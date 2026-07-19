@@ -1,0 +1,63 @@
+/**
+ * src/index.css
+ * ------------------------------------------------------------
+ * Tailwind directives + base styles for light/dark themes,
+ * scrollbar styling, and a few component-layer utilities.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-surface-light text-slate-800 dark:bg-surface-dark dark:text-slate-100 transition-colors duration-300;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white dark:bg-surface-card rounded-2xl shadow-lg p-5 border border-slate-200 dark:border-slate-700;
+  }
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50;
+  }
+  .btn-primary {
+    @apply btn bg-primary text-white hover:bg-indigo-500 active:scale-95;
+  }
+  .btn-cyber {
+    @apply btn bg-cyber-500 text-white hover:bg-cyber-600 active:scale-95;
+  }
+  .input {
+    @apply w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/50;
+  }
+  /* Glassmorphism surface: translucent + blur + subtle border. */
+  .glass {
+    @apply bg-white/70 dark:bg-surface-card/60 backdrop-blur-xl border border-white/40 dark:border-white/10;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+
+/* Accessibility: respect reduced-motion preference globally. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Accessibility: visible focus ring for keyboard navigation. */
+:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}

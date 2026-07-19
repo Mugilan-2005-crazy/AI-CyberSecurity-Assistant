@@ -1,0 +1,78 @@
+{
+  "info": {
+    "name": "CyberSec Assistant — File Malware Scanner (Module 4)",
+    "description": "Tests for POST /api/scan/file (multipart/form-data, field name 'file'). Auth: Authorization: Bearer <accessToken>. Set baseUrl to your backend. The upload middleware blocks .exe/.js/.jar/etc. and caps size at 25MB.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "accessToken", "value": "REPLACE_WITH_TOKEN" }
+  ],
+  "item": [
+    {
+      "name": "1. Scan an EICAR test file (VirusTotal configured)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/scan/file", "host": ["{{baseUrl}}"], "path": ["api", "scan", "file"] },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": "eicar.txt",
+              "description": "Use the EICAR standard anti-virus test string (a benign, detectable sample)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "2. No file uploaded (validation error 400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "multipart/form-data" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/scan/file", "host": ["{{baseUrl}}"], "path": ["api", "scan", "file"] },
+        "body": { "mode": "formdata", "formdata": [] }
+      }
+    },
+    {
+      "name": "3. Blocked executable extension (400 from middleware)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/scan/file", "host": ["{{baseUrl}}"], "path": ["api", "scan", "file"] },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "file", "type": "file", "src": "malware.exe", "description": "Rejected at the gate by multer fileFilter." }
+          ]
+        }
+      }
+    },
+    {
+      "name": "4. VirusTotal not configured (graceful)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/scan/file", "host": ["{{baseUrl}}"], "path": ["api", "scan", "file"] },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "file", "type": "file", "src": "document.pdf", "description": "With no VT_API_KEY, response.configured=false and message explains the service is not configured." }
+          ]
+        }
+      }
+    }
+  ]
+}

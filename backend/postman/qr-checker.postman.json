@@ -1,0 +1,77 @@
+{
+  "info": {
+    "name": "CyberSec Assistant — QR Code Safety Checker (Module 6)",
+    "description": "Tests for POST /api/scan/qr. Auth: Authorization: Bearer <accessToken>. Field name 'qr' (PNG/JPG/JPEG, <=25MB). Set baseUrl to your backend. Also supports a raw 'text' body (pre-decoded) for backward compatibility.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "accessToken", "value": "REPLACE_WITH_TOKEN" }
+  ],
+  "item": [
+    {
+      "name": "1. Scan a QR image containing a URL",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+        "url": { "raw": "{{baseUrl}}/api/scan/qr", "host": ["{{baseUrl}}"], "path": ["api", "scan", "qr"] },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "qr", "type": "file", "src": "qr-url.png", "description": "A QR image whose payload is an http(s) URL." }
+          ]
+        }
+      }
+    },
+    {
+      "name": "2. Pre-decoded text (backward compatible)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/scan/qr", "host": ["{{baseUrl}}"], "path": ["api", "scan", "qr"] },
+        "body": { "mode": "raw", "raw": "{ \"text\": \"https://example.com/login/verify\" }" }
+      }
+    },
+    {
+      "name": "3. Action-scheme QR (tel:/wifi:) flagged",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/scan/qr", "host": ["{{baseUrl}}"], "path": ["api", "scan", "qr"] },
+        "body": { "mode": "raw", "raw": "{ \"text\": \"tel:+15551234567\" }" }
+      }
+    },
+    {
+      "name": "4. Unsupported format (400 - only png/jpg)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+        "url": { "raw": "{{baseUrl}}/api/scan/qr", "host": ["{{baseUrl}}"], "path": ["api", "scan", "qr"] },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "qr", "type": "file", "src": "notes.txt", "description": "Rejected by multer fileFilter." }
+          ]
+        }
+      }
+    },
+    {
+      "name": "5. No file and no text (400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/scan/qr", "host": ["{{baseUrl}}"], "path": ["api", "scan", "qr"] },
+        "body": { "mode": "raw", "raw": "{}" }
+      }
+    }
+  ]
+}

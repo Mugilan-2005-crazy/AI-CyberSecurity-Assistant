@@ -1,0 +1,45 @@
+{
+  "info": {
+    "name": "CyberSec Assistant — Security Report Generator (Module 7)",
+    "description": "Tests for POST /api/scan/report (PDF download) and GET /api/scan/reports (list previous). Auth: Authorization: Bearer <accessToken>. Set baseUrl to your backend. Reports aggregate all 5 modules from ScanHistory; works in-memory if Mongo is down.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "accessToken", "value": "REPLACE_WITH_TOKEN" }
+  ],
+  "item": [
+    {
+      "name": "1. Generate PDF report (all scans)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/scan/report", "host": ["{{baseUrl}}"], "path": ["api", "scan", "report"] },
+        "body": { "mode": "raw", "raw": "{}" }
+      }
+    },
+    {
+      "name": "2. Generate PDF report (date range)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/scan/report", "host": ["{{baseUrl}}"], "path": ["api", "scan", "report"] },
+        "body": { "mode": "raw", "raw": "{ \"from\": \"2026-01-01\", \"to\": \"2026-12-31\" }" }
+      }
+    },
+    {
+      "name": "3. List previous reports",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+        "url": { "raw": "{{baseUrl}}/api/scan/reports", "host": ["{{baseUrl}}"], "path": ["api", "scan", "reports"] }
+      }
+    }
+  ]
+}

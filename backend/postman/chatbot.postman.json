@@ -1,0 +1,82 @@
+{
+  "info": {
+    "name": "CyberSec Assistant — AI Security Chatbot (Module 5)",
+    "description": "Tests for POST /api/chat/message. Auth: Authorization: Bearer <accessToken>. Set baseUrl to your backend. When GEMINI_API_KEY is unset, the endpoint returns aiEnabled:false with a friendly fallback (no crash).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "accessToken", "value": "REPLACE_WITH_TOKEN" }
+  ],
+  "item": [
+    {
+      "name": "1. Ask a cybersecurity question",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/chat/message", "host": ["{{baseUrl}}"], "path": ["api", "chat", "message"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"What is phishing and how can I protect myself?\",\n  \"sessionId\": \"demo-session-1\"\n}"
+        }
+      }
+    },
+    {
+      "name": "2. Multi-turn with history",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/chat/message", "host": ["{{baseUrl}}"], "path": ["api", "chat", "message"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"Give me one more tip.\",\n  \"sessionId\": \"demo-session-1\",\n  \"history\": [\n    { \"role\": \"user\", \"text\": \"How do I create a strong password?\" },\n    { \"role\": \"model\", \"text\": \"Use 16+ random characters from a password manager.\" }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "3. Unrelated question (model should refuse politely)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/chat/message", "host": ["{{baseUrl}}"], "path": ["api", "chat", "message"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"Write me a recipe for chocolate cake.\",\n  \"sessionId\": \"demo-session-2\"\n}"
+        }
+      }
+    },
+    {
+      "name": "4. Validation error (empty message)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/chat/message", "host": ["{{baseUrl}}"], "path": ["api", "chat", "message"] },
+        "body": { "mode": "raw", "raw": "{ \"message\": \"\" }" }
+      }
+    },
+    {
+      "name": "5. Rate-limit behavior (send >20 quickly -> 429)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/chat/message", "host": ["{{baseUrl}}"], "path": ["api", "chat", "message"] },
+        "body": { "mode": "raw", "raw": "{ \"message\": \"test rate limit\" }" }
+      }
+    }
+  ]
+}

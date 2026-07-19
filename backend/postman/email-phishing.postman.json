@@ -1,0 +1,85 @@
+{
+  "info": {
+    "name": "CyberSec Assistant — Email Phishing Detector (Module 3)",
+    "description": "Tests for POST /api/scan/email. Auth: send Authorization: Bearer <accessToken> from POST /api/auth/login. Set baseUrl to your backend (e.g. http://localhost:5000).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "accessToken", "value": "REPLACE_WITH_TOKEN" }
+  ],
+  "item": [
+    {
+      "name": "1. Standard heuristic scan (phishing example)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/scan/email", "host": ["{{baseUrl}}"], "path": ["api", "scan", "email"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"subject\": \"Urgent: your account will be locked\",\n  \"sender\": \"PayPal Security <no-reply@paypa1.com>\",\n  \"body\": \"Dear customer, unusual activity detected. Verify your identity immediately or your account will be suspended. <a href=\\\"http://192.168.1.1/login\\\">Click here to sign in</a> and enter your password.\"\n}"
+        }
+      }
+    },
+    {
+      "name": "2. AI explanation scan (?ai=true)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/scan/email?ai=true", "host": ["{{baseUrl}}"], "path": ["api", "scan", "email"], "query": [{ "key": "ai", "value": "true" }] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"subject\": \"Security alert\",\n  \"sender\": \"IT Support <it@secure-update.xyz>\",\n  \"body\": \"Confirm your password now via <a href=\\\"http://secure-update.xyz/otp\\\">this secure form</a> to avoid lockout.\"\n}"
+        }
+      }
+    },
+    {
+      "name": "3. Scan with suspicious attachment (metadata only)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/scan/email", "host": ["{{baseUrl}}"], "path": ["api", "scan", "email"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"subject\": \"Invoice\",\n  \"sender\": \"billing@invoices.example.com\",\n  \"body\": \"Please review the attached invoice.\",\n  \"attachments\": [ { \"name\": \"invoice.exe\" } ]\n}"
+        }
+      }
+    },
+    {
+      "name": "4. Validation error (missing body)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/scan/email", "host": ["{{baseUrl}}"], "path": ["api", "scan", "email"] },
+        "body": { "mode": "raw", "raw": "{ \"subject\": \"hi\" }" }
+      }
+    },
+    {
+      "name": "5. Benign email (should be safe)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/scan/email", "host": ["{{baseUrl}}"], "path": ["api", "scan", "email"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"subject\": \"Team lunch Friday\",\n  \"sender\": \"jane@company.com\",\n  \"body\": \"Hi team, we are meeting at 1pm in the cafeteria. No action needed.\"\n}"
+        }
+      }
+    }
+  ]
+}
