@@ -28,7 +28,7 @@ const modules = [
   { to: '/scan/email', label: 'Email Phishing', icon: EnvelopeIcon },
   { to: '/scan/file', label: 'File Scanner', icon: DocumentIcon },
   { to: '/scan/qr', label: 'QR Checker', icon: QrCodeIcon },
-  { to: '/chat', label: 'AI Chatbot', icon: ChatBubbleLeftRightIcon },
+  { to: '/dashboard/ai-chatbot', label: 'AI Chatbot', icon: ChatBubbleLeftRightIcon },
 ];
 
 const adminNav = [

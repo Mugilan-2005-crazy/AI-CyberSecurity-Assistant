@@ -11,6 +11,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import compression from 'compression';
 import morgan from 'morgan';
+import cookieParser from 'cookie-parser';
 import config from './config/index.js';
 import logger from './utils/logger.js';
 
@@ -34,6 +35,7 @@ app.use(
 );
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(compression());
 app.use(sanitize);
 app.use(rateLimiter(15 * 60 * 1000, 1000, 'Global rate limit exceeded'));

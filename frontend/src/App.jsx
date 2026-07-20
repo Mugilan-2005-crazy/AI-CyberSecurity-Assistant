@@ -21,6 +21,7 @@ const Register = lazy(() => import('./pages/Register.jsx'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail.jsx'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword.jsx'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword.jsx'));
+const Landing = lazy(() => import('./pages/Landing.jsx'));
 
 // App pages
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
@@ -34,6 +35,7 @@ const EmailPhishing = lazy(() => import('./pages/modules/EmailPhishing.jsx'));
 const FileScanner = lazy(() => import('./pages/modules/FileScanner.jsx'));
 const QrChecker = lazy(() => import('./pages/modules/QrChecker.jsx'));
 const Chatbot = lazy(() => import('./pages/modules/Chatbot.jsx'));
+const AIChatbot = lazy(() => import('./pages/modules/AIChatbot.jsx'));
 const ReportGenerator = lazy(() => import('./pages/modules/ReportGenerator.jsx'));
 
 // Admin
@@ -57,6 +59,9 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
+        {/* Public landing page (no auth required) */}
+        <Route path="/home" element={<Landing />} />
+
         {/* Protected */}
         <Route
           path="/"
@@ -79,6 +84,7 @@ export default function App() {
           <Route path="scan/qr" element={<QrChecker />} />
           <Route path="chat" element={<Chatbot />} />
           <Route path="report" element={<ReportGenerator />} />
+          <Route path="dashboard/ai-chatbot" element={<AIChatbot />} />
 
           {/* Admin-only */}
           <Route path="admin/users" element={<ProtectedRoute role="admin"><AdminUsers /></ProtectedRoute>} />

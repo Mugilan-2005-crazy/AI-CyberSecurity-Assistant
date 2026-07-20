@@ -10,7 +10,7 @@
  * Uses skeletons while loading and a graceful error state.
  */
 import { useEffect, useState, useMemo } from 'react';
-import { ShieldCheckIcon, ExclamationTriangleIcon, CheckCircleIcon, EnvelopeIcon, BugAntIcon, QrCodeIcon } from '@heroicons/react/24/outline';
+import { ShieldCheckIcon, ExclamationTriangleIcon, CheckCircleIcon, EnvelopeIcon, BugAntIcon, QrCodeIcon, LinkIcon } from '@heroicons/react/24/outline';
 import { AnimatePresence } from 'framer-motion';
 import endpoints from '../services/endpoints.js';
 import StatCard from '../components/dashboard/StatCard.jsx';
@@ -48,6 +48,10 @@ export default function Dashboard() {
     [data]
   );
   const recent = data?.recentActivity || [];
+  // Live KPIs derived strictly from the dashboard aggregate (no extra APIs).
+  const totalScans = data?.totalScans || 0;
+  const highRisk = data?.threatsDetected || 0;            // suspicious + malicious
+  const safeScans = Math.max(0, totalScans - highRisk);   // remainder treated as safe
 
   if (loading) {
     return (
@@ -69,12 +73,12 @@ export default function Dashboard() {
   }
 
   const cards = [
-    { icon: ShieldCheckIcon, label: 'Total Scans', value: data.totalScans, sub: 'All modules', accent: 'primary', trend: 12 },
-    { icon: ExclamationTriangleIcon, label: 'Threat Score', value: data.threatScore, sub: `Avg ${data.avgThreatScore}/100`, accent: data.threatScore > 50 ? 'danger' : 'warning', trend: -4 },
-    { icon: CheckCircleIcon, label: 'Safe Files', value: byType.file || 0, sub: 'Clean scans', accent: 'cyber', trend: 8 },
-    { icon: EnvelopeIcon, label: 'Phishing Emails', value: byType.email || 0, sub: 'Analyzed', accent: 'info', trend: 3 },
-    { icon: BugAntIcon, label: 'Malware Detected', value: data.threatsDetected, sub: 'Flagged', accent: 'danger', trend: -2 },
-    { icon: QrCodeIcon, label: 'QR Scans', value: byType.qr || 0, sub: 'Decoded', accent: 'warning', trend: 5 },
+    { icon: ShieldCheckIcon, label: 'Total Scans', value: totalScans, sub: 'All modules', accent: 'primary' },
+    { icon: CheckCircleIcon, label: 'Safe Scans', value: safeScans, sub: 'Clean results', accent: 'cyber' },
+    { icon: BugAntIcon, label: 'Malicious / High Risk', value: highRisk, sub: 'Flagged threats', accent: 'danger' },
+    { icon: LinkIcon, label: 'URL Scans', value: byType.url || 0, sub: 'Analyzed', accent: 'info' },
+    { icon: EnvelopeIcon, label: 'Email Scans', value: byType.email || 0, sub: 'Analyzed', accent: 'warning' },
+    { icon: QrCodeIcon, label: 'QR Scans', value: byType.qr || 0, sub: 'Decoded', accent: 'primary' },
   ];
 
   return (
@@ -139,10 +143,14 @@ export default function Dashboard() {
         <Card title="Scan Statistics" description="Scans per module" className="glass">
           <ScanStatsChart breakdown={data.typeBreakdown || []} />
         </Card>
-        <Card title="Recent Activity" className="lg:col-span-2 glass">
-          <ActivityTimeline rows={recent} />
+        <Card title="Recent Scans" description="Latest 5 scans" className="lg:col-span-2 glass">
+          <ActivityTimeline rows={recent.slice(0, 5)} />
         </Card>
       </div>
+
+      {totalScans === 0 && (
+        <StateView type="empty" title="No scans yet" message="Run a scan from any module to populate your live analytics." />
+      )}
 
       <AnimatePresence>
         {showNotes && <NotificationsPanel items={notes} onClose={() => setShowNotes(false)} />}

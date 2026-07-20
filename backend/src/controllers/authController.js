@@ -139,7 +139,7 @@ export const refreshToken = async (req, res, next) => {
 
 export const logout = async (req, res, next) => {
   try {
-    const token = req.cookies.refreshToken;
+    const token = req.cookies && req.cookies.refreshToken;
     if (token && req.user) {
       const user = await User.findById(req.user.id).select('+refreshTokens');
       if (user) {
@@ -156,11 +156,66 @@ export const me = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) throw new ApiError(404, 'User not found');
+
+    // Account stats from the scan + chat collections (best-effort).
+    const ScanHistory = (await import('../models/ScanHistory.js')).default;
+    const ChatLog = (await import('../models/ChatLog.js')).default;
+    const [totalScans, totalChats] = await Promise.all([
+      ScanHistory.countDocuments({ user: user._id }),
+      ChatLog.countDocuments({ user: user._id }),
+    ]).catch(() => [0, 0]);
+
     res.json({
       success: true,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role, isEmailVerified: user.isEmailVerified },
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isEmailVerified: user.isEmailVerified,
+        createdAt: user.createdAt,
+        totalScans,
+        totalChats,
+      },
     });
   } catch (err) { next(err); }
 };
 
-export default { register, login, verifyEmail, forgotPassword, resetPassword, refreshToken, logout, me };
+// PATCH /api/auth/me — update the display name (min 2 chars).
+export const updateName = async (req, res, next) => {
+  try {
+    const { name } = req.body;
+    if (typeof name !== 'string' || name.trim().length < 2) {
+      throw new ApiError(400, 'Name must be at least 2 characters');
+    }
+    const user = await User.findById(req.user.id);
+    if (!user) throw new ApiError(404, 'User not found');
+    user.name = name.trim();
+    await user.save();
+    res.json({
+      success: true,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, isEmailVerified: user.isEmailVerified, createdAt: user.createdAt },
+    });
+  } catch (err) { next(err); }
+};
+
+// POST /api/auth/change-password — verify current password, set a new one.
+export const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (typeof newPassword !== 'string' || newPassword.length < 8) {
+      throw new ApiError(400, 'New password must be at least 8 characters');
+    }
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user) throw new ApiError(404, 'User not found');
+    if (!(await user.comparePassword(currentPassword))) {
+      throw new ApiError(401, 'Current password is incorrect');
+    }
+    user.password = newPassword;
+    user.refreshTokens = []; // force re-login on all devices
+    await user.save();
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (err) { next(err); }
+};
+
+export default { register, login, verifyEmail, forgotPassword, resetPassword, refreshToken, logout, me, updateName, changePassword };
