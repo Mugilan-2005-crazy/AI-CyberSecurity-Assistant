@@ -24,6 +24,11 @@ import { rateLimiter } from './middleware/rateLimiter.js';
 import { sanitize } from './middleware/sanitize.js';
 
 const app = express();
+console.log("APP.JS LOADED");
+
+app.get("/", (req, res) => {
+  res.send("ROOT WORKING");
+});
 
 // --- Security & base middleware ---
 app.use(helmet());
