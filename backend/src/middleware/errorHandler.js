@@ -37,7 +37,7 @@ export const errorHandler = (err, req, res, _next) => {
 
 // 404 handler for unmatched routes.
 export const notFound = (req, _res, next) => {
-  next(new (require('../utils/ApiError.js').ApiError)(404, `Route not found: ${req.originalUrl}`));
+ next(new ApiError(404, 'Route not found'));
 };
 
 export default errorHandler;
