@@ -8,6 +8,7 @@
  *  - Validation errors -> 422
  */
 import logger from '../utils/logger.js';
+import { ApiError } from '../utils/ApiError.js';
 
 // eslint-disable-next-line no-unused-vars
 export const errorHandler = (err, req, res, _next) => {
