@@ -22,7 +22,8 @@ export default function Login() {
     try {
       const user = await login(form.email, form.password);
       toast.success('Welcome back!');
-      const to = location.state?.from?.pathname || (user.role === 'admin' ? '/admin/analytics' : '/dashboard');
+      const role = user?.role;
+      const to = location.state?.from?.pathname || (role === 'admin' ? '/admin/analytics' : '/dashboard');
       navigate(to, { replace: true });
     } catch (err) {
       toast.error(err.response?.data?.message || 'Login failed');

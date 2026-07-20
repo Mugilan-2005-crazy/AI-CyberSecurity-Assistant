@@ -16,6 +16,8 @@ import RiskLevel from '../../components/ui/RiskLevel.jsx';
 import Skeleton from '../../components/ui/Skeleton.jsx';
 import StateView from '../../components/ui/StateView.jsx';
 
+const URL_RE = /^(https?:\/\/)([\w-]+(\.[\w-]+)+)([\w\-./?%&=#:]*)?$/i;
+
 export default function UrlScanner() {
   const [url, setUrl] = useState('');
   const [result, setResult] = useState(null);
@@ -24,10 +26,14 @@ export default function UrlScanner() {
 
   const scan = async (e) => {
     e.preventDefault();
+    if (!URL_RE.test(url.trim())) {
+      toast.error('Enter a valid URL (e.g. https://example.com)');
+      return;
+    }
     setLoading(true);
     setError(false);
     try {
-      const r = await api.post('/scan/url', { url });
+      const r = await api.post('/scan/url', { url: url.trim() });
       setResult(r.result);
       toast.success('URL analyzed');
     } catch (err) {
@@ -37,6 +43,8 @@ export default function UrlScanner() {
       setLoading(false);
     }
   };
+
+  const { issues, recommendations } = buildFindings(result);
 
   const checks = result?.checks || {};
 
@@ -88,10 +96,68 @@ export default function UrlScanner() {
             <Check label="No brand impersonation" ok={!checks.brandImpersonation}
               detail={checks.brandImpersonation ? `Looks like ${checks.brandImpersonation}` : null} />
           </ul>
+
+          {issues.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold mb-2">Detected Issues</h3>
+              <ul className="space-y-1 text-sm list-disc list-inside text-danger">
+                {issues.map((i) => <li key={i}>{i}</li>)}
+              </ul>
+            </div>
+          )}
+
+          {recommendations.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold mb-2">Recommendations</h3>
+              <ul className="space-y-1 text-sm list-disc list-inside text-slate-300">
+                {recommendations.map((r) => <li key={r}>{r}</li>)}
+              </ul>
+            </div>
+          )}
         </div>
       )}
     </ScanShell>
   );
+}
+
+function buildFindings(result) {
+  const issues = [];
+  const recommendations = [];
+  const c = result?.checks || {};
+  if (result?.valid === false) {
+    issues.push('Invalid URL format — cannot be analyzed safely.');
+    recommendations.push('Double-check the URL and make sure it is complete.');
+    return { issues, recommendations };
+  }
+  if (c.format) { issues.push(c.format); recommendations.push('Provide a correctly formatted URL.'); }
+  if (!c.https) {
+    issues.push('Connection is not over HTTPS (no SSL/TLS).');
+    recommendations.push('Avoid submitting sensitive data on non-HTTPS sites.');
+  }
+  if (c.suspiciousTld) {
+    issues.push(`Suspicious top-level domain "${result?.host?.split('.').pop()}".`);
+    recommendations.push('Be cautious of free/abused TLDs often used in phishing.');
+  }
+  if (c.urlShortener) {
+    issues.push('URL uses a shortening service that hides the real destination.');
+    recommendations.push('Expand the short link first to verify where it leads.');
+  }
+  if (c.ipHost) {
+    issues.push('Host is a raw IP address rather than a domain name.');
+    recommendations.push('Legitimate sites usually use a registered domain name.');
+  }
+  if (c.brandImpersonation) {
+    issues.push(`Possible impersonation of "${c.brandImpersonation}".`);
+    recommendations.push('Navigate to the brand’s official site directly, not via the link.');
+  }
+  if (Array.isArray(c.phishingKeywords) && c.phishingKeywords.length) {
+    issues.push(`Phishing keywords detected: ${c.phishingKeywords.join(', ')}.`);
+    recommendations.push('Be wary of pages asking to log in, verify, or update account info.');
+  }
+  if (!issues.length) {
+    recommendations.push('No major issues detected — still verify the sender before acting.');
+  }
+  return { issues, recommendations };
 }
 
 function Check({ label, ok, detail }) {
