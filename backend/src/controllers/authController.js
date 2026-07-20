@@ -147,7 +147,7 @@ export const logout = async (req, res, next) => {
         await user.save();
       }
     }
-    res.clearCookie('refreshToken');
+    res.clearCookie('refreshToken', cookieOpts);
     res.json({ success: true, message: 'Logged out' });
   } catch (err) { next(err); }
 };
