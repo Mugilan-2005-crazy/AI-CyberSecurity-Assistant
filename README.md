@@ -4,6 +4,21 @@
 
 ---
 
+## 📋 About The Project
+
+The **Cyber Security Assistant** is a full-stack web application that combines traditional security scanning tools with advanced Artificial Intelligence to help users assess, detect, and mitigate cybersecurity threats. Built with **React + Vite** on the frontend and **Node.js + Express** on the backend, it integrates **Google Gemini** (cloud) and **Ollama** (local) for AI-driven threat analysis, recommendations, and conversational security guidance.
+
+**Key Capabilities:**
+- 🔍 Scan URLs, passwords, emails, files, and QR codes for security threats
+- 🤖 AI-powered security chatbot with multimodal file analysis (PDF, images, videos)
+- 📊 Visual security reports with PDF export
+- 🧠 Real-time threat intelligence via web search integration
+- 🌐 Multilingual support (English, Tamil, Tanglish, Hindi)
+- 🎤 Voice input and text-to-speech output
+- 👑 Admin panel for user management and platform analytics
+
+---
+
 ## 📖 Project Overview
 
 The Cyber Security Assistant is a comprehensive web application designed to help users assess and improve their cybersecurity posture. It combines traditional security scanning tools with advanced AI capabilities to provide intelligent analysis, threat detection, and actionable security guidance.
@@ -61,8 +76,8 @@ The platform supports multiple input types — URLs, passwords, emails, files, Q
                               │
                          HTTPS / REST
                               │
-┌─────────────────────────────▼──────────────────────────────┐
-│                  Backend (Node + Express)                   │
+┌──────────────────────────────▼──────────────────────────────┐
+│                  Backend (Node + Express)                    │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
 │  │ Routes   │  │Controllers│  │ Services │  │ Middleware│   │
 │  │ (API)    │  │ (Logic)  │  │ (AI/IO)  │  │ (Auth)   │   │
@@ -73,10 +88,10 @@ The platform supports multiple input types — URLs, passwords, emails, files, Q
 │                    Mongoose / Gemini / Ollama               │
 └─────────────────────────────────────────────────────────────┘
                               │
-                         Mongoose
+                          Mongoose
                               │
-┌─────────────────────────────▼──────────────────────────────┐
-│                    MongoDB Atlas                            │
+┌──────────────────────────────▼──────────────────────────────┐
+│                    MongoDB Atlas                             │
 │              (Users, ScanHistory, ChatLog, etc.)            │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -173,6 +188,7 @@ cp .env.example .env      # VITE_API_URL (or use proxy in dev)
 npm install
 npm run dev               # http://localhost:5173
 ```
+
 > In dev, `/api` is proxied to `localhost:5000` (see `vite.config.js`), so no `VITE_API_URL` is needed.
 
 ---
@@ -303,10 +319,34 @@ npm run build
 
 ## 📸 Screenshots
 
-> Add screenshots of the dashboard, chatbot, and security modules here.
+> Screenshots showcase the key interfaces of the Cyber Security Assistant. Add actual screenshots in the `screenshots/` directory and reference them below.
+
+| Module | Screenshot |
+|--------|------------|
+| **Dashboard** | ![Dashboard](screenshots/dashboard.png) |
+| **AI Chatbot** | ![AI Chatbot](screenshots/ai-chatbot.png) |
+| **URL Scanner** | ![URL Scanner](screenshots/url-scanner.png) |
+| **Password Analyzer** | ![Password Analyzer](screenshots/password-analyzer.png) |
+| **Email Phishing Detector** | ![Email Phishing Detector](screenshots/email-phishing.png) |
+| **QR Security Checker** | ![QR Security Checker](screenshots/qr-checker.png) |
+| **Security Report** | ![Security Report](screenshots/security-report.png) |
 
 ---
 
 ## 📝 License
 
-MIT
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+
+## 👨‍💻 Author
+
+**Mugilan**  
+B.Tech Information Technology
+
+[![GitHub](https://img.shields.io/badge/GitHub-Profile-blue?logo=github)](https://github.com/Mugilan-2005-crazy)  
+[![Email](https://img.shields.io/badge/Email-Contact-red?logo=gmail)](mailto:mugilan@example.com)
+
+---
+
+<p align="center">Built with ❤️ for cybersecurity awareness and education</p>
