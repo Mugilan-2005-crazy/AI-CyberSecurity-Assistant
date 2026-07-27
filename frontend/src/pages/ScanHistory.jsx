@@ -8,6 +8,7 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
+import { useTranslation } from 'react-i18next';
 import endpoints from '../services/endpoints.js';
 import Card from '../components/ui/Card.jsx';
 import Modal from '../components/ui/Modal.jsx';
@@ -20,18 +21,18 @@ import SearchInput from '../components/ui/SearchInput.jsx';
 
 const MODULE_ICON = { url: '🔗', password: '🔑', email: '✉️', file: '📄', qr: '🔳' };
 const MODULE_LABEL = { url: 'URL', password: 'Password', email: 'Email', file: 'File', qr: 'QR' };
-// Top-level fields of `details` we render as a structured summary (others go to "More").
 const SUMMARY_FIELDS = ['input', 'host', 'scheme', 'domain', 'path', 'score', 'strength', 'entropy', 'verdict', 'valid', 'decoded'];
 const PAGE = 8;
 
 export default function ScanHistory() {
+  const { t } = useTranslation();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState('all');
   const [query, setQuery] = useState('');
-  const [selected, setSelected] = useState(null); // scan shown in the detail modal
+  const [selected, setSelected] = useState(null);
 
   useEffect(() => {
     endpoints.getDashboard()
@@ -57,18 +58,18 @@ export default function ScanHistory() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Scan History</h1>
-          <p className="text-sm text-slate-400">{filtered.length} scans</p>
+          <h1 className="text-2xl font-bold">{t('history.title')}</h1>
+          <p className="text-sm text-slate-400">{filtered.length} {t('common.scans')}</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <SearchInput value={query} onChange={(v) => { setQuery(v); setPage(1); }} placeholder="Search target…" ariaLabel="Search scan history" />
-          <select className="input sm:max-w-[160px]" value={filter} onChange={(e) => { setFilter(e.target.value); setPage(1); }} aria-label="Filter by module">
-            <option value="all">All modules</option>
-            <option value="url">URL</option>
-            <option value="password">Password</option>
-            <option value="email">Email</option>
-            <option value="file">File</option>
-            <option value="qr">QR</option>
+          <SearchInput value={query} onChange={(v) => { setQuery(v); setPage(1); }} placeholder={t('common.search')} ariaLabel={t('common.search')} />
+          <select className="input sm:max-w-[160px]" value={filter} onChange={(e) => { setFilter(e.target.value); setPage(1); }} aria-label={t('history.filterByType')}>
+            <option value="all">{t('history.allTypes')}</option>
+            <option value="url">{t('history.url')}</option>
+            <option value="password">{t('history.password')}</option>
+            <option value="email">{t('history.email')}</option>
+            <option value="file">{t('history.file')}</option>
+            <option value="qr">{t('history.qr')}</option>
           </select>
         </div>
       </div>
@@ -79,9 +80,9 @@ export default function ScanHistory() {
             {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
           </div>
         ) : error ? (
-          <StateView type="error" title="Couldn't load history" message="Try again in a moment." />
+          <StateView type="error" title={t('errors.serverError')} message="Try again in a moment." />
         ) : !filtered.length ? (
-          <StateView type="empty" title="No scans found" message={query || filter !== 'all' ? 'No scans match your filters.' : 'Run a scan to see it here.'} />
+          <StateView type="empty" title={t('history.noHistory')} message={query || filter !== 'all' ? 'No scans match your filters.' : 'Run a scan to see it here.'} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

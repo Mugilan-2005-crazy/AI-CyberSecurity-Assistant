@@ -8,6 +8,7 @@ import { BellIcon, SunIcon, MoonIcon, Bars3Icon, ArrowRightOnRectangleIcon } fro
 import api from '../../services/api.js';
 import { useTheme } from '../../context/ThemeContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
+import LanguageSelector from '../LanguageSelector.jsx';
 
 export default function Topbar({ onMenu }) {
   const { theme, toggle } = useTheme();
@@ -34,6 +35,7 @@ export default function Topbar({ onMenu }) {
       <div className="flex-1" />
 
       <div className="flex items-center gap-2">
+        <LanguageSelector />
         <button onClick={toggle} className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700" aria-label="Toggle theme">
           {theme === 'dark' ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
         </button>

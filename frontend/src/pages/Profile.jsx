@@ -11,6 +11,7 @@
  */
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 import { PencilIcon, KeyIcon } from '@heroicons/react/24/outline';
 import endpoints from '../services/endpoints.js';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -24,6 +25,7 @@ import VerdictBadge from '../components/ui/VerdictBadge.jsx';
 const MODULE_ICON = { url: '🔗', password: '🔑', email: '✉️', file: '📄', qr: '🔳' };
 
 export default function Profile() {
+  const { t } = useTranslation();
   const { user: authUser, setUser } = useAuth();
   const [profile, setProfile] = useState(null);
   const [recent, setRecent] = useState([]);
@@ -58,16 +60,16 @@ export default function Profile() {
 
   const saveName = async () => {
     if (name.trim().length < 2) {
-      toast.error('Name must be at least 2 characters');
+      toast.error(t('settings.nameUpdated'));
       return;
     }
     setNameSaving(true);
     try {
       const u = await endpoints.updateProfileName(name.trim());
       setProfile(u);
-      setUser({ ...authUser, name: u.name }); // keep auth context in sync
+      setUser({ ...authUser, name: u.name });
       setNameOpen(false);
-      toast.success('Profile updated');
+      toast.success(t('settings.nameUpdated'));
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to update name');
     } finally {
@@ -77,7 +79,7 @@ export default function Profile() {
 
   const savePassword = async () => {
     if (pw.next.length < 8) {
-      toast.error('New password must be at least 8 characters');
+      toast.error(t('settings.passwordChanged'));
       return;
     }
     setPwSaving(true);
@@ -85,7 +87,7 @@ export default function Profile() {
       await endpoints.changePassword(pw.current, pw.next);
       setPw({ current: '', next: '' });
       setPwOpen(false);
-      toast.success('Password changed');
+      toast.success(t('settings.passwordChanged'));
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to change password');
     } finally {
@@ -104,19 +106,19 @@ export default function Profile() {
   }
 
   if (error || !profile) {
-    return <StateView type="error" title="Couldn't load profile" message="Try again in a moment." />;
+    return <StateView type="error" title={t('errors.serverError')} message="Try again in a moment." />;
   }
 
   const joined = profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : '—';
 
   const stats = [
-    { label: 'Total Scans', value: profile.totalScans ?? 0 },
-    { label: 'Total AI Chats', value: profile.totalChats ?? 0 },
+    { label: t('dashboard.totalScans'), value: profile.totalScans ?? 0 },
+    { label: t('chatbot.title'), value: profile.totalChats ?? 0 },
   ];
 
   return (
     <div className="space-y-6 animate-fade-in max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold">Profile & Account</h1>
+      <h1 className="text-2xl font-bold">{t('profile.title')}</h1>
 
       {/* Identity + quick actions */}
       <Card>
@@ -130,28 +132,28 @@ export default function Profile() {
             <div className="mt-1 flex gap-2">
               <Badge tone={profile.role === 'admin' ? 'danger' : 'info'}>{profile.role}</Badge>
               <Badge tone={profile.isEmailVerified ? 'success' : 'warning'}>
-                {profile.isEmailVerified ? 'Verified' : 'Unverified'}
+                {profile.isEmailVerified ? t('profile.emailVerified') : t('profile.emailNotVerified')}
               </Badge>
             </div>
           </div>
           <div className="flex flex-col gap-2">
             <button className="btn-primary flex items-center gap-1.5" onClick={() => { setName(profile.name); setNameOpen(true); }}>
-              <PencilIcon className="h-4 w-4" /> Edit
+              <PencilIcon className="h-4 w-4" /> {t('common.edit')}
             </button>
             <button className="btn flex items-center gap-1.5" onClick={() => setPwOpen(true)}>
-              <KeyIcon className="h-4 w-4" /> Password
+              <KeyIcon className="h-4 w-4" /> {t('settings.changePassword')}
             </button>
           </div>
         </div>
       </Card>
 
       {/* Account details */}
-      <Card title="Account Details">
+      <Card title={t('profile.personalInfo')}>
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-          <div><dt className="text-slate-400">Name</dt><dd className="font-medium">{profile.name}</dd></div>
-          <div><dt className="text-slate-400">Email</dt><dd className="font-medium break-all">{profile.email}</dd></div>
-          <div><dt className="text-slate-400">Joined</dt><dd className="font-medium">{joined}</dd></div>
-          <div><dt className="text-slate-400">Role</dt><dd className="font-medium">{profile.role}</dd></div>
+          <div><dt className="text-slate-400">{t('auth.name')}</dt><dd className="font-medium">{profile.name}</dd></div>
+          <div><dt className="text-slate-400">{t('auth.email')}</dt><dd className="font-medium break-all">{profile.email}</dd></div>
+          <div><dt className="text-slate-400">{t('profile.memberSince')}</dt><dd className="font-medium">{joined}</dd></div>
+          <div><dt className="text-slate-400">{t('settings.account')}</dt><dd className="font-medium">{profile.role}</dd></div>
         </dl>
       </Card>
 
@@ -166,7 +168,7 @@ export default function Profile() {
       </div>
 
       {/* Recent activity */}
-      <Card title="Recent Activity" description="Your latest scans">
+      <Card title={t('profile.accountStats')} description={t('dashboard.recentScans')}>
         {recent.length ? (
           <ul className="divide-y divide-slate-100 dark:divide-slate-800">
             {recent.map((r) => (
@@ -184,40 +186,40 @@ export default function Profile() {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-slate-400">No scans yet. Run a scan to see it here.</p>
+          <p className="text-sm text-slate-400">{t('dashboard.noScansYet')}. {t('dashboard.runScanHint')}</p>
         )}
       </Card>
 
       {/* Edit name modal */}
-      <Modal open={nameOpen} onClose={() => setNameOpen(false)} title="Edit Display Name">
-        <label className="text-sm">Display name</label>
+      <Modal open={nameOpen} onClose={() => setNameOpen(false)} title={t('settings.updateName')}>
+        <label className="text-sm">{t('auth.name')}</label>
         <input className="input mt-1" value={name} onChange={(e) => setName(e.target.value)} />
         <div className="flex justify-end gap-2 mt-4">
-          <button className="btn" onClick={() => setNameOpen(false)} disabled={nameSaving}>Cancel</button>
+          <button className="btn" onClick={() => setNameOpen(false)} disabled={nameSaving}>{t('common.cancel')}</button>
           <button className="btn-primary" onClick={saveName} disabled={nameSaving}>
-            {nameSaving ? 'Saving…' : 'Save'}
+            {nameSaving ? t('common.loading') : t('common.save')}
           </button>
         </div>
       </Modal>
 
       {/* Change password modal */}
-      <Modal open={pwOpen} onClose={() => setPwOpen(false)} title="Change Password">
+      <Modal open={pwOpen} onClose={() => setPwOpen(false)} title={t('settings.changePassword')}>
         <div className="space-y-3">
           <div>
-            <label className="text-sm">Current password</label>
+            <label className="text-sm">{t('settings.currentPassword')}</label>
             <input type="password" className="input mt-1" value={pw.current}
               onChange={(e) => setPw({ ...pw, current: e.target.value })} autoComplete="current-password" />
           </div>
           <div>
-            <label className="text-sm">New password (min 8 chars)</label>
+            <label className="text-sm">{t('settings.newPassword')}</label>
             <input type="password" className="input mt-1" value={pw.next}
               onChange={(e) => setPw({ ...pw, next: e.target.value })} autoComplete="new-password" />
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-4">
-          <button className="btn" onClick={() => setPwOpen(false)} disabled={pwSaving}>Cancel</button>
+          <button className="btn" onClick={() => setPwOpen(false)} disabled={pwSaving}>{t('common.cancel')}</button>
           <button className="btn-primary" onClick={savePassword} disabled={pwSaving}>
-            {pwSaving ? 'Updating…' : 'Update Password'}
+            {pwSaving ? t('common.loading') : t('settings.updateName')}
           </button>
         </div>
       </Modal>

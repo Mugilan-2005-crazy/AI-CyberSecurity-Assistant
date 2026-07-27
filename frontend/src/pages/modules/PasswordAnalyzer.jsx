@@ -6,6 +6,7 @@
  */
 import { useState } from 'react';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 import { KeyIcon } from '@heroicons/react/24/outline';
 import api from '../../services/api.js';
 import ScanShell from '../../components/modules/ScanShell.jsx';
@@ -18,6 +19,7 @@ const strengthColor = (s) =>
   s === 'Very Weak' || s === 'Weak' ? '#ef4444' : s === 'Good' ? '#f59e0b' : '#10b981';
 
 export default function PasswordAnalyzer() {
+  const { t } = useTranslation();
   const [pw, setPw] = useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -32,22 +34,21 @@ export default function PasswordAnalyzer() {
       setResult(r.result);
     } catch {
       setError(true);
-      toast.error('Analysis failed');
+      toast.error(t('modules.passwordAnalyzer.analysisFailed'));
     } finally {
       setLoading(false);
     }
   };
 
-  // Map the 0-100 score for the gauge (weak => high risk).
   const riskScore = result ? 100 - result.score : 0;
 
   return (
-    <ScanShell title="Password Strength Analyzer" description="Estimate entropy, crack time, and breach exposure." icon={KeyIcon}>
+    <ScanShell title={t('modules.passwordAnalyzer.title')} description={t('modules.passwordAnalyzer.description')} icon={KeyIcon}>
       <form onSubmit={analyze} className="space-y-3">
-        <label htmlFor="pw" className="sr-only">Password</label>
-        <input id="pw" type="password" className="input" placeholder="Enter a password" value={pw}
+        <label htmlFor="pw" className="sr-only">{t('modules.passwordAnalyzer.placeholder')}</label>
+        <input id="pw" type="password" className="input" placeholder={t('modules.passwordAnalyzer.placeholder')} value={pw}
           onChange={(e) => setPw(e.target.value)} required aria-required="true" autoComplete="new-password" />
-        <button className="btn-cyber w-full" disabled={loading}>Analyze</button>
+        <button className="btn-cyber w-full" disabled={loading}>{t('modules.passwordAnalyzer.analyzeBtn')}</button>
       </form>
 
       {loading && (
@@ -58,10 +59,10 @@ export default function PasswordAnalyzer() {
       )}
 
       {!loading && error && (
-        <StateView type="error" title="Analysis failed" message="We couldn't score that password. Try again." />
+        <StateView type="error" title={t('modules.passwordAnalyzer.analysisFailed')} message={t('modules.passwordAnalyzer.analysisFailedText')} />
       )}
       {!loading && !error && !result && (
-        <StateView type="empty" title="No analysis yet" message="Type a password above to see its strength breakdown." />
+        <StateView type="empty" title={t('modules.passwordAnalyzer.noAnalysisYet')} message={t('modules.passwordAnalyzer.typePasswordHint')} />
       )}
 
       {!loading && !error && result && (
@@ -71,22 +72,22 @@ export default function PasswordAnalyzer() {
             <div className="flex-1">
               <p className="text-lg font-bold" style={{ color: strengthColor(result.strength) }}>{result.strength}</p>
               <RiskLevel score={riskScore} showScore={false} />
-              <p className="text-sm text-slate-400 mt-2">Entropy: {result.entropy} bits</p>
-              <p className="text-sm text-slate-400">Charset: {result.charsetSize} characters</p>
-              <p className="text-sm text-slate-400">Crack time (online): {result.crackTimeOnline}</p>
-              <p className="text-sm text-slate-400">Crack time (offline): {result.crackTimeOffline}</p>
+              <p className="text-sm text-slate-400 mt-2">{t('modules.passwordAnalyzer.entropy')}: {result.entropy} {t('modules.passwordAnalyzer.bits')}</p>
+              <p className="text-sm text-slate-400">{t('modules.passwordAnalyzer.charset')}: {result.charsetSize} {t('modules.passwordAnalyzer.characters')}</p>
+              <p className="text-sm text-slate-400">{t('modules.passwordAnalyzer.crackTimeOnline')}: {result.crackTimeOnline}</p>
+              <p className="text-sm text-slate-400">{t('modules.passwordAnalyzer.crackTimeOffline')}: {result.crackTimeOffline}</p>
             </div>
           </div>
 
           {result.isCommonBreach && (
             <div className="p-3 rounded-lg bg-red-500/10 text-danger text-sm" role="alert">
-              ⚠ This password appears in known breach datasets. Do not use it.
+              ⚠ {t('modules.passwordAnalyzer.breachWarning')}
             </div>
           )}
 
           {result.suggestions.length > 0 && (
             <div>
-              <p className="font-semibold mb-1">Suggestions</p>
+              <p className="font-semibold mb-1">{t('modules.passwordAnalyzer.suggestions')}</p>
               <ul className="list-disc list-inside text-sm text-slate-300 space-y-1">
                 {result.suggestions.map((s, i) => <li key={i}>{s}</li>)}
               </ul>

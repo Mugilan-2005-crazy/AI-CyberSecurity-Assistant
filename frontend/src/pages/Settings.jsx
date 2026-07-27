@@ -14,12 +14,14 @@
  * APIs are used where available, otherwise state is graceful.
  */
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { toast } from 'react-toastify';
 import { SunIcon, MoonIcon, ComputerDesktopIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
 import Card from '../components/ui/Card.jsx';
 import Badge from '../components/ui/Badge.jsx';
+import LanguageSelector from '../components/LanguageSelector.jsx';
 
 const THEMES = [
   { key: 'light', label: 'Light', icon: SunIcon },
@@ -27,7 +29,6 @@ const THEMES = [
   { key: 'system', label: 'System', icon: ComputerDesktopIcon },
 ];
 
-// Local persistence for notification prefs (no backend API yet).
 const loadPrefs = () => {
   try {
     const saved = JSON.parse(localStorage.getItem('notificationPrefs') || 'null');
@@ -37,6 +38,7 @@ const loadPrefs = () => {
 };
 
 export default function Settings() {
+  const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
   const { user } = useAuth();
   const [prefs, setPrefs] = useState(loadPrefs);
@@ -59,24 +61,24 @@ export default function Settings() {
 
   return (
     <div className="space-y-6 animate-fade-in max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold">Settings</h1>
+      <h1 className="text-2xl font-bold">{t('settings.title')}</h1>
 
       {/* Theme preference */}
-      <Card title="Appearance" description="Choose how the dashboard looks.">
+      <Card title={t('settings.appearance')} description={t('settings.appearance')}>
         <div className="grid grid-cols-3 gap-3">
-          {THEMES.map((t) => {
-            const active = theme === t.key;
+          {THEMES.map((tItem) => {
+            const active = theme === tItem.key;
             return (
               <button
-                key={t.key}
-                onClick={() => { setTheme(t.key); toast.success(`Theme: ${t.label}`); }}
+                key={tItem.key}
+                onClick={() => { setTheme(tItem.key); toast.success(`Theme: ${tItem.label}`); }}
                 className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${
                   active ? 'border-primary bg-primary/10 text-primary' : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50'
                 }`}
                 aria-pressed={active}
               >
-                <t.icon className="h-6 w-6" />
-                <span className="text-sm font-medium">{t.label}</span>
+                <tItem.icon className="h-6 w-6" />
+                <span className="text-sm font-medium">{tItem.label}</span>
               </button>
             );
           })}
@@ -84,10 +86,10 @@ export default function Settings() {
       </Card>
 
       {/* Notification preferences */}
-      <Card title="Notifications" description="Control how you're alerted.">
+      <Card title={t('settings.notifications')} description={t('settings.notifications')}>
         {[
-          { k: 'email', label: 'Email alerts', desc: 'Receive emails when threats are detected.' },
-          { k: 'inApp', label: 'In-app notifications', desc: 'Real-time alerts inside the dashboard.' },
+          { k: 'email', label: t('settings.notifications'), desc: t('settings.notifications') },
+          { k: 'inApp', label: t('settings.notifications'), desc: t('settings.notifications') },
         ].map((row) => (
           <div key={row.k} className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
             <div>
@@ -106,6 +108,11 @@ export default function Settings() {
         ))}
       </Card>
 
+      {/* Language preference */}
+      <Card title={t('settings.language')} description={t('settings.language')}>
+        <LanguageSelector />
+      </Card>
+
       {/* API configuration status (read-only) */}
       <Card title="API Configuration" description="External service connectivity (read-only).">
         <div className="space-y-2">
@@ -120,16 +127,16 @@ export default function Settings() {
           ))}
         </div>
         <p className="text-xs text-slate-400 mt-3">
-          Live service status isn't exposed by the API. These indicators show “Not Available” instead of guessed values.
+          Live service status isn't exposed by the API. These indicators show "Not Available" instead of guessed values.
         </p>
       </Card>
 
       {/* Security */}
-      <Card title="Security" description="Account protection overview.">
+      <Card title={t('settings.security')} description={t('settings.security')}>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium">Last password change</p>
+              <p className="text-sm font-medium">{t('settings.changePassword')}</p>
               <p className="text-xs text-slate-400">Not tracked by the current API.</p>
             </div>
             <Badge tone="warning">Not Available</Badge>

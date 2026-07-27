@@ -9,6 +9,7 @@
  */
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   ShieldCheckIcon, LinkIcon, KeyIcon, EnvelopeIcon, DocumentIcon,
   QrCodeIcon, ChatBubbleLeftRightIcon, SparklesIcon, BoltIcon,

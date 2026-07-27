@@ -44,7 +44,36 @@ export const updateProfileName = (name) => api.patch('/auth/me', { name }).then(
 export const changePassword = (currentPassword, newPassword) =>
   api.post('/auth/change-password', { currentPassword, newPassword });
 
+// Chat history for the CyberSec Assistant.
+export const getChatHistory = () => api.get('/chat/history').then((r) => r.sessions || []);
+export const clearChatHistory = () => api.delete('/chat/history').then((r) => r);
+
+// AI health status
+export const getAIStatus = () => api.get('/chat/status').then((r) => r);
+
+// Web search for cybersecurity intelligence.
+export const webSearch = (query, sessionId) =>
+  api.post('/chat/web-search', { query, sessionId }).then((r) => r);
+
+// Multimodal chat: send file + message for AI security analysis.
+export const sendMultimodalMessage = async (file, message, sessionId) => {
+  const form = new FormData();
+  if (file) form.append('file', file);
+  if (message) form.append('message', message);
+  if (sessionId) form.append('sessionId', sessionId);
+  console.log('[sendMultimodalMessage] selected file:', file ? { name: file.name, size: file.size, type: file.type } : null);
+  console.log('[sendMultimodalMessage] FormData keys:', Array.from(form.keys()));
+  const res = await api.post('/chat/upload', form);
+  console.log('[sendMultimodalMessage] API response:', res);
+  return res;
+};
+
+// Upload history for AI File Security Analyzer.
+export const getUploadHistory = () => api.get('/ai/upload/history').then((r) => r.analyses || []);
+
 export default {
   getDashboard, downloadReport, listReports, getNotifications,
   getProfile, updateProfileName, changePassword,
+  getChatHistory, clearChatHistory,
+  sendMultimodalMessage, getUploadHistory, webSearch, getAIStatus,
 };

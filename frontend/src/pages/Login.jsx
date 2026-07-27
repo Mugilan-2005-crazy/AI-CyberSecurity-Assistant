@@ -6,10 +6,12 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext.jsx';
 import { ShieldCheckIcon } from '@heroicons/react/24/outline';
 
 export default function Login() {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,39 +35,40 @@ export default function Login() {
   };
 
   return (
-    <AuthShell title="Sign in to your account">
+    <AuthShell title={t('auth.signIn')}>
       <form onSubmit={submit} className="space-y-4">
         <div>
-          <label className="text-sm">Email</label>
+          <label className="text-sm">{t('auth.email')}</label>
           <input type="email" required className="input" value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="you@domain.com" />
+            onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={t('auth.emailPlaceholder')} />
         </div>
         <div>
-          <label className="text-sm">Password</label>
+          <label className="text-sm">{t('auth.password')}</label>
           <input type="password" required className="input" value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••••" />
+            onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder={t('auth.passwordPlaceholder')} />
         </div>
         <button className="btn-primary w-full" disabled={loading}>
-          {loading ? 'Signing in...' : 'Sign In'}
+          {loading ? t('auth.signingIn') : t('auth.signInBtn')}
         </button>
       </form>
       <div className="mt-4 text-sm text-center text-slate-400">
-        <Link to="/forgot-password" className="hover:text-primary">Forgot password?</Link>
+        <Link to="/forgot-password" className="hover:text-primary">{t('auth.forgotPassword')}</Link>
         <span className="mx-2">·</span>
-        <Link to="/register" className="hover:text-primary">Create account</Link>
+        <Link to="/register" className="hover:text-primary">{t('auth.createAccount')}</Link>
       </div>
     </AuthShell>
   );
 }
 
 export function AuthShell({ title, children }) {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-slate-900 to-slate-800">
       <div className="w-full max-w-md card animate-fade-in">
         <div className="flex flex-col items-center mb-6">
           <ShieldCheckIcon className="h-12 w-12 text-cyber-400 animate-float" />
           <h1 className="text-xl font-bold mt-2">{title}</h1>
-          <p className="text-sm text-slate-400">AI-powered Cyber Security Assistant</p>
+          <p className="text-sm text-slate-400">{t('app.tagline')}</p>
         </div>
         {children}
       </div>

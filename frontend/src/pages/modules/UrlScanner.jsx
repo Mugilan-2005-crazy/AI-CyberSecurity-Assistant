@@ -7,6 +7,7 @@
  */
 import { useState } from 'react';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 import { LinkIcon } from '@heroicons/react/24/outline';
 import api from '../../services/api.js';
 import ScanShell from '../../components/modules/ScanShell.jsx';
@@ -19,6 +20,7 @@ import StateView from '../../components/ui/StateView.jsx';
 const URL_RE = /^(https?:\/\/)([\w-]+(\.[\w-]+)+)([\w\-./?%&=#:]*)?$/i;
 
 export default function UrlScanner() {
+  const { t } = useTranslation();
   const [url, setUrl] = useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -27,7 +29,7 @@ export default function UrlScanner() {
   const scan = async (e) => {
     e.preventDefault();
     if (!URL_RE.test(url.trim())) {
-      toast.error('Enter a valid URL (e.g. https://example.com)');
+      toast.error(t('modules.urlScanner.enterValidUrl'));
       return;
     }
     setLoading(true);
@@ -35,10 +37,10 @@ export default function UrlScanner() {
     try {
       const r = await api.post('/scan/url', { url: url.trim() });
       setResult(r.result);
-      toast.success('URL analyzed');
+      toast.success(t('common.success'));
     } catch (err) {
       setError(true);
-      toast.error(err.response?.data?.message || 'Scan failed');
+      toast.error(err.response?.data?.message || t('common.error'));
     } finally {
       setLoading(false);
     }
@@ -49,12 +51,12 @@ export default function UrlScanner() {
   const checks = result?.checks || {};
 
   return (
-    <ScanShell title="URL Security Scanner" description="Check links for phishing, SSL, and brand impersonation." icon={LinkIcon}>
+    <ScanShell title={t('modules.urlScanner.title')} description={t('modules.urlScanner.description')} icon={LinkIcon}>
       <form onSubmit={scan} className="flex flex-col sm:flex-row gap-2" aria-label="URL scan form">
-        <label htmlFor="url" className="sr-only">URL to scan</label>
-        <input id="url" className="input flex-1" placeholder="https://example.com" value={url}
+        <label htmlFor="url" className="sr-only">{t('modules.urlScanner.placeholder')}</label>
+        <input id="url" className="input flex-1" placeholder={t('modules.urlScanner.placeholder')} value={url}
           onChange={(e) => setUrl(e.target.value)} required aria-required="true" />
-        <button className="btn-cyber whitespace-nowrap" disabled={loading}>Scan</button>
+        <button className="btn-cyber whitespace-nowrap" disabled={loading}>{t('modules.urlScanner.scanBtn')}</button>
       </form>
 
       {loading && (
@@ -66,11 +68,11 @@ export default function UrlScanner() {
       )}
 
       {!loading && error && (
-        <StateView type="error" title="Scan failed" message="We couldn't analyze that URL. Please try again." />
+        <StateView type="error" title={t('modules.urlScanner.scanFailed')} message={t('modules.urlScanner.scanFailedText')} />
       )}
 
       {!loading && !error && !result && (
-        <StateView type="empty" title="No scan yet" message="Enter a URL above to evaluate its safety in seconds." />
+        <StateView type="empty" title={t('modules.urlScanner.noScanYet')} message={t('modules.urlScanner.enterUrlHint')} />
       )}
 
       {!loading && !error && result && (
@@ -78,7 +80,7 @@ export default function UrlScanner() {
           <div className="flex items-center justify-between">
             <div className="min-w-0">
               <p className="font-mono text-sm break-all">{result.input}</p>
-              <p className="text-slate-400 text-xs">Host: {result.host}</p>
+              <p className="text-slate-400 text-xs">{t('modules.urlScanner.host')}: {result.host}</p>
             </div>
             <VerdictBadge verdict={result.verdict} />
           </div>
@@ -99,7 +101,7 @@ export default function UrlScanner() {
 
           {issues.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold mb-2">Detected Issues</h3>
+              <h3 className="text-sm font-semibold mb-2">{t('modules.urlScanner.detectedIssues')}</h3>
               <ul className="space-y-1 text-sm list-disc list-inside text-danger">
                 {issues.map((i) => <li key={i}>{i}</li>)}
               </ul>
@@ -108,7 +110,7 @@ export default function UrlScanner() {
 
           {recommendations.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold mb-2">Recommendations</h3>
+              <h3 className="text-sm font-semibold mb-2">{t('modules.urlScanner.recommendations')}</h3>
               <ul className="space-y-1 text-sm list-disc list-inside text-slate-300">
                 {recommendations.map((r) => <li key={r}>{r}</li>)}
               </ul>
@@ -148,7 +150,7 @@ function buildFindings(result) {
   }
   if (c.brandImpersonation) {
     issues.push(`Possible impersonation of "${c.brandImpersonation}".`);
-    recommendations.push('Navigate to the brand’s official site directly, not via the link.');
+    recommendations.push('Navigate to the brand\'s official site directly, not via the link.');
   }
   if (Array.isArray(c.phishingKeywords) && c.phishingKeywords.length) {
     issues.push(`Phishing keywords detected: ${c.phishingKeywords.join(', ')}.`);

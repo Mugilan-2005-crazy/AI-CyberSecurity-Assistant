@@ -10,7 +10,9 @@
  * Uses skeletons while loading and a graceful error state.
  */
 import { useEffect, useState, useMemo } from 'react';
-import { ShieldCheckIcon, ExclamationTriangleIcon, CheckCircleIcon, EnvelopeIcon, BugAntIcon, QrCodeIcon, LinkIcon } from '@heroicons/react/24/outline';
+import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
+import { ShieldCheckIcon, ExclamationTriangleIcon, CheckCircleIcon, EnvelopeIcon, BugAntIcon, QrCodeIcon, LinkIcon, DocumentArrowDownIcon } from '@heroicons/react/24/outline';
 import { AnimatePresence } from 'framer-motion';
 import endpoints from '../services/endpoints.js';
 import StatCard from '../components/dashboard/StatCard.jsx';
@@ -30,11 +32,13 @@ const MODULE_ORDER = ['url', 'password', 'email', 'file', 'qr'];
 const MODULE_LABEL = { url: 'URL', password: 'Password', email: 'Email', file: 'File', qr: 'QR' };
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [notes, setNotes] = useState([]);
   const [showNotes, setShowNotes] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [generatingReport, setGeneratingReport] = useState(false);
 
   useEffect(() => {
     Promise.all([endpoints.getDashboard(), endpoints.getNotifications().catch(() => [])])
@@ -52,6 +56,18 @@ export default function Dashboard() {
   const totalScans = data?.totalScans || 0;
   const highRisk = data?.threatsDetected || 0;            // suspicious + malicious
   const safeScans = Math.max(0, totalScans - highRisk);   // remainder treated as safe
+
+  const handleDownloadReport = async () => {
+    setGeneratingReport(true);
+    try {
+      await endpoints.downloadReport();
+      toast.success(t('reports.reportGenerated'));
+    } catch {
+      toast.error(t('reports.reportFailed'));
+    } finally {
+      setGeneratingReport(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -73,24 +89,35 @@ export default function Dashboard() {
   }
 
   const cards = [
-    { icon: ShieldCheckIcon, label: 'Total Scans', value: totalScans, sub: 'All modules', accent: 'primary' },
-    { icon: CheckCircleIcon, label: 'Safe Scans', value: safeScans, sub: 'Clean results', accent: 'cyber' },
-    { icon: BugAntIcon, label: 'Malicious / High Risk', value: highRisk, sub: 'Flagged threats', accent: 'danger' },
-    { icon: LinkIcon, label: 'URL Scans', value: byType.url || 0, sub: 'Analyzed', accent: 'info' },
-    { icon: EnvelopeIcon, label: 'Email Scans', value: byType.email || 0, sub: 'Analyzed', accent: 'warning' },
-    { icon: QrCodeIcon, label: 'QR Scans', value: byType.qr || 0, sub: 'Decoded', accent: 'primary' },
+    { icon: ShieldCheckIcon, label: t('dashboard.totalScans'), value: totalScans, sub: t('dashboard.allModules'), accent: 'primary' },
+    { icon: CheckCircleIcon, label: t('dashboard.safeScans'), value: safeScans, sub: t('dashboard.cleanResults'), accent: 'cyber' },
+    { icon: BugAntIcon, label: t('dashboard.highRisk'), value: highRisk, sub: t('dashboard.flaggedThreats'), accent: 'danger' },
+    { icon: LinkIcon, label: t('dashboard.urlScans'), value: byType.url || 0, sub: t('dashboard.analyzed'), accent: 'info' },
+    { icon: EnvelopeIcon, label: t('dashboard.emailScans'), value: byType.email || 0, sub: t('dashboard.analyzed'), accent: 'warning' },
+    { icon: QrCodeIcon, label: t('dashboard.qrScans'), value: byType.qr || 0, sub: t('dashboard.decoded'), accent: 'primary' },
   ];
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Security Overview</h1>
-          <p className="text-sm text-slate-400">Real-time posture across all protection modules.</p>
+          <h1 className="text-2xl font-bold">{t('dashboard.title')}</h1>
+          <p className="text-sm text-slate-400">{t('dashboard.subtitle')}</p>
         </div>
-        <button onClick={() => setShowNotes((s) => !s)} className="btn-primary" aria-label="Toggle notifications">
-          Notifications ({notes.filter((n) => !n.read).length})
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleDownloadReport}
+            disabled={generatingReport}
+            className="btn-primary inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label={t('dashboard.downloadReport')}
+          >
+            <DocumentArrowDownIcon className="w-4 h-4" />
+            {generatingReport ? t('dashboard.generating') : t('dashboard.downloadReport')}
+          </button>
+          <button onClick={() => setShowNotes((s) => !s)} className="btn-primary" aria-label={t('dashboard.notifications')}>
+            {t('dashboard.notifications')} ({notes.filter((n) => !n.read).length})
+          </button>
+        </div>
       </div>
 
       {/* KPI cards with animated counters */}
@@ -104,11 +131,11 @@ export default function Dashboard() {
 
       {/* Security gauge + module risk levels */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card title="Overall Security Score" description="Composite of all module risk" className="flex flex-col items-center">
+        <Card title={t('dashboard.overallScore')} description={t('dashboard.allModules')} className="flex flex-col items-center">
           <SecurityGauge score={100 - data.avgThreatScore} />
           <RiskLevel score={100 - data.avgThreatScore} className="mt-2" />
         </Card>
-        <Card title="Module Risk Levels" className="lg:col-span-2">
+        <Card title={t('dashboard.moduleRiskLevels')} className="lg:col-span-2">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {MODULE_ORDER.map((m) => {
               const count = byType[m] || 0;
@@ -131,25 +158,25 @@ export default function Dashboard() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card title="Weekly Threat Analysis" description="Average threat score trend" className="lg:col-span-2 glass">
+        <Card title={t('dashboard.weeklyThreat')} description={t('dashboard.weeklyThreat')} className="lg:col-span-2 glass">
           <ThreatChart recent={recent} />
         </Card>
-        <Card title="Threat Distribution" description="Safe vs flagged" className="glass">
+        <Card title={t('dashboard.threatDistribution')} description={t('dashboard.threatDistribution')} className="glass">
           <ThreatDistributionChart recent={recent} />
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card title="Scan Statistics" description="Scans per module" className="glass">
+        <Card title={t('dashboard.scanStatistics')} description={t('dashboard.scanStatistics')} className="glass">
           <ScanStatsChart breakdown={data.typeBreakdown || []} />
         </Card>
-        <Card title="Recent Scans" description="Latest 5 scans" className="lg:col-span-2 glass">
+        <Card title={t('dashboard.recentScans')} description={t('dashboard.recentScans')} className="lg:col-span-2 glass">
           <ActivityTimeline rows={recent.slice(0, 5)} />
         </Card>
       </div>
 
       {totalScans === 0 && (
-        <StateView type="empty" title="No scans yet" message="Run a scan from any module to populate your live analytics." />
+        <StateView type="empty" title={t('dashboard.noScansYet')} message={t('dashboard.runScanHint')} />
       )}
 
       <AnimatePresence>

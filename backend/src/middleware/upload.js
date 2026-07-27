@@ -8,6 +8,7 @@
  */
 import multer from 'multer';
 import ApiError from '../utils/ApiError.js';
+import crypto from 'crypto';
 
 const upload = multer({
   storage: multer.memoryStorage(),

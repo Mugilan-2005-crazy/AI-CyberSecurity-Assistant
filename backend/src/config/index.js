@@ -43,6 +43,11 @@ const config = {
   },
 
   gemini: { apiKey: process.env.GEMINI_API_KEY || '' },
+  ollama: {
+    url: process.env.OLLAMA_URL || 'http://localhost:11434',
+    model: process.env.OLLAMA_MODEL || 'llama3.1',
+  },
+  uploadsDir: process.env.UPLOADS_DIR || 'uploads',
   virusTotal: { apiKey: process.env.VIRUSTOTAL_API_KEY || '' },
 
   admin: {
@@ -53,3 +58,15 @@ const config = {
 };
 
 export default config;
+
+const logConfig = () => {
+  console.log('=== App Configuration ===');
+  console.log('Environment:', config.env);
+  console.log('Ollama URL:', config.ollama.url);
+  console.log('Ollama Model:', config.ollama.model);
+  console.log('Gemini Enabled:', Boolean(config.gemini.apiKey));
+  console.log('Mongo URI:', config.mongoUri.replace(/\/\/.*@/, '//***@'));
+  console.log('========================');
+};
+
+logConfig();

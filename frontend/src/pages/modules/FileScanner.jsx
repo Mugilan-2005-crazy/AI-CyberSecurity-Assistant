@@ -6,6 +6,7 @@
  */
 import { useState } from 'react';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 import { DocumentIcon } from '@heroicons/react/24/outline';
 import api from '../../services/api.js';
 import ScanShell from '../../components/modules/ScanShell.jsx';
@@ -16,6 +17,7 @@ import Skeleton from '../../components/ui/Skeleton.jsx';
 import StateView from '../../components/ui/StateView.jsx';
 
 export default function FileScanner() {
+  const { t } = useTranslation();
   const [file, setFile] = useState(null);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -23,7 +25,7 @@ export default function FileScanner() {
 
   const upload = async (e) => {
     e.preventDefault();
-    if (!file) return toast.error('Choose a file');
+    if (!file) return toast.error(t('modules.fileScanner.noFile'));
     setLoading(true);
     setError(false);
     const form = new FormData();
@@ -31,21 +33,21 @@ export default function FileScanner() {
     try {
       const r = await api.post('/scan/file', form, { headers: { 'Content-Type': 'multipart/form-data' } });
       setResult(r.result);
-      toast.success('File scanned');
+      toast.success(t('common.success'));
     } catch (err) {
       setError(true);
-      toast.error(err.response?.data?.message || 'Scan failed');
+      toast.error(err.response?.data?.message || t('common.error'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ScanShell title="File Malware Scanner" description="Upload a file to check its SHA-256 against VirusTotal." icon={DocumentIcon}>
+    <ScanShell title={t('modules.fileScanner.title')} description={t('modules.fileScanner.description')} icon={DocumentIcon}>
       <form onSubmit={upload} className="space-y-3">
-        <label htmlFor="file" className="sr-only">File to scan</label>
+        <label htmlFor="file" className="sr-only">{t('modules.fileScanner.fileToScan')}</label>
         <input id="file" type="file" className="input" onChange={(e) => setFile(e.target.files[0])} required aria-required="true" />
-        <button className="btn-cyber w-full" disabled={loading}>Scan with VirusTotal</button>
+        <button className="btn-cyber w-full" disabled={loading}>{t('modules.fileScanner.scanBtn')}</button>
       </form>
 
       {loading && (
@@ -56,17 +58,17 @@ export default function FileScanner() {
       )}
 
       {!loading && error && (
-        <StateView type="error" title="Scan failed" message="We couldn't scan that file. Try a different file." />
+        <StateView type="error" title={t('modules.fileScanner.scanFailed')} message={t('modules.fileScanner.scanFailedText')} />
       )}
       {!loading && !error && !result && (
-        <StateView type="empty" title="No file scanned" message="Select a file above to check it for malware." />
+        <StateView type="empty" title={t('modules.fileScanner.noFileScanned')} message={t('modules.fileScanner.selectFileHint')} />
       )}
 
       {!loading && !error && result && (
         <div className="mt-5 space-y-4">
           {result.configured === false ? (
-            <StateView type="info" title="Service not configured"
-              message="Malware scanning (VirusTotal) isn't enabled on the server. Contact your administrator." />
+            <StateView type="info" title={t('modules.fileScanner.serviceNotConfigured')}
+              message={t('modules.fileScanner.serviceNotConfiguredText')} />
           ) : (
             <>
               <div className="flex items-center justify-between">

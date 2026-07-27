@@ -5,6 +5,7 @@
  * mobile drawer on small screens.
  */
 import { NavLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   ShieldCheckIcon, LinkIcon, KeyIcon, EnvelopeIcon, DocumentIcon,
   QrCodeIcon, ChatBubbleLeftRightIcon, DocumentTextIcon,
@@ -14,30 +15,31 @@ import { useAuth } from '../../context/AuthContext.jsx';
 
 // Workspace (overview & management)
 const workspace = [
-  { to: '/dashboard', label: 'Dashboard', icon: ShieldCheckIcon },
-  { to: '/profile', label: 'Profile', icon: UserCircleIcon },
-  { to: '/history', label: 'Scan History', icon: ClockIcon },
-  { to: '/reports', label: 'Reports', icon: DocumentTextIcon },
-  { to: '/settings', label: 'Settings', icon: CogIcon },
+  { to: '/dashboard', labelKey: 'dashboard.title', icon: ShieldCheckIcon },
+  { to: '/profile', labelKey: 'profile.title', icon: UserCircleIcon },
+  { to: '/history', labelKey: 'history.title', icon: ClockIcon },
+  { to: '/reports', labelKey: 'reports.title', icon: DocumentTextIcon },
+  { to: '/settings', labelKey: 'settings.title', icon: CogIcon },
 ];
 
 // Security modules
 const modules = [
-  { to: '/scan/url', label: 'URL Scanner', icon: LinkIcon },
-  { to: '/scan/password', label: 'Password Analyzer', icon: KeyIcon },
-  { to: '/scan/email', label: 'Email Phishing', icon: EnvelopeIcon },
-  { to: '/scan/file', label: 'File Scanner', icon: DocumentIcon },
-  { to: '/scan/qr', label: 'QR Checker', icon: QrCodeIcon },
-  { to: '/dashboard/ai-chatbot', label: 'AI Chatbot', icon: ChatBubbleLeftRightIcon },
+  { to: '/scan/url', labelKey: 'modules.urlScanner.title', icon: LinkIcon },
+  { to: '/scan/password', labelKey: 'modules.passwordAnalyzer.title', icon: KeyIcon },
+  { to: '/scan/email', labelKey: 'modules.emailPhishing.title', icon: EnvelopeIcon },
+  { to: '/scan/file', labelKey: 'modules.fileScanner.title', icon: DocumentIcon },
+  { to: '/scan/qr', labelKey: 'modules.qrChecker.title', icon: QrCodeIcon },
+  { to: '/dashboard/ai-chatbot', labelKey: 'chatbot.title', icon: ChatBubbleLeftRightIcon },
 ];
 
 const adminNav = [
-  { to: '/admin/users', label: 'User Management', icon: UsersIcon },
-  { to: '/admin/analytics', label: 'Analytics', icon: ChartBarIcon },
+  { to: '/admin/users', labelKey: 'settings.account', icon: UsersIcon },
+  { to: '/admin/analytics', labelKey: 'settings.title', icon: ChartBarIcon },
 ];
 
 export default function Sidebar({ open, onClose }) {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const linkCls = ({ isActive }) =>
     `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
       isActive ? 'bg-primary text-white' : 'hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300'
@@ -49,7 +51,7 @@ export default function Sidebar({ open, onClose }) {
       {items.map((n) => (
         <NavLink key={n.to} to={n.to} className={linkCls} onClick={onClose}>
           <n.icon className="h-5 w-5" />
-          {n.label}
+          {t(n.labelKey)}
         </NavLink>
       ))}
     </>
@@ -69,10 +71,10 @@ export default function Sidebar({ open, onClose }) {
         </div>
 
         <nav className="flex-1 flex flex-col gap-1 overflow-y-auto">
-          <Group title="Workspace" items={workspace} />
-          <Group title="Security Modules" items={modules} />
+          <Group title={t('dashboard.allModules').replace(' modules', '')} items={workspace} />
+          <Group title={t('modules.urlScanner.title').replace(' Security Scanner', '')} items={modules} />
 
-          {user?.role === 'admin' && <Group title="Admin" items={adminNav} />}
+          {user?.role === 'admin' && <Group title={t('settings.security')} items={adminNav} />}
         </nav>
 
         <div className="mt-2 px-3 py-2 text-xs text-slate-400 border-t border-slate-200 dark:border-slate-700">

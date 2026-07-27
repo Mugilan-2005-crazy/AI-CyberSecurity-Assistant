@@ -7,6 +7,7 @@
  */
 import { useState } from 'react';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
 import endpoints from '../../services/endpoints.js';
 import ScanShell from '../../components/modules/ScanShell.jsx';
@@ -14,6 +15,7 @@ import Skeleton from '../../components/ui/Skeleton.jsx';
 import StateView from '../../components/ui/StateView.jsx';
 
 export default function ReportGenerator() {
+  const { t } = useTranslation();
   const [range, setRange] = useState({ from: '', to: '' });
   const [loading, setLoading] = useState(false);
 
@@ -21,33 +23,33 @@ export default function ReportGenerator() {
     setLoading(true);
     try {
       await endpoints.downloadReport(range);
-      toast.success('Report downloaded');
+      toast.success(t('reports.reportGenerated'));
     } catch {
-      toast.error('Failed to generate report');
+      toast.error(t('reports.reportFailed'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ScanShell title="Security Report Generator" description="Compile all module activity into a downloadable PDF." icon={DocumentTextIcon}>
-      <p className="text-sm text-slate-400">Generate a PDF summarizing your scan activity across every module.</p>
+    <ScanShell title={t('modules.reportGenerator.title')} description={t('modules.reportGenerator.description')} icon={DocumentTextIcon}>
+      <p className="text-sm text-slate-400">{t('modules.reportGenerator.description')}</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
         <div>
-          <label htmlFor="from" className="text-sm">From</label>
+          <label htmlFor="from" className="text-sm">{t('common.search')}</label>
           <input id="from" type="date" className="input mt-1" value={range.from}
             onChange={(e) => setRange({ ...range, from: e.target.value })} />
         </div>
         <div>
-          <label htmlFor="to" className="text-sm">To</label>
+          <label htmlFor="to" className="text-sm">{t('common.search')}</label>
           <input id="to" type="date" className="input mt-1" value={range.to}
             onChange={(e) => setRange({ ...range, to: e.target.value })} />
         </div>
       </div>
 
       <button className="btn-cyber w-full mt-4" onClick={generate} disabled={loading}>
-        {loading ? 'Generating PDF...' : 'Generate & Download PDF'}
+        {loading ? t('dashboard.generating') : t('modules.reportGenerator.generateBtn')}
       </button>
 
       {loading && (
@@ -59,7 +61,7 @@ export default function ReportGenerator() {
       )}
 
       {!loading && (
-        <StateView type="info" title="Tip" message="Reports aggregate your latest scans. Use date ranges to focus on a period." />
+        <StateView type="info" title={t('common.info')} message={t('modules.reportGenerator.tip')} />
       )}
     </ScanShell>
   );

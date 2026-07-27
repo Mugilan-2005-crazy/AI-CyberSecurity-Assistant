@@ -38,6 +38,7 @@ const userSchema = new mongoose.Schema(
 
     lastLogin: { type: Date },
     isActive: { type: Boolean, default: true },
+    language: { type: String, default: 'en', maxlength: 10 },
   },
   { timestamps: true }
 );

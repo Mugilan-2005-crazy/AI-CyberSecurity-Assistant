@@ -6,6 +6,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 import { QrCodeIcon } from '@heroicons/react/24/outline';
 import jsQR from 'jsqr';
 import api from '../../services/api.js';
@@ -17,6 +18,7 @@ import Skeleton from '../../components/ui/Skeleton.jsx';
 import StateView from '../../components/ui/StateView.jsx';
 
 export default function QrChecker() {
+  const { t } = useTranslation();
   const videoRef = useRef();
   const canvasRef = useRef();
   const [stream, setStream] = useState(null);
@@ -26,13 +28,41 @@ export default function QrChecker() {
   const [scanned, setScanned] = useState('');
 
   const start = async () => {
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+      setStream(null);
+    }
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error(t('modules.qrChecker.browserNotSupported'));
+      return;
+    }
     try {
       const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       setStream(s);
       videoRef.current.srcObject = s;
       videoRef.current.play();
-    } catch {
-      toast.error('Camera access denied');
+    } catch (err) {
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        toast.error(t('modules.qrChecker.cameraDenied'));
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        toast.error(t('modules.qrChecker.cameraUnavailable'));
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+        toast.error(t('modules.qrChecker.cameraUnavailable'));
+      } else if (err.name === 'OverconstrainedError' || err.name === 'ConstraintNotSatisfiedError') {
+        toast.error(t('modules.qrChecker.cameraUnavailable'));
+      } else {
+        toast.error(t('modules.qrChecker.cameraUnavailable'));
+      }
+    }
+  };
+
+  const stop = () => {
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+    }
+    setStream(null);
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
     }
   };
 
@@ -65,26 +95,31 @@ export default function QrChecker() {
     setError(false);
     try {
       const r = await api.post('/scan/qr', { text });
+      console.log('QR ANALYSIS RESPONSE', r);
       setResult(r.result);
     } catch {
       setError(true);
-      toast.error('QR check failed');
+      toast.error(t('modules.qrChecker.checkFailed'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ScanShell title="QR Code Safety Checker" description="Scan a QR with your camera or paste its content." icon={QrCodeIcon}>
+    <ScanShell title={t('modules.qrChecker.title')} description={t('modules.qrChecker.description')} icon={QrCodeIcon}>
       <div className="space-y-3">
         <video ref={videoRef} className="w-full rounded-lg bg-black aspect-video" muted aria-label="Camera preview" />
         <canvas ref={canvasRef} className="hidden" />
-        <button className="btn-cyber w-full" onClick={start}>Start Camera</button>
-        <p className="text-xs text-slate-400">Or paste decoded QR content:</p>
-        <label htmlFor="qr" className="sr-only">QR content</label>
+        {stream ? (
+          <button className="btn-primary w-full" onClick={stop}>{t('modules.qrChecker.stopCamera')}</button>
+        ) : (
+          <button className="btn-cyber w-full" onClick={start}>{t('modules.qrChecker.startCamera')}</button>
+        )}
+        <p className="text-xs text-slate-400">{t('modules.qrChecker.orPaste')}</p>
+        <label htmlFor="qr" className="sr-only">{t('modules.qrChecker.orPaste')}</label>
         <input id="qr" className="input" placeholder="data / URL" value={scanned}
           onChange={(e) => setScanned(e.target.value)} />
-        <button className="btn-primary w-full" onClick={() => analyze(scanned)}>Check Text</button>
+        <button className="btn-primary w-full" onClick={() => analyze(scanned)}>{t('modules.qrChecker.checkText')}</button>
       </div>
 
       {loading && (
@@ -95,10 +130,10 @@ export default function QrChecker() {
       )}
 
       {!loading && error && (
-        <StateView type="error" title="Check failed" message="We couldn't evaluate that QR code." />
+        <StateView type="error" title={t('modules.qrChecker.checkFailed')} message={t('modules.qrChecker.checkFailedText')} />
       )}
       {!loading && !error && !result && (
-        <StateView type="empty" title="No QR scanned" message="Use the camera or paste content to assess safety." />
+        <StateView type="empty" title={t('modules.qrChecker.noQrScanned')} message={t('modules.qrChecker.useCameraHint')} />
       )}
 
       {!loading && !error && result && (
@@ -111,7 +146,14 @@ export default function QrChecker() {
             <RiskMeter score={result.riskScore} />
             <RiskLevel score={result.riskScore} />
           </div>
-          {result.reason && <p className="text-sm text-slate-400">{result.reason}</p>}
+          {result.reason && (
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-4 py-3">
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{result.reason}</p>
+              {result.recommendation && (
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Recommendation: {result.recommendation}</p>
+              )}
+            </div>
+          )}
           {result.warnings?.length > 0 && (
             <ul className="list-disc list-inside text-sm text-warning space-y-1">
               {result.warnings.map((w, i) => <li key={i}>{w}</li>)}

@@ -15,7 +15,7 @@ export const protect = (req, _res, next) => {
     }
     const token = header.split(' ')[1];
     const decoded = verifyAccessToken(token);
-    req.user = { id: decoded.sub, role: decoded.role, email: decoded.email };
+    req.user = { id: decoded.sub, role: decoded.role, email: decoded.email, language: decoded.language || 'en' };
     next();
   } catch (err) {
     next(new ApiError(401, 'Not authorized, token failed'));

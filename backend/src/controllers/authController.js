@@ -20,7 +20,7 @@ const cookieOpts = {
 };
 
 const issueTokens = (user) => {
-  const access = signAccessToken({ sub: user._id.toString(), role: user.role, email: user.email });
+  const access = signAccessToken({ sub: user._id.toString(), role: user.role, email: user.email, language: user.language || 'en' });
   const refresh = signRefreshToken({ sub: user._id.toString() });
   return { access, refresh };
 };
@@ -50,7 +50,7 @@ export const register = async (req, res, next) => {
     res.status(201).json({
       success: true,
       accessToken: access,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role, isEmailVerified: user.isEmailVerified },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, isEmailVerified: user.isEmailVerified, language: user.language || 'en' },
     });
   } catch (err) { next(err); }
 };
@@ -73,7 +73,7 @@ export const login = async (req, res, next) => {
     res.json({
       success: true,
       accessToken: access,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role, isEmailVerified: user.isEmailVerified },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, isEmailVerified: user.isEmailVerified, language: user.language || 'en' },
     });
   } catch (err) { next(err); }
 };
@@ -173,6 +173,7 @@ export const me = async (req, res, next) => {
         email: user.email,
         role: user.role,
         isEmailVerified: user.isEmailVerified,
+        language: user.language || 'en',
         createdAt: user.createdAt,
         totalScans,
         totalChats,
@@ -218,4 +219,27 @@ export const changePassword = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-export default { register, login, verifyEmail, forgotPassword, resetPassword, refreshToken, logout, me, updateName, changePassword };
+// PATCH /api/auth/me/language — update the user's language preference.
+export const updateLanguage = async (req, res, next) => {
+  try {
+    const { language } = req.body;
+    const supported = ['en', 'ta', 'tanglish', 'hi'];
+    if (!supported.includes(language)) {
+      throw new ApiError(400, 'Unsupported language');
+    }
+    const user = await User.findById(req.user.id);
+    if (!user) throw new ApiError(404, 'User not found');
+    user.language = language;
+    await user.save();
+
+    const access = signAccessToken({ sub: user._id.toString(), role: user.role, email: user.email, language: user.language });
+    res.json({
+      success: true,
+      message: 'Language preference updated',
+      accessToken: access,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, isEmailVerified: user.isEmailVerified, language: user.language },
+    });
+  } catch (err) { next(err); }
+};
+
+export default { register, login, verifyEmail, forgotPassword, resetPassword, refreshToken, logout, me, updateName, changePassword, updateLanguage };

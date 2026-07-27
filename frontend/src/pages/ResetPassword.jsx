@@ -5,9 +5,11 @@
 import { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 import api from '../services/api.js';
 
 export default function ResetPassword() {
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const [pw, setPw] = useState('');
@@ -28,17 +30,17 @@ export default function ResetPassword() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="card max-w-md w-full animate-fade-in">
-        <h1 className="text-xl font-bold mb-2">Set new password</h1>
+        <h1 className="text-xl font-bold mb-2">{t('auth.resetPasswordTitle')}</h1>
         {done ? (
-          <p className="text-cyber-400">Redirecting to login...</p>
+          <p className="text-cyber-400">{t('common.loading')}</p>
         ) : (
           <form onSubmit={submit} className="space-y-4">
-            <input type="password" required minLength={8} className="input" placeholder="New password"
+            <input type="password" required minLength={8} className="input" placeholder={t('auth.newPassword')}
               value={pw} onChange={(e) => setPw(e.target.value)} />
-            <button className="btn-primary w-full">Update password</button>
+            <button className="btn-primary w-full">{t('auth.resetPasswordBtn')}</button>
           </form>
         )}
-        <Link to="/login" className="text-sm text-primary hover:underline mt-4 inline-block">Back to login</Link>
+        <Link to="/login" className="text-sm text-primary hover:underline mt-4 inline-block">{t('common.back')}</Link>
       </div>
     </div>
   );

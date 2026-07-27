@@ -13,22 +13,20 @@
  */
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 import { DocumentArrowDownIcon, TableCellsIcon } from '@heroicons/react/24/outline';
 import endpoints from '../services/endpoints.js';
 import Card from '../components/ui/Card.jsx';
 import Loader from '../components/ui/Loader.jsx';
 import Badge from '../components/ui/Badge.jsx';
 
-// CSV column order required by spec.
 const CSV_COLUMNS = ['Scan Type', 'Target', 'Result', 'Risk Level', 'Date & Time'];
 
-// Escape a single CSV field (quote if it contains comma/quote/newline).
 const csvField = (v) => {
   const s = v == null ? '' : String(v);
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 
-// Build a CSV string from scan rows (type/input/verdict/riskScore/createdAt).
 const toCsv = (rows = []) => {
   const lines = [CSV_COLUMNS.join(',')];
   for (const r of rows) {
@@ -41,7 +39,6 @@ const toCsv = (rows = []) => {
   return lines.join('\n');
 };
 
-// Trigger a client-side CSV file download.
 const downloadCsv = (csv, filename) => {
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -53,11 +50,12 @@ const downloadCsv = (csv, filename) => {
 };
 
 export default function Reports() {
+  const { t } = useTranslation();
   const [reports, setReports] = useState([]);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false); // true while any export is in flight
-  const [busyKind, setBusyKind] = useState(null); // 'pdf' | 'csv' for per-button state
+  const [busy, setBusy] = useState(false);
+  const [busyKind, setBusyKind] = useState(null);
   const [range, setRange] = useState({ from: '', to: '' });
 
   // Load previous reports AND the recent scan history (for CSV + empty handling).
@@ -81,10 +79,10 @@ export default function Reports() {
     setBusyKind('pdf');
     try {
       await endpoints.downloadReport(range);
-      toast.success('PDF report downloaded');
+      toast.success(t('reports.reportGenerated'));
       load();
     } catch {
-      toast.error('Failed to generate PDF report');
+      toast.error(t('reports.reportFailed'));
     } finally {
       setBusy(false);
       setBusyKind(null);
@@ -93,7 +91,7 @@ export default function Reports() {
 
   const exportCsv = () => {
     if (!history.length) {
-      toast.info('No scan history to export yet');
+      toast.info(t('reports.noReports'));
       return;
     }
     setBusy(true);
@@ -114,22 +112,22 @@ export default function Reports() {
 
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold">Reports</h1>
+      <h1 className="text-2xl font-bold">{t('reports.title')}</h1>
 
-      <Card title="Export Scan History" description="Download your scans as a PDF or CSV with type, target, result, risk, and timestamp.">
+      <Card title={t('reports.generateReport')} description={t('reports.generateReport')}>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
           <div>
-            <label className="text-sm">From</label>
+            <label className="text-sm">{t('common.search')}</label>
             <input type="date" className="input mt-1" value={range.from} onChange={(e) => setRange({ ...range, from: e.target.value })} />
           </div>
           <div>
-            <label className="text-sm">To</label>
+            <label className="text-sm">{t('common.search')}</label>
             <input type="date" className="input mt-1" value={range.to} onChange={(e) => setRange({ ...range, to: e.target.value })} />
           </div>
           <div className="flex gap-2">
             <button className="btn-cyber flex-1 flex items-center justify-center gap-1.5" onClick={generatePdf} disabled={busy}>
               {busyKind === 'pdf' ? <Loader label="" /> : <DocumentArrowDownIcon className="h-4 w-4" />}
-              <span>{busyKind === 'pdf' ? 'Generating…' : 'Export PDF'}</span>
+              <span>{busyKind === 'pdf' ? t('dashboard.generating') : t('reports.downloadPdf')}</span>
             </button>
           </div>
         </div>
@@ -137,7 +135,7 @@ export default function Reports() {
         <div className="mt-4">
           <button className="btn flex items-center justify-center gap-1.5 w-full sm:w-auto" onClick={exportCsv} disabled={busy || !hasHistory}>
             {busyKind === 'csv' ? <Loader label="" /> : <TableCellsIcon className="h-4 w-4" />}
-            <span>{busyKind === 'csv' ? 'Exporting…' : 'Export CSV'}</span>
+            <span>{busyKind === 'csv' ? t('common.loading') : 'Export CSV'}</span>
           </button>
           {!hasHistory && !loading && (
             <p className="text-xs text-slate-400 mt-2">No scans recorded yet — run a scan to enable CSV export.</p>
@@ -145,9 +143,9 @@ export default function Reports() {
         </div>
       </Card>
 
-      <Card title="Previous Reports">
+      <Card title={t('reports.title')}>
         {loading ? <Loader /> : !reports.length ? (
-          <p className="text-sm text-slate-400">No reports generated yet.</p>
+          <p className="text-sm text-slate-400">{t('reports.noReports')}</p>
         ) : (
           <div className="space-y-2">
             {reports.map((r) => (

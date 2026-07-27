@@ -6,10 +6,12 @@
  * each route is a separate chunk (better caching + performance).
  * A Suspense fallback shows a branded loader during chunk loads.
  */
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { I18nextProvider } from 'react-i18next';
+import i18n from './i18n/config.js';
 
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Layout from './components/layout/Layout.jsx';
@@ -50,6 +52,7 @@ const Fallback = () => (
 
 export default function App() {
   return (
+    <I18nextProvider i18n={i18n}>
     <Suspense fallback={<Fallback />}>
       <Routes>
         {/* Public */}
@@ -91,8 +94,14 @@ export default function App() {
           <Route path="admin/analytics" element={<ProtectedRoute role="admin"><AdminAnalytics /></ProtectedRoute>} />
         </Route>
 
-        <Route path="*" element={<Dashboard />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
+      <ToastContainer
+  position="top-right"
+  autoClose={3000}
+  theme="dark"
+/>
     </Suspense>
+    </I18nextProvider>
   );
 }

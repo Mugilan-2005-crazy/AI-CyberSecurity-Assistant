@@ -5,9 +5,11 @@
  */
 import { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../services/api.js';
 
 export default function VerifyEmail() {
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   const [state, setState] = useState('verifying');
 
@@ -22,19 +24,19 @@ export default function VerifyEmail() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="card max-w-md text-center animate-fade-in">
-        {state === 'verifying' && <p>Verifying your email...</p>}
+        {state === 'verifying' && <p>{t('auth.signingIn')}</p>}
         {state === 'success' && (
           <>
-            <h1 className="text-xl font-bold text-cyber-400">Email verified!</h1>
-            <p className="text-slate-400 my-2">Your account is now active.</p>
-            <Link to="/login" className="btn-primary">Continue to login</Link>
+            <h1 className="text-xl font-bold text-cyber-400">{t('auth.checkInbox')}</h1>
+            <p className="text-slate-400 my-2">{t('auth.verifyEmailTextEnd')}</p>
+            <Link to="/login" className="btn-primary">{t('auth.continueToLogin')}</Link>
           </>
         )}
         {state === 'error' && (
           <>
-            <h1 className="text-xl font-bold text-danger">Verification failed</h1>
-            <p className="text-slate-400 my-2">The link is invalid or expired.</p>
-            <Link to="/login" className="btn-primary">Back to login</Link>
+            <h1 className="text-xl font-bold text-danger">{t('errors.validationError')}</h1>
+            <p className="text-slate-400 my-2">{t('auth.verifyEmailTextEnd')}</p>
+            <Link to="/login" className="btn-primary">{t('auth.continueToLogin')}</Link>
           </>
         )}
       </div>

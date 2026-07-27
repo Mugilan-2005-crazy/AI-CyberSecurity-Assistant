@@ -11,16 +11,20 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.1.5",
+    "@rollup/wasm-node": "^4.62.2",
     "axios": "^1.7.7",
     "chart.js": "^4.4.4",
     "framer-motion": "^11.5.4",
+    "i18next": "^26.3.6",
     "jspdf": "^2.5.2",
     "jsqr": "^1.4.0",
     "react": "^18.3.1",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.3.1",
+    "react-i18next": "^17.0.11",
     "react-router-dom": "^6.26.1",
-    "react-toastify": "^10.0.5"
+    "react-toastify": "^10.0.5",
+    "rollup": "^4.38.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",

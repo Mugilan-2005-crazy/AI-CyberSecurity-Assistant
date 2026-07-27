@@ -15,6 +15,11 @@ const messageSchema = new mongoose.Schema(
   {
     role: { type: String, enum: ['user', 'model'], required: true },
     text: { type: String, required: true, maxlength: 8000 },
+    attachment: {
+      filename: { type: String },
+      mimeType: { type: String },
+      size: { type: Number },
+    },
   },
   { _id: false }
 );
@@ -23,6 +28,9 @@ const chatLogSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     sessionId: { type: String, required: true, index: true },
+    conversationTitle: { type: String, maxlength: 200 },
+    category: { type: String, maxlength: 50 },
+    language: { type: String, maxlength: 10, default: 'en' },
     messages: { type: [messageSchema], default: [] },
   },
   { timestamps: true }
