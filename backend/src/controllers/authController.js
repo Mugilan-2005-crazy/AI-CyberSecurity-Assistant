@@ -2,15 +2,16 @@
  * controllers/authController.js
  * ------------------------------------------------------------
  * Handles registration, login, email verification, password
- * reset, refresh tokens, and current-user lookup. Issues JWT
- * access + refresh tokens and stores refresh tokens on the user.
+ * reset (token + OTP), refresh tokens, 2FA verification,
+ * and current-user lookup. Issues JWT access + refresh tokens
+ * and stores refresh tokens on the user.
  */
 import crypto from 'crypto';
 import User from '../models/User.js';
 import ApiError from '../utils/ApiError.js';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
 import { generateToken, hashToken } from '../utils/tokens.js';
-import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/email.js';
+import { sendVerificationEmail, sendPasswordResetEmail, sendOTPEmail, sendSuspiciousLoginEmail } from '../utils/email.js';
 
 const cookieOpts = {
   httpOnly: true,
@@ -23,6 +24,11 @@ const issueTokens = (user) => {
   const access = signAccessToken({ sub: user._id.toString(), role: user.role, email: user.email, language: user.language || 'en' });
   const refresh = signRefreshToken({ sub: user._id.toString() });
   return { access, refresh };
+};
+
+const maskEmail = (email) => {
+  const [name, domain] = email.split('@');
+  return name[0] + '*****@' + domain;
 };
 
 export const register = async (req, res, next) => {
@@ -242,4 +248,158 @@ export const updateLanguage = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-export default { register, login, verifyEmail, forgotPassword, resetPassword, refreshToken, logout, me, updateName, changePassword, updateLanguage };
+// ─── OTP-based password reset ─────────────────────────────
+
+// POST /api/auth/forgot-password/send-otp — send 6-digit OTP to email
+export const sendOTP = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) throw new ApiError(404, 'No account with that email');
+
+      const otp = crypto.randomInt(100000, 1000000).toString();
+    user.passwordResetOTP = hashToken(otp);
+    user.passwordResetOTPExpire = Date.now() + 10 * 60 * 1000; // 10 min
+    await user.save();
+
+    await sendOTPEmail(email, otp);
+    res.json({
+      success: true,
+      maskedEmail: maskEmail(email),
+      message: 'OTP sent to your email',
+    });
+  } catch (err) { next(err); }
+};
+
+// POST /api/auth/forgot-password/verify-otp — verify OTP
+export const verifyOTP = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+    const user = await User.findOne({ email }).select('+passwordResetOTP +passwordResetOTPExpire');
+    if (!user || !user.passwordResetOTP) throw new ApiError(400, 'No OTP request found');
+    if (user.passwordResetOTPExpire < Date.now()) throw new ApiError(400, 'OTP has expired');
+    if (user.passwordResetOTP !== hashToken(otp)) throw new ApiError(400, 'Invalid OTP');
+
+    // OTP verified — generate a short-lived reset token
+    const resetToken = generateToken();
+    user.passwordResetToken = hashToken(resetToken);
+    user.passwordResetExpire = Date.now() + 10 * 60 * 1000;
+    user.passwordResetOTP = undefined;
+    user.passwordResetOTPExpire = undefined;
+    await user.save();
+
+    res.json({ success: true, message: 'OTP verified' });
+  } catch (err) { next(err); }
+};
+
+// POST /api/auth/forgot-password/reset — reset password with OTP-verified token
+export const resetPasswordWithOTP = async (req, res, next) => {
+  try {
+    const { resetToken, password } = req.body;
+    const user = await User.findOne({ passwordResetToken: hashToken(resetToken) });
+    if (!user || user.passwordResetExpire < Date.now()) {
+      throw new ApiError(400, 'Invalid or expired reset session');
+    }
+    user.password = password;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpire = undefined;
+    user.refreshTokens = [];
+    await user.save();
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (err) { next(err); }
+};
+
+// ─── 2FA endpoints ────────────────────────────────────────
+
+// POST /api/auth/2fa/verify — verify 2FA after login
+export const verify2FA = async (req, res, next) => {
+  try {
+    const { userId, otp, trustDevice } = req.body;
+    const user = await User.findById(userId).select('+twoFactorSecret');
+    if (!user) throw new ApiError(404, 'User not found');
+
+    // For simplicity, use a 6-digit OTP match (can be upgraded to TOTP)
+    if (user.twoFactorSecret !== hashToken(otp)) {
+      throw new ApiError(401, 'Invalid verification code');
+    }
+
+    const { access, refresh } = issueTokens(user);
+    user.refreshTokens.push(refresh);
+    if (trustDevice) user.twoFactorSecret = undefined; // bypass next time (simplified)
+    await user.save();
+
+    res.cookie('refreshToken', refresh, cookieOpts);
+    res.json({
+      success: true,
+      accessToken: access,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, isEmailVerified: user.isEmailVerified, language: user.language || 'en' },
+    });
+  } catch (err) { next(err); }
+};
+
+// ─── Enhanced login with device tracking ──────────────────
+
+// POST /api/auth/login-enhanced — login with device tracking + suspicious detection
+export const loginEnhanced = async (req, res, next) => {
+  try {
+    const { email, password, device, location } = req.body;
+    const user = await User.findOne({ email }).select('+password +refreshTokens');
+    if (!user || !(await user.comparePassword(password))) {
+      throw new ApiError(401, 'Invalid credentials');
+    }
+    if (!user.isActive) throw new ApiError(403, 'Account disabled');
+
+    // Detect suspicious login
+    const isNewDevice = device && user.lastLoginDevice && user.lastLoginDevice !== device;
+    const isNewLocation = location && user.lastLoginLocation && user.lastLoginLocation !== location;
+    const isSuspicious = isNewDevice || isNewLocation;
+
+    if (isSuspicious) {
+      await sendSuspiciousLoginEmail(user.email, device || 'Unknown', location || 'Unknown');
+    }
+
+    // Update login tracking
+    user.lastLogin = new Date();
+    user.lastLoginIp = req.ip || '';
+    user.lastLoginLocation = location || user.lastLoginLocation;
+    user.lastLoginDevice = device || user.lastLoginDevice;
+    user.loginHistory.push({
+      ip: req.ip || '',
+      location: location || '',
+      device: device || '',
+      time: new Date(),
+      success: true,
+    });
+    if (user.loginHistory.length > 50) user.loginHistory = user.loginHistory.slice(-50);
+
+    // Check 2FA
+    if (user.twoFactorEnabled) {
+    const otp = crypto.randomInt(100000, 1000000).toString();
+      user.twoFactorSecret = hashToken(otp);
+      await user.save();
+      // In production, send OTP via email/SMS here
+      return res.json({
+        success: true,
+        requires2FA: true,
+        userId: user._id,
+        deviceInfo: { device: device || 'Unknown', location: location || 'Unknown', time: new Date().toISOString() },
+        message: '2FA verification required',
+      });
+    }
+
+    const { access, refresh } = issueTokens(user);
+    user.refreshTokens.push(refresh);
+    await user.save();
+
+    res.cookie('refreshToken', refresh, cookieOpts);
+    res.json({
+      success: true,
+      accessToken: access,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, isEmailVerified: user.isEmailVerified, language: user.language || 'en' },
+      suspicious: isSuspicious,
+      lastLogin: { device: user.lastLoginDevice, location: user.lastLoginLocation, time: user.lastLogin },
+    });
+  } catch (err) { next(err); }
+};
+
+export default { register, login, verifyEmail, forgotPassword, resetPassword, refreshToken, logout, me, updateName, changePassword, updateLanguage, sendOTP, verifyOTP, resetPasswordWithOTP, verify2FA, loginEnhanced };

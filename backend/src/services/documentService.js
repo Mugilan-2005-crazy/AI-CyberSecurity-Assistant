@@ -196,7 +196,7 @@ async function embedChunks(documentId, chunks) {
     try {
       embedding = await vectorStore.generateEmbedding(chunk.text);
     } catch (err) {
-      console.warn(`[documentService] Embedding failed for chunk: ${err.message}`);
+      // Continue without embedding if generation fails
     }
 
     chunkObjects.push({

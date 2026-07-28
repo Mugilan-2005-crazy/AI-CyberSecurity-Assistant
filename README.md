@@ -1,12 +1,20 @@
 # 🛡️ Cyber Security Assistant
 
+![Node.js](https://img.shields.io/badge/Node.js-18%2B-green?logo=node.js)
+![Express](https://img.shields.io/badge/Express-4.19-black?logo=express)
+![React](https://img.shields.io/badge/React-18.3-blue?logo=react)
+![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green?logo=mongodb)
+![JWT](https://img.shields.io/badge/JWT-Auth-orange?logo=jsonwebtoken)
+![Gemini](https://img.shields.io/badge/Google_Gemini-AI-purple?logo=google)
+![Ollama](https://img.shields.io/badge/Ollama-Llama_3.1-blue?logo=ollama)
+
 > Production-ready, AI-powered Cyber Security Assistant — full-stack (React + Vite / Node + Express / MongoDB Atlas) with JWT auth, 7 security modules, an AI chatbot with multimodal analysis, admin panel, and PDF reporting.
 
 ---
 
 ## 📋 About The Project
 
-The **Cyber Security Assistant** is a full-stack web application that combines traditional security scanning tools with advanced Artificial Intelligence to help users assess, detect, and mitigate cybersecurity threats. Built with **React + Vite** on the frontend and **Node.js + Express** on the backend, it integrates **Google Gemini** (cloud) and **Ollama** (local) for AI-driven threat analysis, recommendations, and conversational security guidance.
+The **Cyber Security Assistant** is a full-stack web application that combines traditional security scanning tools with advanced Artificial Intelligence to help users assess, detect, and mitigate cybersecurity threats. Built with **React + Vite** on the frontend and **Node.js + Express** on the backend, it integrates **Google Gemini** (cloud) and **Ollama** (local Llama 3.1) for AI-driven threat analysis, recommendations, and conversational security guidance.
 
 **Key Capabilities:**
 - 🔍 Scan URLs, passwords, emails, files, and QR codes for security threats
@@ -19,23 +27,15 @@ The **Cyber Security Assistant** is a full-stack web application that combines t
 
 ---
 
-## 📖 Project Overview
+## ✨ Key Features
 
-The Cyber Security Assistant is a comprehensive web application designed to help users assess and improve their cybersecurity posture. It combines traditional security scanning tools with advanced AI capabilities to provide intelligent analysis, threat detection, and actionable security guidance.
-
-The platform supports multiple input types — URLs, passwords, emails, files, QR codes — and augments each scan with AI-driven insights. The integrated AI chatbot can analyze uploaded files (PDF, images, videos), perform web searches for threat intelligence, and engage in context-aware multi-turn conversations about security topics.
-
----
-
-## ✨ Features
-
-**Authentication & User Management**
+### Authentication & User Management
 - Register, Login, Forgot/Reset Password, Email Verification
 - JWT access + refresh tokens, httpOnly cookies
 - Profile management with account statistics
 - Admin panel for user management and platform analytics
 
-**Security Modules**
+### Security Modules
 1. **URL Scanner** — HTTPS/SSL check, suspicious TLDs, URL shorteners, brand impersonation (typosquatting)
 2. **Password Analyzer** — Shannon entropy, crack-time estimates, breach awareness, suggestions
 3. **Email Phishing Detector** — heuristic scan + optional Gemini AI explanation
@@ -44,7 +44,7 @@ The platform supports multiple input types — URLs, passwords, emails, files, Q
 6. **QR Code Safety Checker** — live camera decode (jsQR) + safety verdict
 7. **Report Generator** — PDF export via PDFKit
 
-**AI Chatbot Capabilities**
+### AI Chatbot Capabilities
 - Text chat with Gemini and Ollama providers
 - Multimodal file analysis (PDF, images, videos)
 - Web search integration for threat intelligence
@@ -59,41 +59,25 @@ The platform supports multiple input types — URLs, passwords, emails, files, Q
 
 ---
 
-## 🧱 Architecture
+## 🧱 System Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Frontend (React + Vite)                   │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
-│  │  Pages   │  │ Components│  │ Services │  │ Contexts │   │
-│  │ (Views)  │  │ (UI/UX)  │  │ (API)    │  │ (State)  │   │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘   │
-│         │             │             │             │         │
-│         └─────────────┴──────┬──────┴─────────────┘         │
-│                              ▼                              │
-│                    Framer Motion / i18n                     │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                         HTTPS / REST
-                              │
-┌──────────────────────────────▼──────────────────────────────┐
-│                  Backend (Node + Express)                    │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
-│  │ Routes   │  │Controllers│  │ Services │  │ Middleware│   │
-│  │ (API)    │  │ (Logic)  │  │ (AI/IO)  │  │ (Auth)   │   │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘   │
-│         │             │             │             │         │
-│         └─────────────┴──────┬──────┴─────────────┘         │
-│                              ▼                              │
-│                    Mongoose / Gemini / Ollama               │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                          Mongoose
-                              │
-┌──────────────────────────────▼──────────────────────────────┐
-│                    MongoDB Atlas                             │
-│              (Users, ScanHistory, ChatLog, etc.)            │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    User[👤 User] --> Frontend[React + Vite Frontend]
+    Frontend -->|REST API| Backend[Express Backend]
+    Backend --> Auth[🔐 Authentication<br/>JWT + RBAC]
+    Auth --> AIRouter[🤖 AI Router]
+    AIRouter --> Gemini[☁️ Google Gemini]
+    AIRouter --> Ollama[🖥️ Ollama / Llama 3.1]
+    AIRouter --> SecurityModules[🛡️ Security Modules]
+    SecurityModules --> URLScanner[URL Scanner]
+    SecurityModules --> EmailScanner[Email Phishing]
+    SecurityModules --> FileScanner[File Malware]
+    SecurityModules --> QRScanner[QR Checker]
+    SecurityModules --> PasswordAnalyzer[Password Analyzer]
+    Backend --> MongoDB[(🍃 MongoDB Atlas)]
+    Gemini -->|External| GoogleCloud[Google Cloud API]
+    FileScanner -->|Optional| VirusTotal[VirusTotal API]
 ```
 
 ---
@@ -114,17 +98,17 @@ The platform supports multiple input types — URLs, passwords, emails, files, Q
 
 ## 🛠 Tech Stack
 
-| Layer | Tech |
-|-------|------|
-| Frontend | React 18, Vite, Tailwind CSS, Framer Motion, Chart.js, React Router |
-| Backend | Node.js, Express, MVC, Mongoose, JWT, express-validator |
-| Database | MongoDB Atlas |
-| AI | Google Gemini (`@google/generative-ai`), Ollama (local Llama 3.1) |
-| Threat Intel | VirusTotal API |
-| PDF | jsPDF (frontend), PDFKit (backend) |
-| Auth | JWT access + refresh tokens, httpOnly cookies, bcrypt |
-| Security | Helmet, CORS, rate limiting, input validation, NoSQL sanitization, prompt injection detection |
-| Deploy | Vercel (frontend), Render (backend), Docker optional |
+| Layer | Technology |
+|-------|------------|
+| **Frontend** | React 18, Vite, Tailwind CSS, Framer Motion, Chart.js, React Router |
+| **Backend** | Node.js, Express, MVC, Mongoose, JWT, express-validator |
+| **Database** | MongoDB Atlas |
+| **AI** | Google Gemini (`@google/generative-ai`), Ollama (local Llama 3.1) |
+| **Threat Intel** | VirusTotal API |
+| **PDF** | jsPDF (frontend), PDFKit (backend) |
+| **Auth** | JWT access + refresh tokens, httpOnly cookies, bcrypt |
+| **Security** | Helmet, CORS, rate limiting, input validation, NoSQL sanitization, prompt injection detection |
+| **Deploy** | Vercel (frontend), Render (backend), Docker optional |
 
 ---
 
@@ -134,29 +118,123 @@ The platform supports multiple input types — URLs, passwords, emails, files, Q
 cs assistant/
 ├── backend/
 │   ├── src/
-│   │   ├── config/        # env loader, db connection
-│   │   ├── models/        # User, ScanHistory, Report, Notification, ChatLog, AttachmentAnalysis
-│   │   ├── controllers/   # auth, scan, chat, admin, aiUpload, document
-│   │   ├── routes/        # auth, scan, chat, admin, aiUpload, document
-│   │   ├── middleware/    # auth, validate, rateLimiter, sanitize, upload, error, languageDetector
-│   │   ├── services/      # security (url/password/email/file/qr/gemini/ollama), scan, report, search, vectorStore, document, ai
-│   │   ├── utils/         # logger, jwt, tokens, email, ApiError, catchAsync, seed, sanitizePrompt
-│   │   ├── app.js         # Express assembly
-│   │   └── server.js      # Entry point
-│   ├── scripts/           # Utility scripts
-│   ├── Dockerfile / render.yaml / .env.example
+│   │   ├── config/                 # Environment & database configuration
+│   │   │   ├── index.js           # Central config loader
+│   │   │   └── db.js              # MongoDB connection
+│   │   ├── models/                 # Mongoose schemas
+│   │   │   ├── User.js
+│   │   │   ├── ScanHistory.js
+│   │   │   ├── Report.js
+│   │   │   ├── Notification.js
+│   │   │   ├── ChatLog.js
+│   │   │   ├── Document.js
+│   │   │   ├── NoteChatLog.js
+│   │   │   └── AttachmentAnalysis.js
+│   │   ├── controllers/            # Request handlers
+│   │   │   ├── authController.js
+│   │   │   ├── scanController.js
+│   │   │   ├── chatController.js
+│   │   │   ├── adminController.js
+│   │   │   ├── documentController.js
+│   │   │   └── aiUploadController.js
+│   │   ├── routes/                 # API route definitions
+│   │   │   ├── authRoutes.js
+│   │   │   ├── scanRoutes.js
+│   │   │   ├── chatRoutes.js
+│   │   │   ├── adminRoutes.js
+│   │   │   ├── documentRoutes.js
+│   │   │   └── aiUploadRoutes.js
+│   │   ├── middleware/             # Express middleware
+│   │   │   ├── auth.js
+│   │   │   ├── validate.js
+│   │   │   ├── rateLimiter.js
+│   │   │   ├── sanitize.js
+│   │   │   ├── upload.js
+│   │   │   ├── errorHandler.js
+│   │   │   └── languageDetector.js
+│   │   ├── services/               # Business logic & external integrations
+│   │   │   ├── security/
+│   │   │   │   ├── urlScanner.js
+│   │   │   │   ├── passwordAnalyzer.js
+│   │   │   │   ├── emailPhishing.js
+│   │   │   │   ├── fileScanner.js
+│   │   │   │   ├── qrChecker.js
+│   │   │   │   ├── qrDecoder.js
+│   │   │   │   ├── gemini.js
+│   │   │   │   └── reportGenerator.js
+│   │   │   ├── ai/
+│   │   │   │   ├── aiRouter.js
+│   │   │   │   ├── ollamaService.js
+│   │   │   │   └── multimodalAI.js
+│   │   │   ├── search/
+│   │   │   │   └── webSearchService.js
+│   │   │   ├── scanService.js
+│   │   │   ├── reportService.js
+│   │   │   ├── documentService.js
+│   │   │   ├── vectorStore/
+│   │   │   │   └── vectorStore.js
+│   │   │   └── fileAnalysisService.js
+│   │   ├── utils/                  # Helpers & utilities
+│   │   │   ├── logger.js
+│   │   │   ├── jwt.js
+│   │   │   ├── tokens.js
+│   │   │   ├── email.js
+│   │   │   ├── ApiError.js
+│   │   │   ├── catchAsync.js
+│   │   │   ├── seedAdmin.js
+│   │   │   └── sanitizePrompt.js
+│   │   ├── app.js                  # Express app assembly
+│   │   └── server.js               # Entry point
+│   ├── scripts/                    # Utility scripts
+│   ├── .env.example
+│   ├── Dockerfile
+│   ├── render.yaml
 │   └── package.json
 └── frontend/
     ├── src/
-    │   ├── components/    # layout, ui, chat, modules
-    │   ├── context/       # AuthContext, ThemeContext
-    │   ├── pages/         # auth, dashboard, modules/*, admin/*
-    │   ├── services/      # api client, endpoints
-    │   ├── hooks/         # useSpeechRecognition, useTextToSpeech
-    │   ├── i18n/          # translations (en, ta, hi, tanglish)
-    │   ├── utils/         # markdown renderer
-    │   ├── App.jsx / main.jsx / index.css
-    ├── vercel.json / .env.example / tailwind.config.js / vite.config.js
+    │   ├── components/
+    │   │   ├── layout/             # Layout wrappers
+    │   │   ├── ui/                 # Reusable UI components
+    │   │   ├── chat/               # Chat-specific components
+    │   │   ├── dashboard/          # Dashboard widgets
+    │   │   ├── modules/            # Scan module shells
+    │   │   └── common/             # Shared components (ErrorBoundary)
+    │   ├── context/                 # React contexts
+    │   │   ├── AuthContext.jsx
+    │   │   └── ThemeContext.jsx
+    │   ├── pages/                   # Route pages
+    │   │   ├── auth/               # Login, Register, ForgotPassword, ResetPassword, VerifyEmail
+    │   │   ├── dashboard/          # Dashboard, ScanHistory, Reports, Settings, Profile
+    │   │   ├── modules/            # Security scan modules
+    │   │   │   ├── UrlScanner.jsx
+    │   │   │   ├── PasswordAnalyzer.jsx
+    │   │   │   ├── EmailPhishing.jsx
+    │   │   │   ├── FileScanner.jsx
+    │   │   │   ├── QrChecker.jsx
+    │   │   │   ├── AIChatbot.jsx
+    │   │   │   ├── Chatbot.jsx
+    │   │   │   └── SecurityNotesAI.jsx
+    │   │   └── admin/              # Admin panels
+    │   │       ├── AdminUsers.jsx
+    │   │       └── AdminAnalytics.jsx
+    │   ├── services/                # API clients
+    │   │   ├── api.js
+    │   │   └── endpoints.js
+    │   ├── hooks/                   # Custom React hooks
+    │   │   ├── useSpeechRecognition.js
+    │   │   └── useTextToSpeech.js
+    │   ├── i18n/                    # Internationalization
+    │   │   └── config.js
+    │   ├── utils/                   # Frontend utilities
+    │   │   └── markdown.js
+    │   ├── App.jsx
+    │   ├── main.jsx
+    │   └── index.css
+    ├── public/
+    ├── vercel.json
+    ├── .env.example
+    ├── tailwind.config.js
+    ├── vite.config.js
     └── package.json
 ```
 
@@ -225,7 +303,39 @@ npm run dev               # http://localhost:5173
 
 ---
 
-## 📡 API Modules
+## 🏃 Running the Application
+
+### Backend
+```bash
+cd backend
+npm install
+npm run dev
+# Server starts on http://localhost:5000
+```
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+# Client starts on http://localhost:5173
+```
+
+### Production Build
+```bash
+# Backend
+cd backend
+npm start
+
+# Frontend
+cd frontend
+npm run build
+# Serve dist/ with any static file server
+```
+
+---
+
+## 📡 API Overview
 
 ### Authentication
 | Method | Endpoint | Auth | Description |
@@ -234,7 +344,7 @@ npm run dev               # http://localhost:5173
 | POST | `/api/auth/login` | — | Login |
 | GET | `/api/auth/verify-email` | — | Verify email address |
 | POST | `/api/auth/forgot-password` | — | Request password reset |
-| POST | `/api/reset-password` | — | Reset password |
+| POST | `/api/auth/reset-password` | — | Reset password |
 | POST | `/api/auth/refresh` | — | Refresh access token |
 | GET | `/api/auth/me` | ✅ | Current user profile |
 | PATCH | `/api/auth/me` | ✅ | Update profile |
@@ -262,6 +372,18 @@ npm run dev               # http://localhost:5173
 | DELETE | `/api/chat/history` | ✅ | Clear chat history |
 | GET | `/api/chat/status` | ✅ | AI provider health |
 
+### Security Notes AI
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/notes/formats` | ✅ | Supported file formats |
+| GET | `/api/notes/languages` | ✅ | Supported languages |
+| GET | `/api/notes/documents` | ✅ | List user documents |
+| POST | `/api/notes/upload` | ✅ | Upload document |
+| GET | `/api/notes/:id` | ✅ | Get document details |
+| DELETE | `/api/notes/:id` | ✅ | Delete document |
+| POST | `/api/notes/chat` | ✅ | Chat with document |
+| GET | `/api/notes/history/:documentId` | ✅ | Document chat history |
+
 ### Admin
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
@@ -272,39 +394,271 @@ npm run dev               # http://localhost:5173
 | GET | `/api/admin/logs` | 👑 | Scan logs |
 | GET | `/api/admin/notifications` | ✅ | User notifications |
 
----
-
-## 🎨 Frontend Features
-
-- **Responsive Design** — Mobile-first layout with sidebar drawers
-- **Dark Mode** — System-aware theme switching
-- **Animations** — Framer Motion for smooth transitions
-- **Markdown Rendering** — Headings, bold, lists, code blocks, inline code
-- **Multilingual** — English, Tamil, Tanglish, Hindi support
-- **Voice Features** — Text-to-speech and speech-to-text
-- **Drag & Drop** — File upload with visual feedback
-- **Chat History** — Persistent conversation management
-- **Security Reports** — Visual report cards with PDF export
+> 👑 = Admin only, ✅ = Authenticated users
 
 ---
 
-## 🔒 Security
+## 📸 Screenshots
 
-- Helmet.js for HTTP security headers
-- CORS with configurable origins
-- Rate limiting on all sensitive routes
+> Screenshots showcase the key interfaces of the Cyber Security Assistant. Add actual screenshots in the `docs/screenshots/` directory and reference them below.
+
+### Landing Page
+
+![Landing Page](docs/screenshots/landing-page.png)
+
+### Login
+
+![Login](docs/screenshots/login.png)
+
+### Register
+
+![Register](docs/screenshots/register.png)
+
+### Dashboard
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+### AI Chatbot
+
+![AI Chatbot](docs/screenshots/ai-chatbot.png)
+
+### URL Scanner
+
+![URL Scanner](docs/screenshots/url-scanner.png)
+
+### Email Phishing Detector
+
+![Email Phishing Detector](docs/screenshots/email-phishing.png)
+
+### QR Code Scanner
+
+![QR Code Scanner](docs/screenshots/qr-scanner.png)
+
+### File Malware Scanner
+
+![File Malware Scanner](docs/screenshots/file-scanner.png)
+
+### Password Analyzer
+
+![Password Analyzer](docs/screenshots/password-analyzer.png)
+
+### Admin Dashboard
+
+![Admin Dashboard](docs/screenshots/admin-dashboard.png)
+
+### Forgot Password
+
+![Forgot Password](docs/screenshots/forgot-password.png)
+
+### Reset Password
+
+![Reset Password](docs/screenshots/reset-password.png)
+
+### Settings
+
+![Settings](docs/screenshots/settings.png)
+
+---
+
+## 📚 Module Documentation
+
+### Authentication Module
+**Purpose:** Secure user registration, login, and session management using JWT access/refresh tokens with httpOnly cookies.
+
+**Endpoints:**
+- `POST /api/auth/register` — Create new user account
+- `POST /api/auth/login` — Authenticate user
+- `GET /api/auth/verify-email` — Verify email address
+- `POST /api/auth/forgot-password` — Request password reset
+- `POST /api/auth/reset-password` — Reset password with token
+- `POST /api/auth/forgot-password/send-otp` — Send OTP for password reset
+- `POST /api/auth/forgot-password/verify-otp` — Verify OTP
+- `POST /api/auth/forgot-password/reset` — Reset password with OTP session
+- `POST /api/auth/refresh` — Refresh access token
+- `POST /api/auth/logout` — Logout and clear refresh token
+- `GET /api/auth/me` — Get current user profile
+- `PATCH /api/auth/me` — Update profile
+- `POST /api/auth/change-password` — Change password
+- `POST /api/auth/2fa/verify` — Verify 2FA code
+- `POST /api/auth/login-enhanced` — Login with device tracking
+
+**Security Considerations:**
+- Passwords hashed with bcrypt (12 rounds)
+- JWT access tokens short-lived (7 days)
+- Refresh tokens stored in httpOnly cookies with `sameSite: 'strict'`
+- Rate limiting on auth routes
 - Input validation via express-validator
-- NoSQL injection sanitization
-- bcrypt password hashing
-- JWT with httpOnly refresh tokens
-- Prompt injection detection
-- SHA-256 file hash generation
-- File type validation and blocking
-- Secure environment variable management
+- Email verification tokens with expiry
+- Secure OTP generation using `crypto.randomInt()`
 
 ---
 
-## 🧪 Running Tests
+### Dashboard Module
+**Purpose:** Central hub displaying security overview, analytics, recent activity, and quick access to all security modules.
+
+**Endpoints:**
+- `GET /api/scan/dashboard` — Aggregate scan data, threat stats, security tips
+
+**Security Considerations:**
+- Protected by JWT authentication
+- Graceful degradation when MongoDB is unavailable
+
+---
+
+### AI Chatbot Module
+**Purpose:** Conversational AI assistant for cybersecurity guidance, with support for text, voice, and multimodal file analysis.
+
+**Endpoints:**
+- `POST /api/chat/message` — Send text message
+- `POST /api/chat/upload` — Upload file for AI analysis
+- `POST /api/chat/web-search` — Web search for threat intelligence
+- `GET /api/chat/history` — Get chat history
+- `DELETE /api/chat/history` — Clear chat history
+- `GET /api/chat/status` — AI provider health check
+
+**Security Considerations:**
+- Protected by JWT + rate limiting
+- Prompt injection detection and sanitization
+- AI request timeouts (30s) to prevent hanging
+- Graceful fallback between Gemini and Ollama
+- File type validation and blocking
+- No sensitive data exposure in responses
+
+---
+
+### URL Scanner Module
+**Purpose:** Analyze URLs for phishing, malware, and security risks using heuristic detection.
+
+**Endpoints:**
+- `POST /api/scan/url` — Scan a URL
+
+**Security Considerations:**
+- Input validation (URL format)
+- No external data exfiltration
+- Client-side URL never stored in plaintext
+
+---
+
+### Email Phishing Detector Module
+**Purpose:** Detect phishing attempts, suspicious links, and social engineering in emails.
+
+**Endpoints:**
+- `POST /api/scan/email` — Analyze email content
+
+**Security Considerations:**
+- Optional AI explanation via Gemini
+- Input sanitization before processing
+- No email content stored in plaintext
+
+---
+
+### QR Code Scanner Module
+**Purpose:** Decode and analyze QR codes for malicious content, unsafe actions, and suspicious patterns.
+
+**Endpoints:**
+- `POST /api/scan/qr` — Analyze decoded QR text
+
+**Security Considerations:**
+- Supports both image upload and text input
+- Validates action URIs (tel:, sms:, wifi:, etc.)
+- Delegates URL analysis to existing URL scanner
+
+---
+
+### File Malware Scanner Module
+**Purpose:** Scan uploaded files for malware using SHA-256 hashing and VirusTotal API.
+
+**Endpoints:**
+- `POST /api/scan/file` — Upload and scan file
+
+**Security Considerations:**
+- SHA-256 hashing before upload
+- File type validation and blocking
+- 25MB file size limit
+- Graceful degradation when VirusTotal is unavailable
+- Request timeouts to prevent hanging
+
+---
+
+### Password Analyzer Module
+**Purpose:** Evaluate password strength using entropy analysis, crack-time estimation, and breach awareness.
+
+**Endpoints:**
+- `POST /api/scan/password` — Analyze password strength
+
+**Security Considerations:**
+- Plaintext password never stored or returned
+- Pure synchronous analysis (no external I/O)
+- Breach-aware common password detection
+
+---
+
+### Admin Dashboard Module
+**Purpose:** Platform administration, user management, analytics, and system monitoring.
+
+**Endpoints:**
+- `GET /api/admin/users` — List all users
+- `PATCH /api/admin/users/:id` — Update user
+- `DELETE /api/admin/users/:id` — Delete user
+- `GET /api/admin/analytics` — Platform analytics
+- `GET /api/admin/logs` — Scan logs
+- `GET /api/admin/notifications` — User notifications
+
+**Security Considerations:**
+- Admin-only authorization (`authorize('admin')`)
+- Input validation on all mutations
+- Audit logging via Winston
+
+---
+
+### Security Report Generator
+**Purpose:** Generate comprehensive PDF security reports from scan history.
+
+**Endpoints:**
+- `POST /api/scan/report` — Generate PDF report
+- `GET /api/scan/reports` — List previous reports
+
+**Security Considerations:**
+- Protected by JWT authentication
+- Graceful fallback when MongoDB is unavailable
+- In-memory PDF generation via PDFKit
+
+---
+
+## 🔒 Security Features
+
+### Authentication & Authorization
+- **JWT Authentication** — Short-lived access tokens + refresh tokens in httpOnly cookies
+- **Role-Based Access Control (RBAC)** — Admin and user roles with middleware enforcement
+- **Password Hashing** — bcrypt with 12 rounds
+- **Secure OTP Generation** — Cryptographically secure random integers via `crypto.randomInt()`
+
+### Request Protection
+- **AI Request Timeouts** — 30-second timeout on all Gemini/Ollama/VirusTotal requests
+- **Input Validation** — express-validator on all sensitive routes
+- **Rate Limiting** — Per-route rate limiters (auth: 5/min, chat: 20/min, uploads: 5/min)
+- **NoSQL Injection Prevention** — Mongoose sanitization middleware
+- **XSS Prevention** — Input sanitization, no unsafe `innerHTML`
+
+### Headers & Transport
+- **Helmet Security Headers** — HSTS, CSP, X-Frame-Options, etc.
+- **CORS Protection** — Restricted to configured client origin
+- **Secure Cookies** — `httpOnly`, `secure` in production, `sameSite: 'strict'`
+
+### Error Handling
+- **Secure Error Responses** — Internal errors hidden in production
+- **Winston Logging** — Structured logs without sensitive data
+- **Global Error Handler** — Centralized error formatting
+
+### Data Protection
+- **Sensitive Data Exclusion** — MongoDB `select: false` on password, tokens, refresh tokens
+- **No Token Leakage** — Reset tokens never returned in API responses
+- **File Security** — Type validation, size limits, blocked extensions
+- **Prompt Injection Detection** — Server-side sanitization before AI calls
+
+---
+
+## 🧪 Testing
 
 ```bash
 # Backend syntax check
@@ -317,19 +671,29 @@ npm run build
 
 ---
 
-## 📸 Screenshots
+## 🐛 Troubleshooting
 
-> Screenshots showcase the key interfaces of the Cyber Security Assistant. Add actual screenshots in the `screenshots/` directory and reference them below.
+### Backend won't start
+- Ensure MongoDB URI is correct and reachable
+- Verify all required environment variables are set
+- Check if port 5000 is already in use
+- Run `npm install` to ensure dependencies are installed
 
-| Module | Screenshot |
-|--------|------------|
-| **Dashboard** | ![Dashboard](screenshots/dashboard.png) |
-| **AI Chatbot** | ![AI Chatbot](screenshots/ai-chatbot.png) |
-| **URL Scanner** | ![URL Scanner](screenshots/url-scanner.png) |
-| **Password Analyzer** | ![Password Analyzer](screenshots/password-analyzer.png) |
-| **Email Phishing Detector** | ![Email Phishing Detector](screenshots/email-phishing.png) |
-| **QR Security Checker** | ![QR Security Checker](screenshots/qr-checker.png) |
-| **Security Report** | ![Security Report](screenshots/security-report.png) |
+### AI chatbot not responding
+- Verify `GEMINI_API_KEY` is set correctly
+- Ensure Ollama is running locally if using local AI
+- Check network connectivity for external API calls
+- Review Winston logs for detailed error messages
+
+### Frontend build fails
+- Delete `node_modules` and reinstall: `rm -rf node_modules && npm install`
+- Ensure Node.js version is 18+
+- Check for environment variable mismatches
+
+### Email not sending
+- Verify SMTP credentials in `.env`
+- For Gmail, use an App Password (not your regular password)
+- Check spam folder for verification emails
 
 ---
 

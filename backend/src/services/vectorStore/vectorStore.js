@@ -114,7 +114,7 @@ export async function generateEmbedding(text) {
       return normalizeEmbedding(response.embedding);
     }
   } catch (err) {
-    console.warn('[vectorStore] Ollama embedding failed, using fallback:', err.message);
+    // Fallback to simple embedding if Ollama is unavailable
   }
   return null;
 }

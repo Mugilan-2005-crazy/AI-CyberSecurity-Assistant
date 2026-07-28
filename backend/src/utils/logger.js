@@ -5,8 +5,9 @@
  * colored console output; in production it writes JSON logs
  * that are easy to ingest into a log aggregator.
  */
+
+
 import winston from 'winston';
-import config from '../config/index.js';
 
 const { combine, timestamp, printf, colorize, json } = winston.format;
 
@@ -16,12 +17,12 @@ const devFormat = printf(({ level, message, timestamp: ts, ...meta }) => {
 });
 
 const logger = winston.createLogger({
-  level: config.env === 'production' ? 'info' : 'debug',
+  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
   format: json(),
   transports: [new winston.transports.Console()],
 });
 
-if (config.env !== 'production') {
+if (process.env.NODE_ENV !== 'production') {
   logger.clear();
   logger.add(
     new winston.transports.Console({

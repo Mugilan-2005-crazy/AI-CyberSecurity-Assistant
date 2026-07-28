@@ -7,6 +7,7 @@
  * missing in production so misconfiguration fails fast.
  */
 import dotenv from 'dotenv';
+import logger from '../utils/logger.js';
 
 dotenv.config();
 
@@ -52,21 +53,24 @@ const config = {
 
   admin: {
     email: process.env.ADMIN_EMAIL || 'admin@cybersec.io',
-    password: process.env.ADMIN_PASSWORD || 'Admin@123456',
+    password: process.env.ADMIN_PASSWORD,
     name: process.env.ADMIN_NAME || 'Super Admin',
   },
 };
 
+if (!config.admin.password) {
+  throw new Error('Missing required environment variable: ADMIN_PASSWORD');
+}
+
 export default config;
 
 const logConfig = () => {
-  console.log('=== App Configuration ===');
-  console.log('Environment:', config.env);
-  console.log('Ollama URL:', config.ollama.url);
-  console.log('Ollama Model:', config.ollama.model);
-  console.log('Gemini Enabled:', Boolean(config.gemini.apiKey));
-  console.log('Mongo URI:', config.mongoUri.replace(/\/\/.*@/, '//***@'));
-  console.log('========================');
+  logger.info('=== App Configuration ===');
+  logger.info('Environment', { env: config.env });
+  logger.info('Ollama URL', { url: config.ollama.url });
+  logger.info('Ollama Model', { model: config.ollama.model });
+  logger.info('Gemini Enabled', { enabled: Boolean(config.gemini.apiKey) });
+  logger.info('Mongo URI', { uri: config.mongoUri.replace(/\/\/.*@/, '//***@') });
 };
 
 logConfig();

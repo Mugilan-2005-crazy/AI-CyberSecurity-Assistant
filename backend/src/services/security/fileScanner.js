@@ -46,15 +46,27 @@ const sha256 = (buffer) => crypto.createHash('sha256').update(buffer).digest('he
  *    Throws on non-2xx so callers can decide how to degrade.
  * ------------------------------------------------------------------ */
 const vtRequest = async (path, options = {}) => {
-  const res = await fetch(`${VT_BASE}${path}`, {
-    ...options,
-    headers: { 'x-apikey': config.virusTotal.apiKey, ...(options.headers || {}) },
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    throw new Error(`VirusTotal ${res.status}: ${body.slice(0, 200)}`);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+  try {
+    const res = await fetch(`${VT_BASE}${path}`, {
+      ...options,
+      headers: { 'x-apikey': config.virusTotal.apiKey, ...(options.headers || {}) },
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      throw new Error(`VirusTotal ${res.status}: ${body.slice(0, 200)}`);
+    }
+    return res.json();
+  } catch (err) {
+    clearTimeout(timeout);
+    if (err.name === 'AbortError') {
+      throw new Error('VirusTotal request timed out');
+    }
+    throw err;
   }
-  return res.json();
 };
 
 /* ------------------------------------------------------------------

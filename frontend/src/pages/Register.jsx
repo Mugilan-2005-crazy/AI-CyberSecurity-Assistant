@@ -9,6 +9,7 @@ import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext.jsx';
 import { AuthShell } from './Login.jsx';
+import PasswordInput from '../components/ui/PasswordInput.jsx';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -76,11 +77,16 @@ export default function Register() {
           <input type="email" className="input" value={form.email} onChange={update('email')} placeholder={t('auth.emailPlaceholder')} />
           {errors.email && <p className="text-danger text-xs mt-1">{errors.email}</p>}
         </div>
-        <div>
-          <label className="text-sm">{t('auth.passwordMin')}</label>
-          <input type="password" className="input" value={form.password} onChange={update('password')} placeholder={t('auth.passwordPlaceholder')} />
-          {errors.password && <p className="text-danger text-xs mt-1">{errors.password}</p>}
-        </div>
+        <PasswordInput
+          label={t('auth.passwordMin')}
+          value={form.password}
+          onChange={update('password')}
+          placeholder={t('auth.passwordPlaceholder')}
+          error={errors.password}
+          minLength={8}
+          required
+          autoComplete="new-password"
+        />
         <button className="btn-cyber w-full" disabled={loading}>
           {loading ? t('auth.creating') : t('auth.registerBtn')}
         </button>

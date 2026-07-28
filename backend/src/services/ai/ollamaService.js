@@ -19,7 +19,7 @@ import logger from '../../utils/logger.js';
 
 const OLLAMA_URL = config.ollama.url;
 const OLLAMA_MODEL = config.ollama.model;
-const REQUEST_TIMEOUT = 60000;
+const REQUEST_TIMEOUT = 30000;
 const SYSTEM_PROMPT_BASE =
   'You are a multilingual cybersecurity assistant. ' +
   'Always answer in the user\'s selected language. ' +
@@ -82,17 +82,17 @@ export const askOllama = async (prompt, history = [], language = 'en') => {
     const reply = result?.message?.content?.trim() || '';
 
     if (!reply) {
-      console.warn('[Ollama] Empty response from model');
+      logger.warn('[Ollama] Empty response from model');
       return {
         success: false,
         response: 'Local AI returned an empty response. Please try again or switch to cloud AI.',
       };
     }
 
-    console.log('[Ollama] Success, reply length:', reply.length);
+    logger.info('[Ollama] Success', { replyLength: reply.length });
     return { success: true, response: reply };
   } catch (err) {
-    console.error('[Ollama] askOllama error:', err);
+    logger.error('[Ollama] askOllama error', { error: err.message, stack: err.stack });
     logger.warn(`Ollama request failed: ${err.message}`);
 
     if (err.code === 'ECONNREFUSED' || err.message?.includes('ECONNREFUSED')) {
@@ -113,12 +113,12 @@ export const askOllama = async (prompt, history = [], language = 'en') => {
 
 /** True only when Ollama is reachable AND the model exists. */
 export const isOllamaAvailable = async () => {
-  console.log('[Ollama] isOllamaAvailable check started', { url: OLLAMA_URL, model: OLLAMA_MODEL });
+  logger.info('[Ollama] isOllamaAvailable check started', { url: OLLAMA_URL, model: OLLAMA_MODEL });
 
   try {
-    console.log('[Ollama] Calling ollama.list()...');
+    logger.info('[Ollama] Calling ollama.list()...');
     const list = await withTimeout(ollama.list(), 10000);
-    console.log('[Ollama] ollama.list() response:', {
+    logger.info('[Ollama] ollama.list() response', {
       type: typeof list,
       keys: list ? Object.keys(list) : [],
       hasModels: Boolean(list?.models),
@@ -128,21 +128,21 @@ export const isOllamaAvailable = async () => {
 
     const models = Array.isArray(list?.models) ? list.models : [];
     if (!models.length) {
-      console.warn('[Ollama] No models returned from Ollama');
+      logger.warn('[Ollama] No models returned from Ollama');
       return false;
     }
 
     const hasModel = models.some((m) => {
       const name = String(m.name || m.model || '');
       const match = name === OLLAMA_MODEL || name.startsWith(OLLAMA_MODEL + ':') || name.endsWith('/' + OLLAMA_MODEL);
-      console.log('[Ollama] Model check:', { candidate: name, match });
+      logger.info('[Ollama] Model check', { candidate: name, match });
       return match;
     });
 
-    console.log('[Ollama] isOllamaAvailable result:', hasModel);
+    logger.info('[Ollama] isOllamaAvailable result:', hasModel);
     return hasModel;
   } catch (err) {
-    console.error('[Ollama] isOllamaAvailable error:', err);
+    logger.error('[Ollama] isOllamaAvailable error', { error: err.message, stack: err.stack });
     logger.warn(`Ollama availability check failed: ${err.message}`);
     return false;
   }

@@ -94,6 +94,14 @@ if (config.gemini.apiKey) {
  * @returns {Promise<string>} the model's reply text
  * @throws {Error} if the model is not configured or the call fails
  */
+const withTimeout = (promise, ms = 30000) => {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error('Gemini request timed out')), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+};
+
 export const ask = async (message, history = [], language = 'en') => {
   if (!model) throw new Error('Gemini API is not configured.');
 
@@ -109,7 +117,7 @@ export const ask = async (message, history = [], language = 'en') => {
 
   const chat = model.startChat({ history });
   try {
-    const result = await chat.sendMessage(enhancedMessage);
+    const result = await withTimeout(chat.sendMessage(enhancedMessage));
     return result.response.text();
   } catch (err) {
     if (err.statusCode === 404 || err.status === 404) {
@@ -119,7 +127,7 @@ export const ask = async (message, history = [], language = 'en') => {
         try {
           const fallbackModel = genAI.getGenerativeModel({ model: fallbackName, systemInstruction: SYSTEM_INSTRUCTION });
           const fallbackChat = fallbackModel.startChat({ history });
-          const result = await fallbackChat.sendMessage(enhancedMessage);
+          const result = await withTimeout(fallbackChat.sendMessage(enhancedMessage));
           logger.info(`[gemini] Fallback model ${fallbackName} succeeded`);
           return result.response.text();
         } catch (fallbackErr) {

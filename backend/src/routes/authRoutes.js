@@ -5,7 +5,11 @@
  */
 import express from 'express';
 import { body } from 'express-validator';
-import { register, login, verifyEmail, forgotPassword, resetPassword, refreshToken, logout, me, updateName, changePassword, updateLanguage } from '../controllers/authController.js';
+import {
+  register, login, verifyEmail, forgotPassword, resetPassword,
+  refreshToken, logout, me, updateName, changePassword, updateLanguage,
+  sendOTP, verifyOTP, resetPasswordWithOTP, verify2FA, loginEnhanced,
+} from '../controllers/authController.js';
 import { validate } from '../middleware/validate.js';
 import { authLimiter } from '../middleware/rateLimiter.js';
 import { protect } from '../middleware/auth.js';
@@ -36,5 +40,16 @@ router.post('/change-password', protect, validate([
   body('currentPassword').exists().withMessage('Current password required'),
   body('newPassword').isLength({ min: 8 }).withMessage('Min 8 chars'),
 ]), changePassword);
+
+// ─── OTP-based password reset ─────────────────────────────
+router.post('/forgot-password/send-otp', authLimiter, validate([body('email').isEmail()]), sendOTP);
+router.post('/forgot-password/verify-otp', authLimiter, validate([body('email').isEmail(), body('otp').isLength({ min: 6, max: 6 })]), verifyOTP);
+router.post('/forgot-password/reset', validate([body('resetToken').exists(), body('password').isLength({ min: 8 })]), resetPasswordWithOTP);
+
+// ─── 2FA ──────────────────────────────────────────────────
+router.post('/2fa/verify', validate([body('userId').exists(), body('otp').isLength({ min: 6, max: 6 })]), verify2FA);
+
+// ─── Enhanced login with device tracking ──────────────────
+router.post('/login-enhanced', authLimiter, validate([body('email').isEmail(), body('password').exists()]), loginEnhanced);
 
 export default router;

@@ -10,7 +10,7 @@ import { chat, getChatHistory, clearChatHistory, multimodalChat, webSearch } fro
 import { askOllama, isOllamaAvailable } from '../services/ai/ollamaService.js';
 import gemini from '../services/security/gemini.js';
 import { validate } from '../middleware/validate.js';
-import { protect } from '../middleware/auth.js';
+import { protect, authorize } from '../middleware/auth.js';
 import { detectLanguage } from '../middleware/languageDetector.js';
 import { rateLimiter } from '../middleware/rateLimiter.js';
 import multer from 'multer';
@@ -38,7 +38,7 @@ const upload = multer({
 });
 
 // GET /api/test/ollama - temporary diagnostic route
-router.get('/test/ollama', async (req, res) => {
+router.get('/test/ollama', protect, authorize('admin'), async (req, res) => {
   try {
     const result = await askOllama('Explain ransomware', []);
     res.json({
@@ -47,16 +47,15 @@ router.get('/test/ollama', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (err) {
-    console.error('[test/ollama] error:', err);
+    logger.error('[test/ollama] error', { error: err.message, stack: err.stack });
     res.status(500).json({
       success: false,
       message: err.message,
-      stack: err.stack,
     });
   }
 });
 
-router.get('/status', async (req, res) => {
+router.get('/status', protect, authorize('admin'), async (req, res) => {
   try {
     const ollamaAvailable = await isOllamaAvailable();
     const geminiConfigured = gemini.isConfigured();
@@ -82,7 +81,7 @@ router.get('/status', async (req, res) => {
   }
 });
 
-router.get('/gemini-health', async (req, res) => {
+router.get('/gemini-health', protect, authorize('admin'), async (req, res) => {
   try {
     const geminiConfigured = gemini.isConfigured();
     const health = {

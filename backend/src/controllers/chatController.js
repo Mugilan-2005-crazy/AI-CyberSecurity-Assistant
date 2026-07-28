@@ -167,7 +167,7 @@ export const chat = async (req, res, next) => {
   try {
     const { message, history, sessionId } = req.body;
 
-    console.log('[chatController] POST /chat/message received', {
+    logger.info('[chatController] POST /chat/message received', {
       messagePreview: message?.slice?.(0, 100),
       historyLength: Array.isArray(history) ? history.length : undefined,
       sessionId,
@@ -212,14 +212,13 @@ export const chat = async (req, res, next) => {
         ? `\n\nRelevant document context:\n${(docResults.topChunks || []).join('\n\n')}`
         : '';
       const prompt = context ? `${context}${docContext}\n\nUser: ${safeMessage}` : `${safeMessage}${docContext}`;
-      console.log('[chatController] Calling routeAI with prompt:', prompt.slice(0, 150));
+      logger.info('[chatController] Calling routeAI with prompt', { promptPreview: prompt.slice(0, 150) });
       const result = await routeAI(prompt, safeHistory, effectiveLanguage);
       reply = result.response;
       provider = result.provider;
-      console.log('[chatController] AI result received', { provider, replyPreview: reply.slice(0, 100) });
+      logger.info('[chatController] AI result received', { provider, replyPreview: reply.slice(0, 100) });
     } catch (err) {
-      console.error('[chatController] AI routing failed:', err);
-      logger.error(`AI routing failed for user ${req.user.id}: ${err.message}`);
+      logger.error(`AI routing failed for user ${req.user.id}: ${err.message}`, { error: err.message, stack: err.stack });
       reply = FALLBACK_REPLY;
       provider = 'none';
     }
@@ -238,10 +237,10 @@ export const chat = async (req, res, next) => {
       aiEnabled: provider !== 'none',
     };
 
-    console.log('[chatController] Sending response', { provider, replyPreview: reply.slice(0, 100) });
+    logger.info('[chatController] Sending response', { provider, replyPreview: reply.slice(0, 100) });
     res.json(responsePayload);
   } catch (err) {
-    console.error('[chatController] Unhandled error:', err);
+    logger.error('[chatController] Unhandled error', { error: err.message, stack: err.stack });
     next(err);
   }
 };
@@ -295,8 +294,7 @@ export const multimodalChat = async (req, res, next) => {
         logger.info('[chatController] Text-only AI response received', { provider, replyPreview: reply.slice(0, 100) });
       }
     } catch (err) {
-      console.error('[chatController] Multimodal routing failed:', err);
-      logger.error(`Multimodal routing failed for user ${req.user.id}: ${err.message}`);
+      logger.error(`Multimodal routing failed for user ${req.user.id}: ${err.message}`, { error: err.message, stack: err.stack });
       reply = FALLBACK_REPLY;
       provider = 'none';
     }
@@ -320,7 +318,7 @@ export const multimodalChat = async (req, res, next) => {
     logger.info('[chatController] multimodalChat response sent', { provider, replyPreview: reply.slice(0, 100), sessionId: sid });
     res.json(responsePayload);
   } catch (err) {
-    console.error('[chatController] Multimodal unhandled error:', err);
+    logger.error('[chatController] Multimodal unhandled error', { error: err.message, stack: err.stack });
     next(err);
   }
 };

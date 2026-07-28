@@ -55,15 +55,23 @@ const SYSTEM_INSTRUCTION = [
   'If analysis is limited, explain what was checked and what could not be analyzed.',
 ].join(' ');
 
+const withTimeout = (promise, ms = 30000) => {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error('Gemini request timed out')), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+};
+
 const askGeminiText = async (prompt, language = 'en') => {
   if (!textModel) throw new Error('Gemini not configured');
   const langInstruction = language === 'ta' ? 'Reply in Tamil.' : language === 'hi' ? 'Reply in Hindi.' : language === 'tanglish' ? 'Reply in Tanglish.' : 'Reply in English.';
   
   const tryTextModel = async (modelName) => {
     const model = genAI.getGenerativeModel({ model: modelName });
-    const result = await model.generateContent({
+    const result = await withTimeout(model.generateContent({
       contents: [{ role: 'user', parts: [{ text: `${SYSTEM_INSTRUCTION}\n[Language: ${langInstruction}]\n\n${prompt}` }] }],
-    });
+    }));
     return result.response.text();
   };
 
@@ -108,36 +116,36 @@ const askGeminiVision = async (prompt, imageBuffer, mimeType = 'image/png', lang
   const langInstruction = language === 'ta' ? 'Reply in Tamil.' : language === 'hi' ? 'Reply in Hindi.' : language === 'tanglish' ? 'Reply in Tanglish.' : 'Reply in English.';
 
    const tryVisionModel = async (modelName) => {
-     logger.info('[GEMINI] Trying model', { model: modelName });
-     const model = genAI.getGenerativeModel({ model: modelName });
-     const requestPayload = {
-       contents: [
-         {
-           parts: [
-             { text: `${SYSTEM_INSTRUCTION}\n[Language: ${langInstruction}]\n\n${prompt}` },
-             {
-               inlineData: {
-                 mimeType,
-                 data: base64Data,
-               },
-             },
-           ],
-         },
-       ],
-     };
-     logger.info('[GEMINI] Request payload structure validated', {
-       model: modelName,
-       contentType: 'inlineData',
-       mimeType,
-       textLength: requestPayload.contents[0].parts[0].text.length,
-       base64Length: base64Data.length,
-     });
+      logger.info('[GEMINI] Trying model', { model: modelName });
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const requestPayload = {
+        contents: [
+          {
+            parts: [
+              { text: `${SYSTEM_INSTRUCTION}\n[Language: ${langInstruction}]\n\n${prompt}` },
+              {
+                inlineData: {
+                  mimeType,
+                  data: base64Data,
+                },
+              },
+            ],
+          },
+        ],
+      };
+      logger.info('[GEMINI] Request payload structure validated', {
+        model: modelName,
+        contentType: 'inlineData',
+        mimeType,
+        textLength: requestPayload.contents[0].parts[0].text.length,
+        base64Length: base64Data.length,
+      });
 
-     const result = await model.generateContent(requestPayload);
-     const reply = result.response.text();
-     logger.info('[GEMINI] Success', { model: modelName, replyLength: reply.length, replyPreview: reply.slice(0, 100) });
-     return reply;
-   };
+      const result = await withTimeout(model.generateContent(requestPayload));
+      const reply = result.response.text();
+      logger.info('[GEMINI] Success', { model: modelName, replyLength: reply.length, replyPreview: reply.slice(0, 100) });
+      return reply;
+    };
 
   try {
     let reply = await tryVisionModel(currentVisionModelName);

@@ -68,6 +68,7 @@ export default function QrChecker() {
 
   useEffect(() => {
     if (!stream) return;
+    let raf = null;
     const tick = () => {
       const canvas = canvasRef.current;
       const video = videoRef.current;
@@ -83,10 +84,13 @@ export default function QrChecker() {
           analyze(code.data);
         }
       }
-      requestAnimationFrame(tick);
+      raf = requestAnimationFrame(tick);
     };
     tick();
-    return () => stream?.getTracks().forEach((t) => t.stop());
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      stream?.getTracks().forEach((t) => t.stop());
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stream]);
 
@@ -95,7 +99,9 @@ export default function QrChecker() {
     setError(false);
     try {
       const r = await api.post('/scan/qr', { text });
-      console.log('QR ANALYSIS RESPONSE', r);
+      if (import.meta.env.DEV) {
+        console.log('QR ANALYSIS RESPONSE', r);
+      }
       setResult(r.result);
     } catch {
       setError(true);

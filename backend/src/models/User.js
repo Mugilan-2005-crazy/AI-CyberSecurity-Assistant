@@ -34,6 +34,29 @@ const userSchema = new mongoose.Schema(
     passwordResetToken: { type: String, select: false },
     passwordResetExpire: { type: Date, select: false },
 
+    // OTP-based password reset fields
+    passwordResetOTP: { type: String, select: false },
+    passwordResetOTPExpire: { type: Date, select: false },
+    passwordResetPhone: { type: String, select: false, default: '' },
+
+    // 2FA fields
+    twoFactorEnabled: { type: Boolean, default: false },
+    twoFactorSecret: { type: String, select: false },
+
+    // Login activity tracking
+    lastLoginIp: { type: String, default: '' },
+    lastLoginLocation: { type: String, default: '' },
+    lastLoginDevice: { type: String, default: '' },
+    loginHistory: [
+      {
+        ip: String,
+        location: String,
+        device: String,
+        time: { type: Date, default: Date.now },
+        success: { type: Boolean, default: true },
+      },
+    ],
+
     refreshTokens: [{ type: String, select: false }],
 
     lastLogin: { type: Date },

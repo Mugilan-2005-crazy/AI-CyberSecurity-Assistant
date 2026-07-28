@@ -97,8 +97,7 @@ export const scanPasswordRoute = async (req, res, next) => {
  */
 export const scanEmailRoute = async (req, res, next) => {
   try {
-     console.log("EMAIL REQUEST BODY:", req.body);
-    const { subject, body, sender, attachments } = req.body || {};
+     const { subject, body, sender, attachments } = req.body || {};
 
     // Input guard: body is required and must be a non-empty string.
     if (typeof body !== 'string' || body.trim() === '') {

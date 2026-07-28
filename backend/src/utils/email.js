@@ -50,4 +50,22 @@ export const sendPasswordResetEmail = (email, token) =>
            <p>This link expires in 1 hour. If you did not request this, ignore the email.</p>`,
   });
 
-export default { sendEmail, sendVerificationEmail, sendPasswordResetEmail };
+export const sendOTPEmail = (email, otp) =>
+  sendEmail({
+    to: email,
+    subject: 'Your password reset OTP',
+    html: `<p>You requested a password reset. Use the OTP below:</p>
+           <h2 style="font-size:32px;letter-spacing:6px;color:#00e5ff;background:#1e293b;padding:16px;border-radius:8px;text-align:center;">${otp}</h2>
+           <p>This OTP expires in 10 minutes. If you did not request this, ignore the email.</p>`,
+  });
+
+export const sendSuspiciousLoginEmail = (email, device, location) =>
+  sendEmail({
+    to: email,
+    subject: '⚠️ Suspicious login attempt detected',
+    html: `<p>We detected a login attempt on your account from an unrecognized device or location.</p>
+           <p><strong>Device:</strong> ${device}<br/><strong>Location:</strong> ${location}</p>
+           <p>If this was you, you can ignore this email. If not, please secure your account immediately.</p>`,
+  });
+
+export default { sendEmail, sendVerificationEmail, sendPasswordResetEmail, sendOTPEmail, sendSuspiciousLoginEmail };

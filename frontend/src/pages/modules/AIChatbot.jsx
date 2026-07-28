@@ -145,7 +145,9 @@ export default function AIChatbot() {
     const fileArr = Array.from(files);
     if (fileArr.length === 0) return;
     const file = fileArr[0];
-    console.log('[AIChatbot] processFile selected:', { name: file.name, size: file.size, type: file.type });
+    if (import.meta.env.DEV) {
+      console.log('[AIChatbot] processFile selected:', { name: file.name, size: file.size, type: file.type });
+    }
     if (file.size > MAX_SIZE) {
       toast.error(t('chatbot.fileTooLarge'));
       return;
@@ -259,6 +261,12 @@ export default function AIChatbot() {
     }
   }, [speechTranscript]);
 
+  useEffect(() => {
+    return () => {
+      if (attachment?.preview) URL.revokeObjectURL(attachment.preview);
+    };
+  }, [attachment]);
+
   const send = async (text) => {
     let msgText = (text || input).trim();
     if (!msgText && !attachment) return;
@@ -367,12 +375,12 @@ export default function AIChatbot() {
         ]);
       }
     } catch (err) {
-      const msgText = err.response?.data?.message || 'Failed to reach the AI assistant. Please try again.';
-      toast.error(msgText);
+      const errorMessage = err.response?.data?.message || 'Failed to reach the AI assistant. Please try again.';
+      toast.error(errorMessage);
       setTypingProvider(currentAttachment ? 'gemini-vision' : 'gemini');
       setMessages((prev) => [
         ...prev,
-        { role: 'model', text: `⚠ ${msgText}`, timestamp: new Date().toISOString(), provider: 'none' },
+        { role: 'model', text: `⚠ ${errorMessage}`, timestamp: new Date().toISOString(), provider: 'none' },
       ]);
     } finally {
       setLoading(false);

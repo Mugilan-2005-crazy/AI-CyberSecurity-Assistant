@@ -61,10 +61,16 @@ export const sendMultimodalMessage = async (file, message, sessionId) => {
   if (file) form.append('file', file);
   if (message) form.append('message', message);
   if (sessionId) form.append('sessionId', sessionId);
-  console.log('[sendMultimodalMessage] selected file:', file ? { name: file.name, size: file.size, type: file.type } : null);
-  console.log('[sendMultimodalMessage] FormData keys:', Array.from(form.keys()));
+  if (import.meta.env.DEV) {
+    console.log('[sendMultimodalMessage] selected file:', file ? { name: file.name, size: file.size, type: file.type } : null);
+  }
+  if (import.meta.env.DEV) {
+    console.log('[sendMultimodalMessage] FormData keys:', Array.from(form.keys()));
+  }
   const res = await api.post('/chat/upload', form);
-  console.log('[sendMultimodalMessage] API response:', res);
+  if (import.meta.env.DEV) {
+    console.log('[sendMultimodalMessage] API response:', res);
+  }
   return res;
 };
 

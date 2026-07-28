@@ -75,7 +75,7 @@ const prefersGemini = (message) => {
   const trimmed = message.trim();
   if (trimmed.length > 300) return true;
   const matched = GEMINI_PRIORITY_PATTERNS.some((pattern) => pattern.test(trimmed));
-  console.log('[aiRouter] prefersGemini check', { messagePreview: trimmed.slice(0, 80), matched });
+  logger.info('[aiRouter] prefersGemini check', { messagePreview: trimmed.slice(0, 80), matched });
   return matched;
 };
 
@@ -87,10 +87,10 @@ const prefersGemini = (message) => {
  * @returns {Promise<{ provider: string, response: string }>}
  */
 export const routeAI = async (message, history = [], language = 'en') => {
-  console.log('[aiRouter] routeAI called', { messagePreview: message.slice(0, 100), language });
+  logger.info('[aiRouter] routeAI called', { messagePreview: message.slice(0, 100), language });
 
   const useGemini = prefersGemini(message);
-  console.log('[aiRouter] prefersGemini result:', useGemini);
+  logger.info('[aiRouter] prefersGemini result:', useGemini);
 
   // Helper to normalize history for Gemini.
   const toGeminiHistory = (hist) =>
@@ -105,17 +105,16 @@ export const routeAI = async (message, history = [], language = 'en') => {
 
   // Try preferred provider first, fall back to the other.
   if (useGemini) {
-    console.log('[aiRouter] Branch: Gemini preferred');
+    logger.info('[aiRouter] Branch: Gemini preferred');
 
     // Prefer Gemini, fallback to Ollama.
     if (gemini.isConfigured()) {
       try {
-        console.log('[aiRouter] Trying Gemini...');
+        logger.info('[aiRouter] Trying Gemini...');
         const reply = await gemini.ask(message, toGeminiHistory(history), language);
-        console.log('[aiRouter] Gemini success, reply length:', reply.length);
+        logger.info('[aiRouter] Gemini success', { replyLength: reply.length });
         return { provider: 'gemini', response: reply };
       } catch (err) {
-        console.error('[aiRouter] Gemini failed:', err);
         logger.warn(`Gemini failed, falling back to Ollama: ${err.message}`);
         const category = classifyAIError(err);
         if (category === 'INVALID_API_KEY' || category === 'QUOTA_EXCEEDED' || category === 'MODEL_UNAVAILABLE') {
@@ -123,23 +122,22 @@ export const routeAI = async (message, history = [], language = 'en') => {
         }
       }
     } else {
-      console.log('[aiRouter] Gemini not configured');
+      logger.info('[aiRouter] Gemini not configured');
     }
 
     // Fallback: Ollama.
     try {
-      console.log('[aiRouter] Falling back to Ollama...');
+      logger.info('[aiRouter] Falling back to Ollama...');
       const ollamaResult = await askOllama(message, history, language);
-      console.log('[aiRouter] Ollama fallback result:', { success: ollamaResult.success });
+      logger.info('[aiRouter] Ollama fallback result', { success: ollamaResult.success });
       if (ollamaResult.success) {
         return { provider: 'ollama', response: ollamaResult.response };
       }
     } catch (err) {
-      console.error('[aiRouter] Ollama fallback failed:', err);
       logger.warn(`Ollama fallback failed: ${err.message}`);
     }
 
-    console.log('[aiRouter] Both providers failed, returning fallback');
+    logger.info('[aiRouter] Both providers failed, returning fallback');
     if (gemini.isConfigured()) {
       return { provider: 'gemini', response: GEMINI_QUOTA_REPLY };
     }
@@ -147,42 +145,40 @@ export const routeAI = async (message, history = [], language = 'en') => {
   }
 
   // Prefer Ollama for general/learning questions, fallback to Gemini.
-  console.log('[aiRouter] Branch: Ollama preferred');
+  logger.info('[aiRouter] Branch: Ollama preferred');
   try {
     const ollamaAvailable = await isOllamaAvailable();
-    console.log('[aiRouter] isOllamaAvailable result:', ollamaAvailable);
+    logger.info('[aiRouter] isOllamaAvailable result:', ollamaAvailable);
 
     if (ollamaAvailable) {
-      console.log('[aiRouter] Trying Ollama...');
+      logger.info('[aiRouter] Trying Ollama...');
       const ollamaResult = await askOllama(message, history, language);
-      console.log('[aiRouter] Ollama result:', { success: ollamaResult.success });
+      logger.info('[aiRouter] Ollama result:', { success: ollamaResult.success });
       if (ollamaResult.success) {
         return { provider: 'ollama', response: ollamaResult.response };
       }
     } else {
-      console.log('[aiRouter] Ollama not available, skipping');
+      logger.info('[aiRouter] Ollama not available, skipping');
     }
   } catch (err) {
-    console.error('[aiRouter] Ollama branch error:', err);
     logger.warn(`Ollama unavailable: ${err.message}`);
   }
 
   // Fallback: Gemini.
   if (gemini.isConfigured()) {
     try {
-      console.log('[aiRouter] Falling back to Gemini...');
+      logger.info('[aiRouter] Falling back to Gemini...');
       const reply = await gemini.ask(message, toGeminiHistory(history), language);
-      console.log('[aiRouter] Gemini fallback success, reply length:', reply.length);
+      logger.info('[aiRouter] Gemini fallback success', { replyLength: reply.length });
       return { provider: 'gemini', response: reply };
     } catch (err) {
-      console.error('[aiRouter] Gemini fallback failed:', err);
       logger.warn(`Gemini fallback failed: ${err.message}`);
     }
   } else {
-    console.log('[aiRouter] Gemini not configured for fallback');
+    logger.info('[aiRouter] Gemini not configured for fallback');
   }
 
-  console.log('[aiRouter] All providers failed, returning fallback');
+  logger.info('[aiRouter] All providers failed, returning fallback');
   if (await isOllamaAvailable()) {
     return { provider: 'ollama', response: OLLAMA_OFFLINE_REPLY };
   }
@@ -190,7 +186,7 @@ export const routeAI = async (message, history = [], language = 'en') => {
 };
 
 export const routeMultimodalAI = async (fileBuffer, filename, mimeType, language = 'en', userQuery = '', userId = null) => {
-  console.log('[aiRouter] routeMultimodalAI called', { filename, mimeType, language, queryPreview: userQuery.slice(0, 80) });
+  logger.info('[aiRouter] routeMultimodalAI called', { filename, mimeType, language, queryPreview: userQuery.slice(0, 80) });
 
   try {
     const result = await analyzeAttachment(fileBuffer, filename, mimeType, language, userQuery, userId);
@@ -206,7 +202,6 @@ export const routeMultimodalAI = async (fileBuffer, filename, mimeType, language
       result,
     };
   } catch (err) {
-    console.error('[aiRouter] Multimodal analysis failed:', err);
     logger.error(`Multimodal AI failed: ${err.message}`);
     return {
       provider: 'none',
