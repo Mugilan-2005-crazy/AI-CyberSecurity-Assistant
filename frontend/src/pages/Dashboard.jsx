@@ -11,11 +11,12 @@
  *   6. Quick Actions Section
  * Uses glassmorphism, Framer Motion, loading skeletons, empty states.
  */
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
+import useRealtimeDashboard from '../hooks/useRealtimeDashboard.js';
 import {
   ShieldCheckIcon, ExclamationTriangleIcon, CheckCircleIcon,
   EnvelopeIcon, BugAntIcon, QrCodeIcon, LinkIcon,
@@ -79,17 +80,71 @@ export default function Dashboard() {
   const [error, setError] = useState(false);
   const [generatingReport, setGeneratingReport] = useState(false);
   const [aiStatus, setAiStatus] = useState(null);
+  const [agentInsights, setAgentInsights] = useState(null);
+  const [agentLoading, setAgentLoading] = useState(true);
+  const [agentError, setAgentError] = useState(false);
 
   useEffect(() => {
     Promise.all([
       endpoints.getDashboard(),
       endpoints.getNotifications().catch(() => []),
       endpoints.getAIStatus().catch(() => null),
+      endpoints.getSecurityInsights().catch(() => null),
     ])
-      .then(([d, n, ai]) => { setData(d); setNotes(n); setAiStatus(ai); })
+      .then(([d, n, ai, agent]) => { setData(d); setNotes(n); setAiStatus(ai); setAgentInsights(agent); })
       .catch(() => setError(true))
-      .finally(() => setLoading(false));
+      .finally(() => { setLoading(false); setAgentLoading(false); });
   }, []);
+
+  useRealtimeDashboard({
+    onScanCompleted: useCallback((payload) => {
+      const { result } = payload || {};
+      if (result?.verdict === 'malicious' || result?.verdict === 'suspicious') {
+        toast.warn(`New threat detected: ${result.verdict}`, { autoClose: 5000 });
+      }
+      setData((prev) => {
+        if (!prev) return prev;
+        const totalScans = (prev.totalScans || 0) + 1;
+        const threats = result?.verdict === 'malicious' || result?.verdict === 'suspicious'
+          ? (prev.threatsDetected || 0) + 1
+          : (prev.threatsDetected || 0);
+        const recentActivity = [{
+          _id: payload?.scanId || Date.now().toString(),
+          type: result?.scanType || 'url',
+          verdict: result?.verdict || 'unknown',
+          riskScore: result?.riskScore || 0,
+          input: result?.input || '',
+          createdAt: new Date().toISOString(),
+        }, ...(prev.recentActivity || [])];
+        return { ...prev, totalScans, threatsDetected: threats, recentActivity: recentActivity.slice(0, 8) };
+      });
+    }, []),
+    onAICompleted: useCallback((payload) => {
+      const { analysis } = payload || {};
+      if (analysis?.threatScore >= 70) {
+        toast.error(`High-risk AI analysis: ${analysis.riskLevel}`, { autoClose: 8000 });
+      }
+      setNotes((prev) => [
+        {
+          _id: `ai-${Date.now()}`,
+          title: 'AI Analysis Completed',
+          message: `${analysis?.scanType || 'Scan'} analysis: ${analysis?.riskLevel || 'Unknown'} risk (score: ${analysis?.threatScore || 0})`,
+          type: analysis?.threatScore >= 70 ? 'danger' : 'info',
+          read: false,
+          createdAt: new Date().toISOString(),
+        },
+        ...prev,
+      ]);
+    }, []),
+    onNotificationCreated: useCallback((payload) => {
+      setNotes((prev) => [payload, ...prev]);
+    }, []),
+    onDashboardUpdate: useCallback((payload) => {
+      if (payload?.threatScore !== undefined) {
+        setData((prev) => prev ? { ...prev, threatScore: payload.threatScore } : prev);
+      }
+    }, []),
+  });
 
   const byType = useMemo(
     () => Object.fromEntries((data?.typeBreakdown || []).map((t) => [t._id, t.count])),
@@ -209,6 +264,94 @@ export default function Dashboard() {
             </StatCard>
           </motion.div>
         ))}
+      </motion.div>
+
+      {/* ─── AI Security Agent Card ──────────────────────── */}
+      <motion.div
+        className="grid grid-cols-1 lg:grid-cols-3 gap-4"
+        initial="hidden"
+        animate="show"
+        variants={fadeUp}
+      >
+        <Card
+          title="AI Security Agent"
+          description="Autonomous risk assessment and recommendations"
+          className="lg:col-span-3 backdrop-blur-sm bg-white/50 dark:bg-surface-card/50 border border-slate-200 dark:border-slate-700"
+        >
+          {agentLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                <Skeleton className="h-24 rounded-xl" />
+                <Skeleton className="h-24 rounded-xl" />
+                <Skeleton className="h-24 rounded-xl" />
+              </div>
+            </div>
+          ) : agentError || !agentInsights ? (
+            <StateView
+              type="error"
+              title="Agent unavailable"
+              message="Could not load security insights. Please try again later."
+            />
+          ) : (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-4 rounded-xl bg-slate-50/50 dark:bg-slate-800/30">
+                  <p className="text-xs text-slate-400 mb-1">Security Score</p>
+                  <p className="text-3xl font-bold text-cyber-400">
+                    {agentInsights.assessment?.overallRiskScore ?? '—'}
+                  </p>
+                </div>
+                <div className="p-4 rounded-xl bg-slate-50/50 dark:bg-slate-800/30">
+                  <p className="text-xs text-slate-400 mb-1">Risk Level</p>
+                  <p className="text-lg font-semibold capitalize">
+                    {agentInsights.assessment?.verdict || 'unknown'}
+                  </p>
+                </div>
+                <div className="p-4 rounded-xl bg-slate-50/50 dark:bg-slate-800/30">
+                  <p className="text-xs text-slate-400 mb-1">Recommendations</p>
+                  <p className="text-3xl font-bold text-primary">
+                    {agentInsights.recommendations?.length ?? 0}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium mb-2">Threat Summary</p>
+                <p className="text-sm text-slate-300 leading-relaxed">
+                  {agentInsights.assessment?.summary || 'No summary available.'}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium mb-3">Recommendations</p>
+                <div className="space-y-2">
+                  {(agentInsights.recommendations || []).slice(0, 5).map((rec, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-start gap-3 p-3 rounded-xl bg-slate-50/50 dark:bg-slate-800/30"
+                    >
+                      <div className={`mt-0.5 h-2 w-2 rounded-full ${
+                        rec.priority === 'critical' ? 'bg-red-400' :
+                        rec.priority === 'high' ? 'bg-amber-400' :
+                        rec.priority === 'medium' ? 'bg-orange-400' :
+                        'bg-cyan-400'
+                      }`} />
+                      <div>
+                        <p className="text-sm font-medium">{rec.action}</p>
+                        {rec.detail && (
+                          <p className="text-xs text-slate-400 mt-0.5">{rec.detail}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </Card>
       </motion.div>
 
       {/* ─── 3. Threat Activity Chart ───────────────────── */}

@@ -1,0 +1,57 @@
+name: Backend CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: Jest Tests
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci --ignore-scripts
+
+      - name: Wait for MongoDB
+        run: |
+          for i in $(seq 1 15); do
+            if node -e "const s=require('net').connect(27017,'127.0.0.1');s.on('connect',()=>process.exit(0));s.on('error',()=>process.exit(1))" 2>/dev/null; then
+              echo "MongoDB is ready"
+              break
+            fi
+            echo "Waiting for MongoDB... ($i)"
+            sleep 1
+          done
+
+      - name: Run tests
+        working-directory: backend
+        run: npm test
+        env:
+          NODE_ENV: test
+          MONGODB_URI: mongodb://127.0.0.1:27017/cybersec_test
+          JWT_SECRET: test_jwt_secret
+          JWT_REFRESH_SECRET: test_refresh_secret
+          JWT_EXPIRE: 7d
+          JWT_REFRESH_EXPIRE: 30d
+          ADMIN_EMAIL: admin@test.com
+          ADMIN_PASSWORD: testpass123
+          ADMIN_NAME: Test Admin
+          CLIENT_ORIGIN: http://localhost:5173
+          PORT: 5001
+          API_PREFIX: /api

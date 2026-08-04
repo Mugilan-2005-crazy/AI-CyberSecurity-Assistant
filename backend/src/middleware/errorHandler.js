@@ -25,7 +25,7 @@ export const errorHandler = (err, req, res, _next) => {
     message = 'Invalid ID format.';
   }
 
-  if (statusCode >= 500) logger.error(`Unhandled error: ${err.stack || err.message}`);
+  if (statusCode >= 500) logger.error(`Unhandled error: ${err.stack || err.message}`, { reqId: req.id });
 
   res.status(statusCode).json({
     success: false,
@@ -33,6 +33,7 @@ export const errorHandler = (err, req, res, _next) => {
       ? 'Internal server error'
       : message,
     ...(process.env.NODE_ENV !== 'production' && { stack: err.stack }),
+    requestId: req.id,
   });
 };
 

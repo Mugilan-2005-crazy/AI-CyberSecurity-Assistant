@@ -10,6 +10,7 @@ import { connectDB } from './config/db.js';
 import config from './config/index.js';
 import logger from './utils/logger.js';
 import User from './models/User.js';
+import { initSocketServer, closeSocketServer } from './socket/socketServer.js';
 
 const seedAdmin = async () => {
   try {
@@ -31,18 +32,46 @@ const seedAdmin = async () => {
 const start = async () => {
   await connectDB();
   await seedAdmin();
-  app.listen(config.port, () => {
+  const server = app.listen(config.port, () => {
     logger.info(`Server running on port ${config.port} [${config.env}]`);
   });
+
+  initSocketServer(server, config);
+
+  const gracefulShutdown = async (signal) => {
+    logger.info(`${signal} received, closing server...`);
+    try {
+      await closeSocketServer();
+      logger.info('Socket.IO server closed');
+    } catch (err) {
+      logger.warn(`Socket.IO close error: ${err.message}`);
+    }
+    server.close(async () => {
+      logger.info('HTTP server closed');
+      try {
+        const mongoose = (await import('mongoose')).default;
+        if (mongoose.connection.readyState === 1) {
+          await mongoose.disconnect();
+          logger.info('MongoDB connection closed');
+        }
+      } catch (err) {
+        logger.warn(`MongoDB disconnect error: ${err.message}`);
+      }
+      process.exit(0);
+    });
+    setTimeout(() => {
+      logger.error('Forced shutdown after timeout');
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 };
 
 start().catch((err) => {
   logger.error(`Fatal startup error: ${err.message}`);
   process.exit(1);
 });
-
-// Graceful shutdown.
-process.on('SIGINT', () => { logger.info('Shutting down...'); process.exit(0); });
-process.on('SIGTERM', () => { logger.info('Shutting down...'); process.exit(0); });
 
 export default app;

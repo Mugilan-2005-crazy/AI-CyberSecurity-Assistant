@@ -66,7 +66,21 @@ export const logs = async (req, res, next) => {
 export const notifications = async (req, res, next) => {
   try {
     const notes = await Notification.find({ user: req.user.id }).sort({ createdAt: -1 }).limit(50);
-    res.json({ success: true, notifications: notes });
+    res.json({
+      success: true,
+      notifications: notes.map((n) => ({
+        _id: n._id,
+        title: n.title,
+        message: n.message,
+        type: n.type,
+        read: n.read,
+        category: n.category,
+        severity: n.severity,
+        metadata: n.metadata,
+        createdAt: n.createdAt,
+        updatedAt: n.updatedAt,
+      })),
+    });
   } catch (err) { next(err); }
 };
 

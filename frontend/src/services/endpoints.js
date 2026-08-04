@@ -51,6 +51,73 @@ export const clearChatHistory = () => api.delete('/chat/history').then((r) => r)
 // AI health status
 export const getAIStatus = () => api.get('/chat/status').then((r) => r);
 
+// AI Security Agent insights
+export const getSecurityInsights = () => api.get('/agent/security-insights').then((r) => r.data);
+
+// SOC Dashboard
+export const getSOCDashboard = () => api.get('/soc/dashboard').then((r) => r.data);
+
+// AI Incident Response
+export const analyzeIncident = (incidentId) =>
+  api.get(`/response/incidents/${incidentId}/analyze`).then((r) => r.data);
+
+export const recommendResponse = (incidentId) =>
+  api.post(`/response/incidents/${incidentId}/recommend`, {}).then((r) => r.data);
+
+export const approveResponse = (incidentId, status) =>
+  api.patch(`/response/incidents/${incidentId}/approve`, { status }).then((r) => r.data);
+
+export const getResponseHistory = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/response/history${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+
+export const getResponseById = (id) =>
+  api.get(`/response/history/${id}`).then((r) => r.data);
+
+// Executive Security Command Center API (Phase 4)
+export const getExecutiveSummary = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/executive/summary${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+
+export const getExecutiveAiSummary = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/executive/ai-summary${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+
+export const getExecutiveReport = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/executive/report${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+
+export const getExecutiveMetrics = () =>
+  api.get('/executive/metrics').then((r) => r.data);
+
+// AI Incident Report Center API (Phase 5)
+export const generateIncidentReport = (incidentId) =>
+  api.post(`/incident-reports/generate/${incidentId}`).then((r) => r.data);
+
+export const getIncidentReports = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/incident-reports${query ? `?${query}` : ''}`).then((r) => r.reports || []);
+};
+
+export const getIncidentReport = (id) =>
+  api.get(`/incident-reports/${id}`).then((r) => r.data);
+
+export const shareIncidentReport = (id, expiresInHours = 72) =>
+  api.post(`/incident-reports/${id}/share`, { expiresInHours }).then((r) => r.data);
+
+export const getSharedIncidentReport = (token) =>
+  api.get(`/incident-reports/share/${token}`).then((r) => r.data);
+
+export const emailIncidentReport = (id, email) =>
+  api.post(`/incident-reports/${id}/email`, { email }).then((r) => r.data);
+
+export const exportIncidentReport = (id, format = 'pdf') =>
+  api.post(`/incident-reports/${id}/export?format=${format}`).then((r) => r.data);
+
 // Web search for cybersecurity intelligence.
 export const webSearch = (query, sessionId) =>
   api.post('/chat/web-search', { query, sessionId }).then((r) => r);
@@ -77,9 +144,96 @@ export const sendMultimodalMessage = async (file, message, sessionId) => {
 // Upload history for AI File Security Analyzer.
 export const getUploadHistory = () => api.get('/ai/upload/history').then((r) => r.analyses || []);
 
+// Alerts API
+export const getAlerts = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/alerts${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+
+export const getAlertById = (id) => api.get(`/alerts/${id}`).then((r) => r.data);
+
+export const acknowledgeAlert = (id) => api.patch(`/alerts/${id}/acknowledge`).then((r) => r.data);
+
+export const getUserAlerts = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/alerts/user${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+
+export const getDashboardAlerts = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/alerts/dashboard${query ? `?${query}` : ''}`).then((r) => r);
+};
+
+// AI SOC Analysis
+export const getAIAnalysisHistory = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/ai/soc/history${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+
+export const getAIAnalysisById = (id) =>
+  api.get(`/ai/soc/${id}`).then((r) => r.data);
+
+export const analyzeScanWithAI = (scanId) =>
+  api.post(`/ai/soc/scan/${scanId}/analyze`).then((r) => r.data);
+
+export const reopenAIAnalysis = (id) =>
+  api.post(`/ai/soc/${id}/reopen`).then((r) => r.data);
+
+export const getAIAnalysisStats = () =>
+  api.get('/ai/soc/stats').then((r) => r.data);
+
+// Threat Intelligence API
+export const getThreatIntelDashboard = () => api.get('/threat-intel/dashboard').then((r) => r.data);
+
+export const analyzeIoc = (ioc, iocType) =>
+  api.post('/threat-intel/analyze', { ioc, iocType }).then((r) => r.data);
+
+export const getIocHistory = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/threat-intel/iocs${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+
+export const getIocReport = (id) => api.get(`/threat-intel/iocs/${id}`).then((r) => r.data);
+
+export const correlateIocs = (iocs) =>
+  api.post('/threat-intel/correlation', { iocs }).then((r) => r.data);
+
+export const refreshThreatIntelCache = () =>
+  api.post('/threat-intel/cache/refresh').then((r) => r);
+
+export const getThreatFeeds = () => api.get('/threat-intel/feeds').then((r) => r.data);
+
+export const searchCVE = (query) => api.get(`/threat-intel/cve/search?q=${encodeURIComponent(query)}`).then((r) => r.data);
+
+export const getCVEById = (id) => api.get(`/threat-intel/cve/${id}`).then((r) => r.data);
+
+// Notification Center API (Phase 3 — Real-time Security Operations)
+export const getNotificationsList = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/notifications${query ? `?${query}` : ''}`).then((r) => r);
+};
+
+export const getUnreadCount = () => api.get('/notifications/unread-count').then((r) => r);
+
+export const markNotificationRead = (id) => api.post(`/notifications/${id}/read`).then((r) => r);
+
+export const markAllNotificationsRead = () => api.post('/notifications/mark-all-read').then((r) => r);
+
+export const deleteNotification = (id) => api.delete(`/notifications/${id}`).then((r) => r);
+
+export const deleteAllReadNotifications = () => api.delete('/notifications/read').then((r) => r);
+
 export default {
   getDashboard, downloadReport, listReports, getNotifications,
   getProfile, updateProfileName, changePassword,
   getChatHistory, clearChatHistory,
-  sendMultimodalMessage, getUploadHistory, webSearch, getAIStatus,
+  sendMultimodalMessage, getUploadHistory, webSearch, getAIStatus, getSecurityInsights,
+  getSOCDashboard,
+  getAlerts, getAlertById, acknowledgeAlert, getUserAlerts, getDashboardAlerts,
+  getAIAnalysisHistory, getAIAnalysisById, analyzeScanWithAI, reopenAIAnalysis, getAIAnalysisStats,
+  getThreatIntelDashboard, analyzeIoc, getIocHistory, getIocReport, correlateIocs, refreshThreatIntelCache,
+  getThreatFeeds, searchCVE, getCVEById,
+  getNotificationsList, getUnreadCount, markNotificationRead, markAllNotificationsRead, deleteNotification, deleteAllReadNotifications,
+  getExecutiveSummary, getExecutiveAiSummary, getExecutiveReport, getExecutiveMetrics,
+  generateIncidentReport, getIncidentReports, getIncidentReport, shareIncidentReport, getSharedIncidentReport, emailIncidentReport, exportIncidentReport,
 };

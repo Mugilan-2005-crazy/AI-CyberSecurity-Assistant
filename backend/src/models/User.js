@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema(
       index: true,
     },
     password: { type: String, required: true, minlength: 8, select: false },
-    role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    role: { type: String, enum: ['user', 'admin', 'security_manager'], default: 'user' },
 
     isEmailVerified: { type: Boolean, default: false },
     emailVerificationToken: { type: String, select: false },
@@ -62,6 +62,9 @@ const userSchema = new mongoose.Schema(
     lastLogin: { type: Date },
     isActive: { type: Boolean, default: true },
     language: { type: String, default: 'en', maxlength: 10 },
+
+    failedLoginAttempts: { type: Number, default: 0 },
+    lockedUntil: { type: Date, default: null },
   },
   { timestamps: true }
 );

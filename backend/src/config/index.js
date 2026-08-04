@@ -28,12 +28,21 @@ const config = {
 
   jwt: {
     secret: required('JWT_SECRET', 'dev_jwt_secret'),
-    expire: process.env.JWT_EXPIRE || '7d',
+    expire: process.env.JWT_EXPIRE || '15m',
     refreshSecret: required('JWT_REFRESH_SECRET', 'dev_refresh_secret'),
     refreshExpire: process.env.JWT_REFRESH_EXPIRE || '30d',
   },
 
-  clientOrigin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+  clientOrigin: (() => {
+    const value = process.env.CLIENT_ORIGIN;
+    if (!value) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('Missing required environment variable: CLIENT_ORIGIN');
+      }
+      return 'http://localhost:5173';
+    }
+    return value;
+  })(),
 
   email: {
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
@@ -47,14 +56,32 @@ const config = {
   ollama: {
     url: process.env.OLLAMA_URL || 'http://localhost:11434',
     model: process.env.OLLAMA_MODEL || 'llama3.1',
+    timeout: Number(process.env.OLLAMA_TIMEOUT) || 30000,
   },
   uploadsDir: process.env.UPLOADS_DIR || 'uploads',
   virusTotal: { apiKey: process.env.VIRUSTOTAL_API_KEY || '' },
+  abuseipdb: { apiKey: process.env.ABUSEIPDB_API_KEY || '', baseUrl: 'https://api.abuseipdb.com/api/v2' },
+  otx: { apiKey: process.env.OTX_API_KEY || '', baseUrl: 'https://otx.alienvault.com/api/v1' },
+  nvd: { apiKey: process.env.NVD_API_KEY || '', baseUrl: 'https://services.nvd.nist.gov/rest/json/cves/2.0' },
+
+  threatIntel: {
+    cacheTtl: Number(process.env.THREAT_INTEL_CACHE_TTL) || 3600000,
+    requestTimeout: Number(process.env.THREAT_INTEL_TIMEOUT) || 15000,
+    maxRetries: Number(process.env.THREAT_INTEL_MAX_RETRIES) || 3,
+  },
+  abuseipdb: { apiKey: process.env.ABUSEIPDB_API_KEY || '', baseUrl: 'https://api.abuseipdb.com/api/v2' },
+  otx: { apiKey: process.env.OTX_API_KEY || '', baseUrl: 'https://otx.alienvault.com/api/v1' },
+  nvd: { apiKey: process.env.NVD_API_KEY || '', baseUrl: 'https://services.nvd.nist.gov/rest/json/cves/2.0' },
 
   admin: {
     email: process.env.ADMIN_EMAIL || 'admin@cybersec.io',
     password: process.env.ADMIN_PASSWORD,
     name: process.env.ADMIN_NAME || 'Super Admin',
+  },
+
+  security: {
+    maxLoginAttempts: Number(process.env.MAX_LOGIN_ATTEMPTS) || 5,
+    lockoutDuration: Number(process.env.LOCKOUT_DURATION) || 15 * 60 * 1000,
   },
 };
 

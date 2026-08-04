@@ -5,19 +5,33 @@
  * reset (token + OTP), refresh tokens, 2FA verification,
  * and current-user lookup. Issues JWT access + refresh tokens
  * and stores refresh tokens on the user.
+ *
+ * Security improvements (Batch #2):
+ *  - User enumeration prevention (forgotPassword, sendOTP)
+ *  - Brute-force protection on loginEnhanced
+ *  - Email verification check on loginEnhanced
+ *  - Secure 2FA flow using signed token (no userId in body)
  */
 import crypto from 'crypto';
 import User from '../models/User.js';
 import ApiError from '../utils/ApiError.js';
-import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
+import { signAccessToken, signRefreshToken, signTwoFactorToken, verifyTwoFactorToken, verifyRefreshToken } from '../utils/jwt.js';
 import { generateToken, hashToken } from '../utils/tokens.js';
 import { sendVerificationEmail, sendPasswordResetEmail, sendOTPEmail, sendSuspiciousLoginEmail } from '../utils/email.js';
+import logger from '../utils/logger.js';
+import config from '../config/index.js';
 
 const cookieOpts = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'strict',
   maxAge: 30 * 24 * 60 * 60 * 1000,
+};
+
+const clearCookieOpts = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict',
 };
 
 const issueTokens = (user) => {
@@ -27,6 +41,7 @@ const issueTokens = (user) => {
 };
 
 const maskEmail = (email) => {
+  if (!email || !email.includes('@')) return 'unknown';
   const [name, domain] = email.split('@');
   return name[0] + '*****@' + domain;
 };
@@ -64,12 +79,29 @@ export const register = async (req, res, next) => {
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email }).select('+password +refreshTokens');
-    if (!user || !(await user.comparePassword(password))) {
-      throw new ApiError(401, 'Invalid credentials');
-    }
+    const user = await User.findOne({ email }).select('+password +refreshTokens +failedLoginAttempts +lockedUntil');
+    if (!user) throw new ApiError(401, 'Invalid credentials');
     if (!user.isActive) throw new ApiError(403, 'Account disabled');
 
+    if (user.lockedUntil && user.lockedUntil > Date.now()) {
+      const remainingMs = user.lockedUntil - Date.now();
+      const remainingMin = Math.ceil(remainingMs / 60000);
+      throw new ApiError(403, `Account locked due to too many failed attempts. Try again in ${remainingMin} minutes.`);
+    }
+
+    const passwordMatch = await user.comparePassword(password);
+    if (!passwordMatch) {
+      user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+      if (user.failedLoginAttempts >= config.security.maxLoginAttempts) {
+        user.lockedUntil = Date.now() + config.security.lockoutDuration;
+        logger.warn(`Account locked: ${email} after ${user.failedLoginAttempts} failed attempts`, { email, ip: req.ip });
+      }
+      await user.save();
+      throw new ApiError(401, 'Invalid credentials');
+    }
+
+    user.failedLoginAttempts = 0;
+    user.lockedUntil = null;
     user.lastLogin = new Date();
     const { access, refresh } = issueTokens(user);
     user.refreshTokens.push(refresh);
@@ -99,17 +131,22 @@ export const verifyEmail = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+// Security: Always return the same generic success response regardless of
+// whether the email exists. This prevents user enumeration attacks.
 export const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
-    if (!user) throw new ApiError(404, 'No account with that email');
-    const token = generateToken();
-    user.passwordResetToken = hashToken(token);
-    user.passwordResetExpire = Date.now() + 60 * 60 * 1000;
-    await user.save();
-    await sendPasswordResetEmail(email, token);
-    res.json({ success: true, message: 'Password reset email sent' });
+
+    if (user) {
+      const token = generateToken();
+      user.passwordResetToken = hashToken(token);
+      user.passwordResetExpire = Date.now() + 60 * 60 * 1000;
+      await user.save();
+      await sendPasswordResetEmail(email, token);
+    }
+
+    res.json({ success: true, message: 'If an account with that email exists, a password reset link has been sent.' });
   } catch (err) { next(err); }
 };
 
@@ -123,7 +160,7 @@ export const resetPassword = async (req, res, next) => {
     user.password = password;
     user.passwordResetToken = undefined;
     user.passwordResetExpire = undefined;
-    user.refreshTokens = []; // force re-login everywhere
+    user.refreshTokens = [];
     await user.save();
     res.json({ success: true, message: 'Password updated' });
   } catch (err) { next(err); }
@@ -153,7 +190,7 @@ export const logout = async (req, res, next) => {
         await user.save();
       }
     }
-    res.clearCookie('refreshToken', cookieOpts);
+    res.clearCookie('refreshToken', clearCookieOpts);
     res.json({ success: true, message: 'Logged out' });
   } catch (err) { next(err); }
 };
@@ -163,7 +200,6 @@ export const me = async (req, res, next) => {
     const user = await User.findById(req.user.id);
     if (!user) throw new ApiError(404, 'User not found');
 
-    // Account stats from the scan + chat collections (best-effort).
     const ScanHistory = (await import('../models/ScanHistory.js')).default;
     const ChatLog = (await import('../models/ChatLog.js')).default;
     const [totalScans, totalChats] = await Promise.all([
@@ -188,7 +224,6 @@ export const me = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-// PATCH /api/auth/me — update the display name (min 2 chars).
 export const updateName = async (req, res, next) => {
   try {
     const { name } = req.body;
@@ -206,7 +241,6 @@ export const updateName = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-// POST /api/auth/change-password — verify current password, set a new one.
 export const changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
@@ -219,13 +253,12 @@ export const changePassword = async (req, res, next) => {
       throw new ApiError(401, 'Current password is incorrect');
     }
     user.password = newPassword;
-    user.refreshTokens = []; // force re-login on all devices
+    user.refreshTokens = [];
     await user.save();
     res.json({ success: true, message: 'Password updated successfully' });
   } catch (err) { next(err); }
 };
 
-// PATCH /api/auth/me/language — update the user's language preference.
 export const updateLanguage = async (req, res, next) => {
   try {
     const { language } = req.body;
@@ -250,28 +283,29 @@ export const updateLanguage = async (req, res, next) => {
 
 // ─── OTP-based password reset ─────────────────────────────
 
-// POST /api/auth/forgot-password/send-otp — send 6-digit OTP to email
+// Security: Always return the same generic success response regardless of
+// whether the email exists. This prevents user enumeration attacks.
 export const sendOTP = async (req, res, next) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
-    if (!user) throw new ApiError(404, 'No account with that email');
 
+    if (user) {
       const otp = crypto.randomInt(100000, 1000000).toString();
-    user.passwordResetOTP = hashToken(otp);
-    user.passwordResetOTPExpire = Date.now() + 10 * 60 * 1000; // 10 min
-    await user.save();
+      user.passwordResetOTP = hashToken(otp);
+      user.passwordResetOTPExpire = Date.now() + 10 * 60 * 1000;
+      await user.save();
+      await sendOTPEmail(email, otp);
+    }
 
-    await sendOTPEmail(email, otp);
     res.json({
       success: true,
       maskedEmail: maskEmail(email),
-      message: 'OTP sent to your email',
+      message: 'If an account with that email exists, an OTP has been sent.',
     });
   } catch (err) { next(err); }
 };
 
-// POST /api/auth/forgot-password/verify-otp — verify OTP
 export const verifyOTP = async (req, res, next) => {
   try {
     const { email, otp } = req.body;
@@ -280,7 +314,6 @@ export const verifyOTP = async (req, res, next) => {
     if (user.passwordResetOTPExpire < Date.now()) throw new ApiError(400, 'OTP has expired');
     if (user.passwordResetOTP !== hashToken(otp)) throw new ApiError(400, 'Invalid OTP');
 
-    // OTP verified — generate a short-lived reset token
     const resetToken = generateToken();
     user.passwordResetToken = hashToken(resetToken);
     user.passwordResetExpire = Date.now() + 10 * 60 * 1000;
@@ -288,11 +321,10 @@ export const verifyOTP = async (req, res, next) => {
     user.passwordResetOTPExpire = undefined;
     await user.save();
 
-    res.json({ success: true, message: 'OTP verified' });
+    res.json({ success: true, message: 'OTP verified', resetToken });
   } catch (err) { next(err); }
 };
 
-// POST /api/auth/forgot-password/reset — reset password with OTP-verified token
 export const resetPasswordWithOTP = async (req, res, next) => {
   try {
     const { resetToken, password } = req.body;
@@ -311,21 +343,32 @@ export const resetPasswordWithOTP = async (req, res, next) => {
 
 // ─── 2FA endpoints ────────────────────────────────────────
 
-// POST /api/auth/2fa/verify — verify 2FA after login
+// Security: Uses a signed twoFactorToken instead of accepting userId in body.
 export const verify2FA = async (req, res, next) => {
   try {
-    const { userId, otp, trustDevice } = req.body;
-    const user = await User.findById(userId).select('+twoFactorSecret');
+    const { twoFactorToken, otp } = req.body;
+
+    if (!twoFactorToken) {
+      throw new ApiError(400, 'twoFactorToken is required');
+    }
+
+    let decoded;
+    try {
+      decoded = verifyTwoFactorToken(twoFactorToken);
+    } catch {
+      throw new ApiError(401, 'Invalid or expired 2FA token');
+    }
+
+    const user = await User.findById(decoded.sub).select('+twoFactorSecret');
     if (!user) throw new ApiError(404, 'User not found');
 
-    // For simplicity, use a 6-digit OTP match (can be upgraded to TOTP)
-    if (user.twoFactorSecret !== hashToken(otp)) {
+    if (!user.twoFactorSecret || user.twoFactorSecret !== hashToken(otp)) {
       throw new ApiError(401, 'Invalid verification code');
     }
 
     const { access, refresh } = issueTokens(user);
     user.refreshTokens.push(refresh);
-    if (trustDevice) user.twoFactorSecret = undefined; // bypass next time (simplified)
+    user.twoFactorSecret = undefined;
     await user.save();
 
     res.cookie('refreshToken', refresh, cookieOpts);
@@ -339,17 +382,44 @@ export const verify2FA = async (req, res, next) => {
 
 // ─── Enhanced login with device tracking ──────────────────
 
-// POST /api/auth/login-enhanced — login with device tracking + suspicious detection
+// Security improvements:
+//  - Brute-force protection (failedLoginAttempts, lockedUntil)
+//  - Email verification check
+//  - Secure 2FA flow using signed token
 export const loginEnhanced = async (req, res, next) => {
   try {
     const { email, password, device, location } = req.body;
-    const user = await User.findOne({ email }).select('+password +refreshTokens');
-    if (!user || !(await user.comparePassword(password))) {
+    const user = await User.findOne({ email }).select('+password +refreshTokens +failedLoginAttempts +lockedUntil');
+
+    if (!user) {
       throw new ApiError(401, 'Invalid credentials');
     }
     if (!user.isActive) throw new ApiError(403, 'Account disabled');
 
-    // Detect suspicious login
+    if (user.lockedUntil && user.lockedUntil > Date.now()) {
+      const remainingMs = user.lockedUntil - Date.now();
+      const remainingMin = Math.ceil(remainingMs / 60000);
+      throw new ApiError(403, `Account locked due to too many failed attempts. Try again in ${remainingMin} minutes.`);
+    }
+
+    const passwordMatch = await user.comparePassword(password);
+    if (!passwordMatch) {
+      user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+      if (user.failedLoginAttempts >= config.security.maxLoginAttempts) {
+        user.lockedUntil = Date.now() + config.security.lockoutDuration;
+        logger.warn(`Account locked: ${email} after ${user.failedLoginAttempts} failed attempts`, { email, ip: req.ip });
+      }
+      await user.save();
+      throw new ApiError(401, 'Invalid credentials');
+    }
+
+    if (!user.isEmailVerified) {
+      throw new ApiError(403, 'Please verify your email address before logging in.');
+    }
+
+    user.failedLoginAttempts = 0;
+    user.lockedUntil = null;
+
     const isNewDevice = device && user.lastLoginDevice && user.lastLoginDevice !== device;
     const isNewLocation = location && user.lastLoginLocation && user.lastLoginLocation !== location;
     const isSuspicious = isNewDevice || isNewLocation;
@@ -358,7 +428,6 @@ export const loginEnhanced = async (req, res, next) => {
       await sendSuspiciousLoginEmail(user.email, device || 'Unknown', location || 'Unknown');
     }
 
-    // Update login tracking
     user.lastLogin = new Date();
     user.lastLoginIp = req.ip || '';
     user.lastLoginLocation = location || user.lastLoginLocation;
@@ -372,16 +441,15 @@ export const loginEnhanced = async (req, res, next) => {
     });
     if (user.loginHistory.length > 50) user.loginHistory = user.loginHistory.slice(-50);
 
-    // Check 2FA
     if (user.twoFactorEnabled) {
-    const otp = crypto.randomInt(100000, 1000000).toString();
+      const otp = crypto.randomInt(100000, 1000000).toString();
       user.twoFactorSecret = hashToken(otp);
       await user.save();
-      // In production, send OTP via email/SMS here
+      const twoFactorToken = signTwoFactorToken(user._id.toString());
       return res.json({
         success: true,
         requires2FA: true,
-        userId: user._id,
+        twoFactorToken,
         deviceInfo: { device: device || 'Unknown', location: location || 'Unknown', time: new Date().toISOString() },
         message: '2FA verification required',
       });

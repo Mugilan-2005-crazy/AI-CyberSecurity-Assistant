@@ -18,7 +18,7 @@ const devFormat = printf(({ level, message, timestamp: ts, ...meta }) => {
 
 const logger = winston.createLogger({
   level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
-  format: json(),
+  format: combine(timestamp(), json()),
   transports: [new winston.transports.Console()],
 });
 
@@ -30,5 +30,12 @@ if (process.env.NODE_ENV !== 'production') {
     })
   );
 }
+
+export const createRequestLogger = (reqId) => ({
+  info: (message, meta = {}) => logger.info(message, { ...meta, reqId }),
+  warn: (message, meta = {}) => logger.warn(message, { ...meta, reqId }),
+  error: (message, meta = {}) => logger.error(message, { ...meta, reqId }),
+  debug: (message, meta = {}) => logger.debug(message, { ...meta, reqId }),
+});
 
 export default logger;

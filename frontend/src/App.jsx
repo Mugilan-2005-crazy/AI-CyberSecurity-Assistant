@@ -39,10 +39,16 @@ const QrChecker = lazy(() => import('./pages/modules/QrChecker.jsx'));
 const Chatbot = lazy(() => import('./pages/modules/Chatbot.jsx'));
 const AIChatbot = lazy(() => import('./pages/modules/AIChatbot.jsx'));
 const ReportGenerator = lazy(() => import('./pages/modules/ReportGenerator.jsx'));
+  const AIAnalyzer = lazy(() => import('./pages/modules/AIAnalyzer.jsx'));
+  const ThreatIntelCenter = lazy(() => import('./pages/ThreatIntelCenter.jsx'));
+  const NotificationCenter = lazy(() => import('./pages/NotificationCenter.jsx'));
 
 // Admin
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers.jsx'));
 const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics.jsx'));
+const SOCDashboard = lazy(() => import('./pages/admin/SOCDashboard.jsx'));
+const ExecutiveDashboard = lazy(() => import('./pages/admin/ExecutiveDashboard.jsx'));
+const AIIncidentReportCenter = lazy(() => import('./pages/admin/AIIncidentReportCenter.jsx'));
 
 const Fallback = () => (
   <div className="flex h-[60vh] items-center justify-center">
@@ -88,10 +94,16 @@ export default function App() {
           <Route path="chat" element={<Chatbot />} />
           <Route path="report" element={<ReportGenerator />} />
           <Route path="dashboard/ai-chatbot" element={<AIChatbot />} />
+          <Route path="ai-analyzer" element={<AIAnalyzer />} />
+          <Route path="threat-intel" element={<ThreatIntelCenter />} />
+          <Route path="notifications" element={<NotificationCenter />} />
 
           {/* Admin-only */}
           <Route path="admin/users" element={<ProtectedRoute role="admin"><AdminUsers /></ProtectedRoute>} />
           <Route path="admin/analytics" element={<ProtectedRoute role="admin"><AdminAnalytics /></ProtectedRoute>} />
+          <Route path="admin/soc" element={<ProtectedRoute role="admin"><SOCDashboard /></ProtectedRoute>} />
+          <Route path="admin/executive" element={<ProtectedRoute role={['admin','security_manager']}><ExecutiveDashboard /></ProtectedRoute>} />
+          <Route path="admin/incident-reports" element={<ProtectedRoute role={['admin','security_manager']}><AIIncidentReportCenter /></ProtectedRoute>} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />

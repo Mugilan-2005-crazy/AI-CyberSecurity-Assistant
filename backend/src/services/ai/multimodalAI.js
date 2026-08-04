@@ -5,6 +5,9 @@
  * Uses Gemini Vision for images and videos, and text analysis
  * for PDFs/DOCX. Falls back to text guidance when vision is
  * unavailable.
+ *
+ * Initialization is lazy (on first use) to avoid blocking
+ * app startup during tests.
  */
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import config from '../../config/index.js';
@@ -18,33 +21,39 @@ let visionModel = null;
 let textModel = null;
 let currentVisionModelName = null;
 let currentTextModelName = null;
+let initialized = false;
 const FALLBACK_VISION_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-flash-latest', 'gemini-pro-latest'];
 const FALLBACK_TEXT_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-flash-latest', 'gemini-pro-latest'];
 
-if (config.gemini.apiKey) {
-  genAI = new GoogleGenerativeAI(config.gemini.apiKey);
-  for (const modelName of FALLBACK_VISION_MODELS) {
-    try {
-      visionModel = genAI.getGenerativeModel({ model: modelName });
-      currentVisionModelName = modelName;
-      break;
-    } catch (err) {
-      logger.warn(`[multimodalAI] Failed to init vision model ${modelName}: ${err.message}`);
+const ensureInitialized = () => {
+  if (initialized) return;
+  initialized = true;
+
+  if (config.gemini.apiKey) {
+    genAI = new GoogleGenerativeAI(config.gemini.apiKey);
+    for (const modelName of FALLBACK_VISION_MODELS) {
+      try {
+        visionModel = genAI.getGenerativeModel({ model: modelName });
+        currentVisionModelName = modelName;
+        break;
+      } catch (err) {
+        logger.warn(`[multimodalAI] Failed to init vision model ${modelName}: ${err.message}`);
+      }
     }
-  }
-  for (const modelName of FALLBACK_TEXT_MODELS) {
-    try {
-      textModel = genAI.getGenerativeModel({ model: modelName });
-      currentTextModelName = modelName;
-      break;
-    } catch (err) {
-      logger.warn(`[multimodalAI] Failed to init text model ${modelName}: ${err.message}`);
+    for (const modelName of FALLBACK_TEXT_MODELS) {
+      try {
+        textModel = genAI.getGenerativeModel({ model: modelName });
+        currentTextModelName = modelName;
+        break;
+      } catch (err) {
+        logger.warn(`[multimodalAI] Failed to init text model ${modelName}: ${err.message}`);
+      }
     }
+    logger.info('[multimodalAI] Gemini models initialized', { visionModel: currentVisionModelName, textModel: currentTextModelName });
+  } else {
+    logger.warn('[multimodalAI] Gemini API key not configured, vision will be unavailable');
   }
-  logger.info('[multimodalAI] Gemini models initialized', { visionModel: currentVisionModelName, textModel: currentTextModelName });
-} else {
-  logger.warn('[multimodalAI] Gemini API key not configured, vision will be unavailable');
-}
+};
 
 const SYSTEM_INSTRUCTION = [
   'You are "CyberSec File Analyzer", a specialized cybersecurity file analyst.',
@@ -64,9 +73,10 @@ const withTimeout = (promise, ms = 30000) => {
 };
 
 const askGeminiText = async (prompt, language = 'en') => {
+  ensureInitialized();
   if (!textModel) throw new Error('Gemini not configured');
   const langInstruction = language === 'ta' ? 'Reply in Tamil.' : language === 'hi' ? 'Reply in Hindi.' : language === 'tanglish' ? 'Reply in Tanglish.' : 'Reply in English.';
-  
+
   const tryTextModel = async (modelName) => {
     const model = genAI.getGenerativeModel({ model: modelName });
     const result = await withTimeout(model.generateContent({
@@ -97,6 +107,7 @@ const askGeminiText = async (prompt, language = 'en') => {
 };
 
 const askGeminiVision = async (prompt, imageBuffer, mimeType = 'image/png', language = 'en') => {
+  ensureInitialized();
   if (!visionModel) throw new Error('Gemini Vision not configured');
 
   const base64Data = imageBuffer.toString('base64');
@@ -206,7 +217,7 @@ const analyzePdf = async (buffer, filename, language, userQuery, userId = null) 
     return result;
   } catch (err) {
     logger.warn(`Gemini PDF analysis failed: ${err.message}`);
-    
+
     const fallbackResult = {
       success: false,
       analysis: 'AI analysis failed. Document extracted successfully but analysis unavailable.',
@@ -222,6 +233,7 @@ const analyzePdf = async (buffer, filename, language, userQuery, userId = null) 
 };
 
 const analyzeImage = async (buffer, filename, mimeType, language, userQuery) => {
+  ensureInitialized();
   const prompt = userQuery || 'Analyze this image for security threats: phishing indicators, suspicious URLs, malware warnings, QR codes, sensitive data exposure, social engineering visuals. Provide a structured security assessment.';
 
   logger.info('[analyzeImage] Starting image analysis', {
@@ -438,7 +450,7 @@ export const analyzeAttachment = async (buffer, filename, mimeType, language, us
       logger.info('[multimodalAI] Image analysis complete', { filename, provider, imageAnalyzed: result.imageAnalyzed, replyPreview: (result.analysis || '').slice(0, 100) });
       await saveAttachmentAnalysis(userId, filename, fileType, buffer.length, { ...result, provider, language });
       const report = generateSecurityReport(result, filename, fileType);
-      return { ...result, fileType, filename, metadata, provider, report };
+      return { ...result, fileType, filename, provider, report };
     }
     if (fileType === 'video') {
       const result = await analyzeVideo(buffer, filename, language, userQuery);

@@ -10,40 +10,87 @@
 
 import ScanHistory from '../models/ScanHistory.js';
 import Notification from '../models/Notification.js';
+import AIAnalysis from '../models/AIAnalysis.js';
 import logger from '../utils/logger.js';
+import { emitScanStarted, emitScanCompleted, createNotification } from '../socket/realtimeNotificationService.js';
 
-/**
- * Persist a completed scan.
- * @param {string} userId  - authenticated user id
- * @param {string} type    - 'url' | 'password' | 'email' | 'file' | 'qr'
- * @param {string} input   - (optionally redacted) scanned target
- * @param {object} result  - scanner output containing riskScore + verdict
- * @param {string} ip      - request IP for auditing
- * @returns {Promise<object|null>} the saved doc, or null on DB failure
- */
+let aiAnalysisEnabled = true;
+
 export const recordScan = async (userId, type, input, result, ip) => {
   const riskScore = result.riskScore ?? 0;
   const verdict = result.verdict ?? 'unknown';
 
+  emitScanStarted(userId, null, type, input).catch((err) => {
+    logger.warn(`[scanService] Failed to emit scan.started: ${err.message}`);
+  });
+
   try {
-    // Write the history row atomically.
     const scan = await ScanHistory.create({ user: userId, type, input, riskScore, verdict, details: result, ip });
 
-    // If the result is a threat, push an in-app notification.
     if (verdict === 'malicious' || verdict === 'suspicious') {
-      await Notification.create({
-        user: userId,
+      await createNotification(userId, {
         title: 'Threat detected',
         message: `Your ${type} scan flagged a ${verdict} result (risk ${riskScore}/100).`,
         type: verdict === 'malicious' ? 'danger' : 'warning',
+        category: 'scan_complete',
+        severity: verdict === 'malicious' ? 'high' : 'medium',
+        metadata: { scanId: scan._id, scanType: type, riskScore },
       });
     }
+
+    emitScanCompleted(userId, scan._id ?? null, result).catch((err) => {
+      logger.warn(`[scanService] Failed to emit scan.completed: ${err.message}`);
+    });
+
+    if (aiAnalysisEnabled && (verdict === 'malicious' || verdict === 'suspicious')) {
+      triggerAIAnalysis(scan._id, type, input, userId).catch((err) => {
+        logger.warn(`[scanService] Auto AI analysis failed for scan ${scan._id}: ${err.message}`);
+      });
+    }
+
     return scan;
   } catch (err) {
-    // Graceful degradation: do not crash the request if the DB is down.
     logger.warn(`Scan history unavailable (${err.message}) — continuing without persistence.`);
+    emitScanCompleted(userId, null, result).catch(() => {});
     return null;
   }
 };
+
+async function triggerAIAnalysis(scanId, type, input, userId) {
+  try {
+    const existing = await AIAnalysis.findOne({ scanId, user: userId });
+    if (existing) return;
+
+    const doc = await AIAnalysis.create({
+      user: userId,
+      scanId,
+      scanType: type,
+      scanInput: input,
+      threatScore: 0,
+      riskLevel: 'Low',
+      confidenceScore: 0,
+      executiveSummary: 'AI analysis is being processed...',
+      technicalSummary: '',
+      rootCause: '',
+      businessImpact: '',
+      recommendedActions: [],
+      mitreTechniques: [],
+      cvssScore: null,
+      cvssVector: '',
+      cvssVersion: '3.1',
+      aiProvider: 'pending',
+      aiProvidersUsed: [],
+      geminiContribution: '',
+      ollamaContribution: '',
+      status: 'pending',
+      metadata: { autoTriggered: true },
+    });
+
+    const { analyzeScan } = await import('./ai/socAnalyzer.js');
+    await analyzeScan(scanId, userId);
+  } catch (err) {
+    logger.error(`[scanService] Auto AI analysis error: ${err.message}`);
+  }
+}
 
 export default { recordScan };

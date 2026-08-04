@@ -3,6 +3,15 @@
  * ------------------------------------------------------------
  * File upload endpoints for multimodal AI chat analysis.
  * Mounted at /api/ai/upload.
+ * @openapi
+ * components:
+ *   schemas:
+ *     FileAnalyzeRequest:
+ *       type: object
+ *       properties:
+ *         file:
+ *           type: string
+ *           format: binary
  */
 import express from 'express';
 import multer from 'multer';
@@ -35,6 +44,25 @@ const upload = multer({
 
 router.use(protect, detectLanguage);
 
+/**
+ * @openapi
+ * /api/ai/upload/analyze:
+ *   post:
+ *     tags:
+ *       - AI Upload
+ *     summary: Upload and analyze file with AI
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/FileAnalyzeRequest'
+ *     responses:
+ *       200:
+ *         description: File analysis result
+ */
 router.post(
   '/analyze',
   rateLimiter(60 * 1000, 10, 'Too many uploads, slow down'),
@@ -42,6 +70,19 @@ router.post(
   uploadAndAnalyze
 );
 
+/**
+ * @openapi
+ * /api/ai/upload/history:
+ *   get:
+ *     tags:
+ *       - AI Upload
+ *     summary: Get upload history
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Upload history
+ */
 router.get('/history', getUploadHistory);
 
 export default router;

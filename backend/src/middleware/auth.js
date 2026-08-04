@@ -3,11 +3,18 @@
  * ------------------------------------------------------------
  * Protects routes by validating the Bearer JWT access token
  * and attaching the authenticated user to req.user.
+ *
+ * Security improvements (Batch #2):
+ *  - Verifies user still exists in the database
+ *  - Verifies account is still active (not disabled/suspended)
+ *  - Rejects deleted, suspended, or disabled accounts
+ *  - Uses lightweight query (only selects needed fields)
  */
 import { verifyAccessToken } from '../utils/jwt.js';
 import ApiError from '../utils/ApiError.js';
+import User from '../models/User.js';
 
-export const protect = (req, _res, next) => {
+export const protect = async (req, _res, next) => {
   try {
     const header = req.headers.authorization || '';
     if (!header.startsWith('Bearer ')) {
@@ -15,9 +22,34 @@ export const protect = (req, _res, next) => {
     }
     const token = header.split(' ')[1];
     const decoded = verifyAccessToken(token);
-    req.user = { id: decoded.sub, role: decoded.role, email: decoded.email, language: decoded.language || 'en' };
+
+    // Security: Verify the user still exists and is active.
+    // This prevents deleted/disabled users from using valid tokens
+    // until they expire. Uses a lightweight query for performance.
+    const user = await User.findById(decoded.sub).select('role email language isActive isEmailVerified').lean();
+
+    if (!user) {
+      throw new ApiError(401, 'User no longer exists');
+    }
+
+    if (!user.isActive) {
+      throw new ApiError(403, 'Account has been disabled');
+    }
+
+    req.user = {
+      id: decoded.sub,
+      role: user.role,
+      email: user.email,
+      language: user.language || 'en',
+      isEmailVerified: user.isEmailVerified,
+    };
     next();
   } catch (err) {
+    // Preserve the ApiError's status code if it's already an ApiError.
+    // This ensures 403 (disabled account) isn't rewritten as 401.
+    if (err instanceof ApiError) {
+      return next(err);
+    }
     next(new ApiError(401, 'Not authorized, token failed'));
   }
 };

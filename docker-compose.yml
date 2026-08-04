@@ -1,0 +1,159 @@
+# ============================================================
+# Docker Compose — Production Stack
+# ============================================================
+# Usage:
+#   docker compose up -d          # start all services
+#   docker compose down           # stop all services
+#   docker compose down -v        # stop and remove volumes (WARNING: deletes data)
+#   docker compose logs -f        # view logs
+#   docker compose ps             # list running services
+# ============================================================
+
+version: '3.8'
+
+services:
+  # --------------------------------------------------------
+  # MongoDB
+  # --------------------------------------------------------
+  mongodb:
+    image: mongo:7
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: cybersec
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # Backend API
+  # --------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      API_PREFIX: /api
+      # MongoDB connection (Docker Compose internal DNS)
+      MONGODB_URI: ${MONGODB_URI}
+      # JWT secrets (set these via environment or .env file)
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_EXPIRE: 15m
+      JWT_REFRESH_EXPIRE: 30d
+      # CORS — frontend is served via nginx on the same host
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost}
+      # Email
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      EMAIL_FROM: ${EMAIL_FROM}
+      # AI providers
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      OLLAMA_URL: http://ollama:11434
+      OLLAMA_TIMEOUT: 30000
+      # VirusTotal
+      VIRUSTOTAL_API_KEY: ${VIRUSTOTAL_API_KEY}
+      # Threat Intelligence Providers (Phase 2)
+      ABUSEIPDB_API_KEY: ${ABUSEIPDB_API_KEY}
+      OTX_API_KEY: ${OTX_API_KEY}
+      NVD_API_KEY: ${NVD_API_KEY}
+      THREAT_INTEL_CACHE_TTL: ${THREAT_INTEL_CACHE_TTL:-3600000}
+      THREAT_INTEL_TIMEOUT: ${THREAT_INTEL_TIMEOUT:-15000}
+      THREAT_INTEL_MAX_RETRIES: ${THREAT_INTEL_MAX_RETRIES:-3}
+      # Admin bootstrap
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@cybersec.io}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      ADMIN_NAME: ${ADMIN_NAME:-Super Admin}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:5000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    # Uncomment and configure if you need Ollama on the host
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
+
+  # --------------------------------------------------------
+  # Frontend (nginx serving built assets)
+  # --------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # --------------------------------------------------------
+  # Ollama (optional local AI)
+  # --------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    restart: always
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "ollama", "--version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    # Uncomment for GPU acceleration (NVIDIA)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+# --------------------------------------------------------
+# Networks
+# --------------------------------------------------------
+networks:
+  app-network:
+    driver: bridge
+
+# --------------------------------------------------------
+# Volumes (persistent data)
+# --------------------------------------------------------
+volumes:
+  mongodb_data:
+    driver: local
+  ollama_data:
+    driver: local

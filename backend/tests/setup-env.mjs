@@ -1,0 +1,17 @@
+process.env.NODE_ENV = 'test';
+process.env.ADMIN_PASSWORD = 'testpass123';
+process.env.ADMIN_EMAIL = 'admin@test.com';
+process.env.ADMIN_NAME = 'Test Admin';
+process.env.JWT_SECRET = 'test_jwt_secret';
+process.env.JWT_REFRESH_SECRET = 'test_refresh_secret';
+process.env.MONGODB_URI = 'mongodb://127.0.0.1:27017/cybersec_test';
+process.env.CLIENT_ORIGIN = 'http://localhost';
+process.env.PORT = '5001';
+process.env.API_PREFIX = '/api';
+process.env.VIRUSTOTAL_API_KEY = '';
+process.env.ABUSEIPDB_API_KEY = '';
+process.env.OTX_API_KEY = '';
+process.env.NVD_API_KEY = '';
+process.env.GEMINI_API_KEY = '';
+process.env.OLLAMA_URL = 'http://localhost:11434';
+process.env.OLLAMA_TIMEOUT = '1000';

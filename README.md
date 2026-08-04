@@ -1,5 +1,6 @@
 # 🛡️ Cyber Security Assistant
 
+![CI/CD](https://github.com/Mugilan-2005-crazy/AI-CyberSecurity-Assistant/actions/workflows/ci.yml/badge.svg)
 ![Node.js](https://img.shields.io/badge/Node.js-18%2B-green?logo=node.js)
 ![Express](https://img.shields.io/badge/Express-4.19-black?logo=express)
 ![React](https://img.shields.io/badge/React-18.3-blue?logo=react)
@@ -9,6 +10,146 @@
 ![Ollama](https://img.shields.io/badge/Ollama-Llama_3.1-blue?logo=ollama)
 
 > Production-ready, AI-powered Cyber Security Assistant — full-stack (React + Vite / Node + Express / MongoDB Atlas) with JWT auth, 7 security modules, an AI chatbot with multimodal analysis, admin panel, and PDF reporting.
+
+---
+
+## 🐳 Docker Deployment
+
+### Prerequisites
+- Docker 24+
+- Docker Compose 2.20+ (or Docker Desktop)
+- At least 4GB RAM (8GB recommended for Ollama)
+- 10GB free disk space
+
+### Container Architecture
+
+```mermaid
+flowchart TD
+    User[👤 User Browser] --> Frontend[Frontend Container<br/>nginx:alpine :80]
+    Frontend -->|/api/*| Backend[Backend Container<br/>node:lts-alpine :5000]
+    Backend --> MongoDB[(MongoDB Container<br/>mongo:7)]
+    Backend -->|Optional| Ollama[Ollama Container<br/>ollama/ollama :11434]
+    Frontend -.->|Direct static files| User
+```
+
+### Quick Start
+
+1. Clone the repository and navigate to the project root
+2. Copy environment files:
+   ```bash
+   cp backend/.env.example backend/.env
+   cp frontend/.env.example frontend/.env
+   ```
+3. Edit `backend/.env` and set at least:
+   - `JWT_SECRET` — a long random string
+   - `JWT_REFRESH_SECRET` — another long random string
+   - `GEMINI_API_KEY` — your Google Gemini key
+   - `MONGO_ROOT_PASSWORD` — MongoDB root password (default: `admin123`)
+4. Start the stack:
+   ```bash
+   docker compose up -d
+   ```
+5. Seed the admin user:
+   ```bash
+   docker compose exec backend npm run seed
+   ```
+6. Verify health:
+   ```bash
+   curl http://localhost/api/health
+   ```
+
+### Production Configuration
+
+#### Environment Variables
+
+All secrets are injected via environment variables. Never hardcode secrets in images.
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `JWT_SECRET` | JWT access token signing secret | *(required)* |
+| `JWT_REFRESH_SECRET` | JWT refresh token signing secret | *(required)* |
+| `GEMINI_API_KEY` | Google Gemini API key | *(required for AI)* |
+| `CLIENT_ORIGIN` | Allowed CORS origin | `http://localhost` |
+| `MONGO_ROOT_PASSWORD` | MongoDB root password | `admin123` |
+| `ADMIN_EMAIL` | Bootstrap admin email | `admin@cybersec.io` |
+| `ADMIN_PASSWORD` | Bootstrap admin password | `Admin@123456` |
+
+### Docker Compose Commands
+
+```bash
+# Start all services in detached mode
+docker compose up -d
+
+# Build images after code changes
+docker compose build
+
+# View logs
+docker compose logs -f
+
+# View logs for a specific service
+docker compose logs -f backend
+
+# Stop all services (preserves data volumes)
+docker compose down
+
+# Stop and remove volumes (WARNING: deletes all data)
+docker compose down -v
+
+# Restart a specific service
+docker compose restart backend
+```
+
+### Production Run
+
+```bash
+# Start with production environment
+docker compose up -d
+
+# Tail logs
+docker compose logs -f --tail=100
+```
+
+### Development Run
+
+For local development without Docker, see the [Installation](#-installation) section above.
+
+To run the full stack with Docker during development:
+
+```bash
+# Start with live reload (requires volume mounts in docker-compose.override.yml)
+docker compose up -d
+```
+
+### Image Details
+
+| Service | Base Image | Exposed Port | Healthcheck |
+|---------|-----------|--------------|-------------|
+| Backend | `node:lts-alpine` | 5000 | `GET /api/health` |
+| Frontend | `nginx:alpine` | 80 | `GET /` |
+| MongoDB | `mongo:7` | 27017 | `mongosh ping` |
+| Ollama | `ollama/ollama:latest` | 11434 | `ollama --version` |
+
+### Troubleshooting
+
+#### Backend won't start
+- Check logs: `docker compose logs backend`
+- Verify MongoDB is healthy: `docker compose ps mongodb`
+- Ensure `JWT_SECRET` and `JWT_REFRESH_SECRET` are set
+
+#### Frontend shows blank page
+- Check nginx logs: `docker compose logs frontend`
+- Verify backend healthcheck passes: `docker compose ps backend`
+- Ensure `CLIENT_ORIGIN` matches the frontend URL in production
+
+#### MongoDB connection refused
+- Wait for MongoDB healthcheck to pass: `docker compose ps mongodb`
+- Verify `MONGODB_URI` in backend `.env` uses Docker Compose service name (`mongodb`)
+- Check credentials match `MONGO_INITDB_ROOT_USERNAME` / `MONGO_INITDB_ROOT_PASSWORD`
+
+#### Ollama not responding
+- Check health: `docker compose ps ollama`
+- For GPU acceleration, uncomment the `deploy` section in `docker-compose.yml`
+- Ensure sufficient RAM (4GB minimum, 8GB+ recommended)
 
 ---
 
@@ -628,33 +769,37 @@ npm run build
 ## 🔒 Security Features
 
 ### Authentication & Authorization
-- **JWT Authentication** — Short-lived access tokens + refresh tokens in httpOnly cookies
+- **JWT Authentication** — Short-lived access tokens (15m) + refresh tokens (30d) in httpOnly cookies
+- **JWT Token Identification** — Each token includes a unique `jti` claim for revocation support
 - **Role-Based Access Control (RBAC)** — Admin and user roles with middleware enforcement
 - **Password Hashing** — bcrypt with 12 rounds
 - **Secure OTP Generation** — Cryptographically secure random integers via `crypto.randomInt()`
+- **Account Lockout Protection** — Temporary lockout after repeated failed login attempts (configurable)
 
 ### Request Protection
-- **AI Request Timeouts** — 30-second timeout on all Gemini/Ollama/VirusTotal requests
+- **AI Request Timeouts** — Configurable timeout (default 30s) on all Gemini/Ollama/VirusTotal requests
 - **Input Validation** — express-validator on all sensitive routes
-- **Rate Limiting** — Per-route rate limiters (auth: 5/min, chat: 20/min, uploads: 5/min)
+- **Rate Limiting** — Per-route rate limiters (auth: 10/15min, chat: 20/min, scans: 30/min, uploads: 5/min)
 - **NoSQL Injection Prevention** — Mongoose sanitization middleware
 - **XSS Prevention** — Input sanitization, no unsafe `innerHTML`
+- **Request Correlation IDs** — Unique ID for every request, included in logs and error responses
 
 ### Headers & Transport
-- **Helmet Security Headers** — HSTS, CSP, X-Frame-Options, etc.
-- **CORS Protection** — Restricted to configured client origin
+- **Helmet Security Headers** — HSTS, CSP, X-Frame-Options, Permissions-Policy, etc.
+- **CORS Protection** — Restricted to configured client origin (required in production)
 - **Secure Cookies** — `httpOnly`, `secure` in production, `sameSite: 'strict'`
 
 ### Error Handling
 - **Secure Error Responses** — Internal errors hidden in production
-- **Winston Logging** — Structured logs without sensitive data
-- **Global Error Handler** — Centralized error formatting
+- **Winston Logging** — Structured JSON logs in production with request correlation IDs
+- **Global Error Handler** — Centralized error formatting with request tracking
 
 ### Data Protection
 - **Sensitive Data Exclusion** — MongoDB `select: false` on password, tokens, refresh tokens
 - **No Token Leakage** — Reset tokens never returned in API responses
 - **File Security** — Type validation, size limits, blocked extensions
 - **Prompt Injection Detection** — Server-side sanitization before AI calls
+- **Graceful MongoDB Degradation** — Application continues without DB for non-critical operations
 
 ---
 
@@ -668,6 +813,96 @@ node --check src/server.js
 cd frontend
 npm run build
 ```
+
+## 🚀 CI/CD Pipeline
+
+The project includes a GitHub Actions CI/CD pipeline (`.github/workflows/ci.yml`) that runs on every push and pull request to `main` and `develop` branches.
+
+### Pipeline Stages
+
+1. **Backend Tests** — Runs Jest test suite with coverage reporting
+2. **Frontend Build** — Builds production Vite bundle
+3. **Docker Validation** — Builds backend and frontend Docker images
+4. **Security Scan** — Runs `npm audit` on both frontend and backend
+
+### Viewing Pipeline Results
+
+Check the [Actions tab](https://github.com/Mugilan-2005-crazy/AI-CyberSecurity-Assistant/actions) for pipeline runs and artifacts.
+
+## 📚 API Documentation
+
+### Swagger UI (OpenAPI 3.0)
+
+Interactive API documentation is available at:
+
+```
+http://localhost:5000/api/docs
+```
+
+The documentation is automatically generated from JSDoc annotations in the route files via `swagger-jsdoc` and served using `swagger-ui-express`.
+
+### Features
+
+- **Interactive Testing** — Call any endpoint directly from the browser
+- **JWT Authentication** — Use the `/api/auth/login` endpoint to obtain a token, then click "Authorize" in Swagger UI to set the bearer token
+- **Schema Definitions** — All request/response schemas are documented (User, ScanResult, SecurityIncident, SecurityAlert, CVE, ThreatCorrelation)
+- **Tag Organization** — Endpoints are grouped by module: Authentication, Security Scans, AI Chatbot, Security Notes AI, AI Upload, Admin, AI Security Agent, SOC Dashboard, SOAR, Alerts, Threat Intelligence
+
+### Production Notes
+
+- **Development**: Swagger UI is available at `/api/docs`
+- **Production**: Swagger UI is disabled. The raw OpenAPI JSON spec remains available at `/api/docs.json` for tooling integration
+- **Security**: All documented endpoints (except health checks) require JWT bearer authentication
+
+### Raw OpenAPI Spec
+
+Download the raw OpenAPI 3.0 specification:
+
+```bash
+curl http://localhost:5000/api/docs.json
+```
+
+---
+
+## 🏭 Production Deployment Notes
+
+### Environment Variables
+- **Never** commit `.env` files to version control
+- Use strong, randomly generated secrets for `JWT_SECRET` and `JWT_REFRESH_SECRET`
+- Set `NODE_ENV=production` in production deployments
+- Configure `CLIENT_ORIGIN` to your actual frontend URL (do not use `http://localhost` in production)
+- Use MongoDB Atlas or a managed MongoDB service for production data
+
+### Docker Production Tips
+- Use `docker compose up -d` for detached production mode
+- Monitor logs: `docker compose logs -f --tail=100`
+- Set resource limits in `docker-compose.yml` if needed
+- Use Docker secrets or environment variable injection for sensitive values
+- Consider adding a reverse proxy (nginx, Traefik) for TLS termination
+
+### Security Checklist
+- [ ] `JWT_SECRET` and `JWT_REFRESH_SECRET` are strong random strings (64+ characters)
+- [ ] `CLIENT_ORIGIN` is set to your production frontend URL
+- [ ] MongoDB uses strong passwords and network restrictions
+- [ ] SMTP credentials use app passwords (not account passwords)
+- [ ] Gemini API key has appropriate quotas and restrictions
+- [ ] VirusTotal API key is kept secret
+- [ ] Docker images are scanned for vulnerabilities
+- [ ] HTTPS is enforced at the reverse proxy level
+
+## ⚠️ Known Limitations
+
+### 2FA Implementation
+The current Two-Factor Authentication (2FA) implementation is **simplified** and **not TOTP-based**. It uses a hashed OTP comparison rather than standard TOTP algorithms (RFC 6238). For production use, consider upgrading to:
+- `speakeasy` for TOTP generation
+- `qrcode` for QR code provisioning
+- Time-based one-time passwords compatible with Google Authenticator, Authy, etc.
+
+### Test Coverage
+Current test coverage is ~43% statements. The service layer (`src/services/**`) is largely untested. Adding unit tests for the AI router, Ollama service, and security modules would improve confidence in production deployments.
+
+### Ollama GPU Support
+GPU acceleration for Ollama requires NVIDIA Container Toolkit configuration. The current Docker Compose setup uses CPU-only inference.
 
 ---
 

@@ -19,7 +19,7 @@ import logger from '../../utils/logger.js';
 
 const OLLAMA_URL = config.ollama.url;
 const OLLAMA_MODEL = config.ollama.model;
-const REQUEST_TIMEOUT = 30000;
+const REQUEST_TIMEOUT = config.ollama.timeout;
 const SYSTEM_PROMPT_BASE =
   'You are a multilingual cybersecurity assistant. ' +
   'Always answer in the user\'s selected language. ' +

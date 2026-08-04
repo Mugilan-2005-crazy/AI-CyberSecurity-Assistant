@@ -10,6 +10,8 @@ import {
   ShieldCheckIcon, LinkIcon, KeyIcon, EnvelopeIcon, DocumentIcon,
   QrCodeIcon, ChatBubbleLeftRightIcon, DocumentTextIcon,
   UsersIcon, ChartBarIcon, UserCircleIcon, ClockIcon, CogIcon,
+  BeakerIcon, SparklesIcon, GlobeAltIcon, BellIcon, BuildingOfficeIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../context/AuthContext.jsx';
 
@@ -32,9 +34,24 @@ const modules = [
   { to: '/dashboard/ai-chatbot', labelKey: 'chatbot.title', icon: ChatBubbleLeftRightIcon },
 ];
 
+const aiModules = [
+  { to: '/ai-analyzer', labelKey: 'AI Analyst', icon: SparklesIcon },
+];
+
+const threatIntelNav = [
+  { to: '/threat-intel', labelKey: 'Threat Intel Center', icon: GlobeAltIcon },
+];
+
+const alertsNav = [
+  { to: '/notifications', labelKey: 'Notifications', icon: BellIcon },
+];
+
 const adminNav = [
+  { to: '/admin/soc', labelKey: 'dashboard.title', icon: BeakerIcon },
   { to: '/admin/users', labelKey: 'settings.account', icon: UsersIcon },
   { to: '/admin/analytics', labelKey: 'settings.title', icon: ChartBarIcon },
+  { to: '/admin/executive', labelKey: 'Executive Command Center', icon: BuildingOfficeIcon },
+  { to: '/admin/incident-reports', labelKey: 'AI Incident Reports', icon: ExclamationTriangleIcon },
 ];
 
 export default function Sidebar({ open, onClose }) {
@@ -74,7 +91,10 @@ export default function Sidebar({ open, onClose }) {
           <Group title={t('dashboard.allModules').replace(' modules', '')} items={workspace} />
           <Group title={t('modules.urlScanner.title').replace(' Security Scanner', '')} items={modules} />
 
-          {user?.role === 'admin' && <Group title={t('settings.security')} items={adminNav} />}
+          {(user?.role === 'admin' || user?.role === 'security_manager') && <Group title={t('settings.security')} items={adminNav} />}
+          <Group title="AI" items={aiModules} />
+          <Group title="Threat Intel" items={threatIntelNav} />
+          <Group title="Alerts" items={alertsNav} />
         </nav>
 
         <div className="mt-2 px-3 py-2 text-xs text-slate-400 border-t border-slate-200 dark:border-slate-700">

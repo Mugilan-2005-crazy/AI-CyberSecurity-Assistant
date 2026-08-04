@@ -1,15 +1,42 @@
-# Build & runtime for the backend (Render / Docker).
-FROM node:18-alpine
-
+# ============================================================
+# Stage 1 — dependency installer (leverages Docker layer caching)
+# ============================================================
+FROM node:lts-alpine AS deps
 WORKDIR /app
 
-# Install dependencies first for better layer caching.
+# Copy only what's needed for npm install
 COPY package*.json ./
-RUN npm install --omit=dev
+RUN npm ci --only=production --ignore-scripts
 
-COPY . .
+# ============================================================
+# Stage 2 — runtime (small, non-root, healthchecked)
+# ============================================================
+FROM node:lts-alpine
+WORKDIR /app
 
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+# Install wget for lightweight healthchecks
+RUN apk add --no-cache wget
+
+# Copy production node_modules from deps stage
+COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
+
+# Copy application source
+COPY --chown=nodejs:nodejs . .
+
+# Switch to non-root user
+USER nodejs
+
+# Environment
 ENV NODE_ENV=production
 EXPOSE 5000
 
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:5000/api/health | grep -q '"success":true' || exit 1
+
+# Start
 CMD ["npm", "start"]

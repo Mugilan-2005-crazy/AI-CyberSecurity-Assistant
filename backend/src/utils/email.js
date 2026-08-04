@@ -4,21 +4,31 @@
  * Nodemailer transport wrapper. Sends verification and
  * password-reset emails using SMTP credentials from config.
  * Failures are logged but do not crash the request flow.
+ *
+ * Transport is created lazily on first send to avoid
+ * hanging SMTP socket during module import.
  */
 import nodemailer from 'nodemailer';
 import config from '../config/index.js';
 import logger from './logger.js';
 
-const transport = nodemailer.createTransport({
-  host: config.email.host,
-  port: config.email.port,
-  secure: config.email.port === 465,
-  auth: { user: config.email.user, pass: config.email.pass },
-});
+let _transport = null;
+
+const getTransport = () => {
+  if (!_transport) {
+    _transport = nodemailer.createTransport({
+      host: config.email.host,
+      port: config.email.port,
+      secure: config.email.port === 465,
+      auth: { user: config.email.user, pass: config.email.pass },
+    });
+  }
+  return _transport;
+};
 
 export const sendEmail = async ({ to, subject, html }) => {
   try {
-    await transport.sendMail({
+    await getTransport().sendMail({
       from: config.email.from,
       to,
       subject,

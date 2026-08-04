@@ -5,8 +5,7 @@
  * Also used by Module 3 (email threat explanation).
  * ------------------------------------------------------------
  * Responsibilities:
- *   - Initialize the Gemini model once at boot from the API key
- *     stored in environment config (never exposed to the client).
+ *   - Initialize the Gemini model lazily on first use (not at import time)
  *   - Constrain the model to cybersecurity topics only and make
  *     it politely refuse anything out of scope.
  *   - Provide a multi-turn `ask(message, history)` and an
@@ -59,32 +58,37 @@ const SYSTEM_INSTRUCTION = [
   'If context about the user\'s recent scans is provided, use it to give personalized advice.',
 ].join(' ');
 
-// Initialize the model once. `model` stays null when no key is set,
-// which lets callers fall back gracefully via isConfigured().
+// Lazy initialization - model starts null, initialized on first use
 let model = null;
 let currentModelName = null;
 let genAI = null;
+let initialized = false;
 const FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-flash-latest', 'gemini-pro-latest'];
 
-if (config.gemini.apiKey) {
-  genAI = new GoogleGenerativeAI(config.gemini.apiKey);
-  logger.info('[gemini] Gemini API key loaded', { keyLength: config.gemini.apiKey.length, keyExists: true });
-  for (const modelName of FALLBACK_MODELS) {
-    try {
-      model = genAI.getGenerativeModel({
-        model: modelName,
-        systemInstruction: SYSTEM_INSTRUCTION,
-      });
-      currentModelName = modelName;
-      logger.info('[gemini] Gemini text model initialized', { model: modelName });
-      break;
-    } catch (err) {
-      logger.warn(`[gemini] Failed to initialize model ${modelName}: ${err.message}`);
+const ensureInitialized = () => {
+  if (initialized) return;
+  initialized = true;
+  
+  if (config.gemini.apiKey) {
+    genAI = new GoogleGenerativeAI(config.gemini.apiKey);
+    logger.info('[gemini] Gemini API key loaded', { keyLength: config.gemini.apiKey.length, keyExists: true });
+    for (const modelName of FALLBACK_MODELS) {
+      try {
+        model = genAI.getGenerativeModel({
+          model: modelName,
+          systemInstruction: SYSTEM_INSTRUCTION,
+        });
+        currentModelName = modelName;
+        logger.info('[gemini] Gemini text model initialized', { model: modelName });
+        break;
+      } catch (err) {
+        logger.warn(`[gemini] Failed to initialize model ${modelName}: ${err.message}`);
+      }
     }
+  } else {
+    logger.warn('[gemini] Gemini API key not configured');
   }
-} else {
-  logger.warn('[gemini] Gemini API key not configured');
-}
+};
 
 /**
  * Send a chat message to Gemini.
@@ -103,6 +107,7 @@ const withTimeout = (promise, ms = 30000) => {
 };
 
 export const ask = async (message, history = [], language = 'en') => {
+  ensureInitialized();
   if (!model) throw new Error('Gemini API is not configured.');
 
   const langInstructions = {
@@ -140,6 +145,9 @@ export const ask = async (message, history = [], language = 'en') => {
 };
 
 /** True only when a valid Gemini API key was provided at boot. */
-export const isConfigured = () => Boolean(model);
+export const isConfigured = () => {
+  ensureInitialized();
+  return Boolean(model);
+};
 
 export default { ask, isConfigured };
