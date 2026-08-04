@@ -1,0 +1,100 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "cloud-dashboard",
+    "title": "Cloud Dashboard",
+    "description": "Cloud security monitoring dashboard for cloud providers, container scanning, and Kubernetes metrics",
+    "tags": ["cloud", "security", "monitoring"],
+    "timezone": "browser",
+    "refresh": "15s",
+    "time": { "from": "now-1h", "to": "now" },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Cloud Scans",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 4, "x": 0, "y": 0 },
+        "targets": [{ "expr": "cloud_scans_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 2,
+        "title": "Cloud Findings",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 4, "x": 4, "y": 0 },
+        "targets": [{ "expr": "cloud_findings_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 3,
+        "title": "Active Cloud Providers",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 4, "x": 8, "y": 0 },
+        "targets": [{ "expr": "cloud_providers_active", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 4,
+        "title": "Container Images Scanned",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 4, "x": 0, "y": 6 },
+        "targets": [{ "expr": "container_images_scanned_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 5,
+        "title": "Container Vulnerabilities",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 4, "x": 4, "y": 6 },
+        "targets": [{ "expr": "container_vulnerabilities_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" } } }
+      },
+      {
+        "id": 6,
+        "title": "Container Secrets Found",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 4, "x": 8, "y": 6 },
+        "targets": [{ "expr": "container_secrets_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" } } }
+      },
+      {
+        "id": 7,
+        "title": "Kubernetes Resources Scanned",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 4, "x": 12, "y": 6 },
+        "targets": [{ "expr": "kubernetes_resources_scanned_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 8,
+        "title": "Kubernetes High Risk Resources",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 4, "x": 16, "y": 6 },
+        "targets": [{ "expr": "kubernetes_high_risk_resources", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" } } }
+      },
+      {
+        "id": 9,
+        "title": "Cloud Scans Over Time",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+        "targets": [
+          { "expr": "rate(cloud_scans_total[5m])", "refId": "A", "legendFormat": "Scans/sec" }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Container Vulnerabilities Over Time",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+        "targets": [
+          { "expr": "rate(container_vulnerabilities_total[5m])", "refId": "A", "legendFormat": "Vulns/sec" }
+        ]
+      }
+    ],
+    "templating": { "list": [] },
+    "annotations": { "list": [] }
+  },
+  "folderId": 0,
+  "overwrite": false
+}

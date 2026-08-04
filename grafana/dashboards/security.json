@@ -1,0 +1,72 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "security",
+    "title": "Security Dashboard",
+    "description": "Security monitoring dashboard showing alerts, security events, and threat detection metrics",
+    "tags": ["security", "alerts", "monitoring"],
+    "timezone": "browser",
+    "refresh": "15s",
+    "time": { "from": "now-1h", "to": "now" },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Active Alerts",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+        "targets": [{ "expr": "alerts_active", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 5 }, { "color": "red", "value": 10 }] } } }
+      },
+      {
+        "id": 2,
+        "title": "Total Alerts",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+        "targets": [{ "expr": "alerts_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 3,
+        "title": "Alerts by Severity",
+        "type": "piechart",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+        "targets": [
+          { "expr": "alerts_by_severity", "refId": "A", "legendFormat": "{{severity}}" }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Alerts by Type",
+        "type": "piechart",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+        "targets": [
+          { "expr": "alerts_by_type", "refId": "A", "legendFormat": "{{type}}" }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Critical Alerts Over Time",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+        "targets": [
+          { "expr": "alerts_total", "refId": "A", "legendFormat": "Total" },
+          { "expr": "alerts_resolved_total", "refId": "B", "legendFormat": "Resolved" }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Security Events",
+        "type": "table",
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 22 },
+        "targets": [
+          { "expr": "count_over_time(security_logs[5m])", "refId": "A", "legendFormat": "Security Events" }
+        ],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      }
+    ],
+    "templating": { "list": [] },
+    "annotations": { "list": [] }
+  },
+  "folderId": 0,
+  "overwrite": false
+}

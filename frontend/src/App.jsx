@@ -55,6 +55,9 @@ const UserUEBAView = lazy(() => import('./pages/UserUEBAView.jsx'));
 const CloudSecurityDashboard = lazy(() => import('./pages/admin/CloudSecurityDashboard.jsx'));
 const ContainerSecurityDashboard = lazy(() => import('./pages/admin/ContainerSecurityDashboard.jsx'));
 const KubernetesDashboard = lazy(() => import('./pages/admin/KubernetesDashboard.jsx'));
+const ObservabilityDashboard = lazy(() => import('./pages/admin/observability/ObservabilityDashboard.jsx'));
+const SystemOverview = lazy(() => import('./pages/admin/observability/SystemOverview.jsx'));
+const HealthDashboard = lazy(() => import('./pages/admin/observability/HealthDashboard.jsx'));
 
 const Fallback = () => (
   <div className="flex h-[60vh] items-center justify-center">
@@ -116,6 +119,9 @@ export default function App() {
 
           <Route path="admin/cloud-security" element={<ProtectedRoute role={['admin','security_manager','cloud_admin','devops','auditor']}><CloudSecurityDashboard /></ProtectedRoute>} />
           <Route path="admin/container-security" element={<ProtectedRoute role={['admin','container_admin','security_manager','devops','auditor']}><ContainerSecurityDashboard /></ProtectedRoute>} />
+          <Route path="admin/observability" element={<ProtectedRoute role={['admin','security_manager','cloud_admin','container_admin','devops']}><ObservabilityDashboard /></ProtectedRoute>} />
+          <Route path="admin/observability/system" element={<ProtectedRoute role={['admin','security_manager','cloud_admin','container_admin','devops']}><SystemOverview /></ProtectedRoute>} />
+          <Route path="admin/observability/health" element={<ProtectedRoute role={['admin','security_manager','cloud_admin','container_admin','devops']}><HealthDashboard /></ProtectedRoute>} />
           <Route path="admin/kubernetes" element={<ProtectedRoute role={['admin','container_admin','security_manager','devops','auditor']}><KubernetesDashboard /></ProtectedRoute>} />
         </Route>
 

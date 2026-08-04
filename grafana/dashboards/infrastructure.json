@@ -1,0 +1,113 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "infrastructure",
+    "title": "Infrastructure Dashboard",
+    "description": "Infrastructure monitoring dashboard for CPU, memory, disk, MongoDB, Socket.IO, and system metrics",
+    "tags": ["infrastructure", "monitoring"],
+    "timezone": "browser",
+    "refresh": "15s",
+    "time": { "from": "now-1h", "to": "now" },
+    "panels": [
+      {
+        "id": 1,
+        "title": "CPU Usage %",
+        "type": "gauge",
+        "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
+        "targets": [{ "expr": "cpu_usage_percent", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 90 }] } } }
+      },
+      {
+        "id": 2,
+        "title": "Memory Heap Usage",
+        "type": "gauge",
+        "gridPos": { "h": 6, "w": 8, "x": 8, "y": 0 },
+        "targets": [{ "expr": "memory_heap_used_bytes / memory_heap_total_bytes * 100", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 75 }, { "color": "red", "value": 90 }] } } }
+      },
+      {
+        "id": 3,
+        "title": "Disk Usage %",
+        "type": "gauge",
+        "gridPos": { "h": 6, "w": 8, "x": 16, "y": 0 },
+        "targets": [{ "expr": "disk_usage_percent", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 90 }] } } }
+      },
+      {
+        "id": 4,
+        "title": "MongoDB Operations",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 6 },
+        "targets": [{ "expr": "mongo_operations_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 5,
+        "title": "MongoDB Query Time (ms)",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 6, "y": 6 },
+        "targets": [{ "expr": "mongo_query_time_ms", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "ms" } }
+      },
+      {
+        "id": 6,
+        "title": "MongoDB Errors",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 12, "y": 6 },
+        "targets": [{ "expr": "mongo_errors_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" } } }
+      },
+      {
+        "id": 7,
+        "title": "Socket Connections",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 18, "y": 6 },
+        "targets": [{ "expr": "socket_connections", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 8,
+        "title": "Socket Messages Sent",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 10 },
+        "targets": [{ "expr": "socket_messages_sent_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 9,
+        "title": "Socket Messages Received",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 6, "y": 10 },
+        "targets": [{ "expr": "socket_messages_received_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 10,
+        "title": "CPU Load Average",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+        "targets": [
+          { "expr": "cpu_load_average_1m", "refId": "A", "legendFormat": "1m" },
+          { "expr": "cpu_load_average_5m", "refId": "B", "legendFormat": "5m" },
+          { "expr": "cpu_load_average_15m", "refId": "C", "legendFormat": "15m" }
+        ]
+      },
+      {
+        "id": 11,
+        "title": "Memory RSS vs Heap",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+        "targets": [
+          { "expr": "memory_rss_bytes", "refId": "A", "legendFormat": "RSS" },
+          { "expr": "memory_heap_used_bytes", "refId": "B", "legendFormat": "Heap Used" },
+          { "expr": "memory_heap_total_bytes", "refId": "C", "legendFormat": "Heap Total" }
+        ],
+        "fieldConfig": { "defaults": { "unit": "bytes" } }
+      }
+    ],
+    "templating": { "list": [] },
+    "annotations": { "list": [] }
+  },
+  "folderId": 0,
+  "overwrite": false
+}

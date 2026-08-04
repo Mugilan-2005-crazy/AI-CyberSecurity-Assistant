@@ -1,0 +1,110 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'cybersec-enterprise'
+    environment: 'production'
+
+scrape_configs:
+  - job_name: 'backend'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['backend:5000']
+        labels:
+          service: 'backend'
+          component: 'api'
+
+  - job_name: 'backend-metrics'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['backend:5000']
+        labels:
+          path: '/api/observability/metrics'
+          format: 'prometheus'
+
+  - job_name: 'mongodb'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['mongodb:27017']
+        labels:
+          service: 'mongodb'
+
+  - job_name: 'socket-io'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['backend:5000']
+        labels:
+          service: 'backend'
+          component: 'socket'
+
+  - job_name: 'ai-services'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['backend:5000']
+        labels:
+          service: 'backend'
+          component: 'ai'
+
+  - job_name: 'threat-intel'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['backend:5000']
+        labels:
+          service: 'backend'
+          component: 'threat-intel'
+
+  - job_name: 'knowledge-graph'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['backend:5000']
+        labels:
+          service: 'backend'
+          component: 'knowledge-graph'
+
+  - job_name: 'ueba'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['backend:5000']
+        labels:
+          service: 'backend'
+          component: 'ueba'
+
+  - job_name: 'cloud-security'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['backend:5000']
+        labels:
+          service: 'backend'
+          component: 'cloud-security'
+
+  - job_name: 'container-security'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['backend:5000']
+        labels:
+          service: 'backend'
+          component: 'container-security'
+
+  - job_name: 'kubernetes'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['backend:5000']
+        labels:
+          service: 'backend'
+          component: 'kubernetes'
+
+  - job_name: 'alert-engine'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['backend:5000']
+        labels:
+          service: 'backend'
+          component: 'alert-engine'
+
+  - job_name: 'health-checks'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['backend:5000']
+        labels:
+          service: 'backend'
+          component: 'health'

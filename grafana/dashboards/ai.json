@@ -1,0 +1,110 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "ai-dashboard",
+    "title": "AI Dashboard",
+    "description": "AI services monitoring dashboard showing AI requests, tokens, cache hits, and threat intelligence metrics",
+    "tags": ["ai", "monitoring", "performance"],
+    "timezone": "browser",
+    "refresh": "15s",
+    "time": { "from": "now-1h", "to": "now" },
+    "panels": [
+      {
+        "id": 1,
+        "title": "AI Requests Total",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+        "targets": [{ "expr": "ai_requests_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 2,
+        "title": "AI Errors",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+        "targets": [{ "expr": "ai_errors_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" } } }
+      },
+      {
+        "id": 3,
+        "title": "AI Cache Hits",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+        "targets": [{ "expr": "ai_cache_hits_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 4,
+        "title": "Tokens Used",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+        "targets": [{ "expr": "ai_tokens_used_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 5,
+        "title": "AI Request Latency",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+        "targets": [
+          { "expr": "ai_latency_ms_sum / ai_latency_ms_count", "refId": "A", "legendFormat": "Avg AI Latency" }
+        ],
+        "fieldConfig": { "defaults": { "unit": "ms" } }
+      },
+      {
+        "id": 6,
+        "title": "Threat Intel Queries",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 0, "y": 14 },
+        "targets": [{ "expr": "threat_intel_queries_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 7,
+        "title": "Threat Intel Cache Hits",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 6, "y": 14 },
+        "targets": [{ "expr": "threat_intel_cache_hits_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 8,
+        "title": "Knowledge Graph Entities",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 12, "y": 14 },
+        "targets": [{ "expr": "knowledge_graph_entities", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 9,
+        "title": "Knowledge Graph Queries",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 18, "y": 14 },
+        "targets": [{ "expr": "knowledge_graph_queries_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 10,
+        "title": "AI Requests Over Time",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+        "targets": [
+          { "expr": "rate(ai_requests_total[5m])", "refId": "A", "legendFormat": "Requests/sec" }
+        ]
+      },
+      {
+        "id": 11,
+        "title": "Threat Intel Queries Over Time",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+        "targets": [
+          { "expr": "rate(threat_intel_queries_total[5m])", "refId": "A", "legendFormat": "Queries/sec" }
+        ]
+      }
+    ],
+    "templating": { "list": [] },
+    "annotations": { "list": [] }
+  },
+  "folderId": 0,
+  "overwrite": false
+}

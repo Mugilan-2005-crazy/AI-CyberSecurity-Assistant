@@ -1,0 +1,90 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "application",
+    "title": "Application Dashboard",
+    "description": "Application performance dashboard showing HTTP requests, response times, API latency, and error rates",
+    "tags": ["application", "performance"],
+    "timezone": "browser",
+    "refresh": "15s",
+    "time": { "from": "now-1h", "to": "now" },
+    "panels": [
+      {
+        "id": 1,
+        "title": "HTTP Requests by Method",
+        "type": "piechart",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+        "targets": [
+          { "expr": "http_requests_by_method", "refId": "A", "legendFormat": "{{method}}" }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "HTTP Requests by Status Code",
+        "type": "piechart",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+        "targets": [
+          { "expr": "http_requests_by_status", "refId": "A", "legendFormat": "{{status}}" }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Response Time (ms)",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+        "targets": [
+          { "expr": "http_response_time_ms_sum / http_response_time_ms_count", "refId": "A", "legendFormat": "Avg Response Time" },
+          { "expr": "performance_p50_ms", "refId": "B", "legendFormat": "P50" },
+          { "expr": "performance_p95_ms", "refId": "C", "legendFormat": "P95" },
+          { "expr": "performance_p99_ms", "refId": "D", "legendFormat": "P99" }
+        ],
+        "fieldConfig": { "defaults": { "unit": "ms" } }
+      },
+      {
+        "id": 4,
+        "title": "API Latency by Endpoint",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+        "targets": [
+          { "expr": "api_latency_ms_sum / api_latency_ms_count", "refId": "A", "legendFormat": "{{endpoint}}" }
+        ],
+        "fieldConfig": { "defaults": { "unit": "ms" } }
+      },
+      {
+        "id": 5,
+        "title": "Error Rate",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+        "targets": [
+          { "expr": "error_total", "refId": "A", "legendFormat": "Total Errors" }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Performance Percentiles",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 24 },
+        "targets": [
+          { "expr": "performance_p50_ms", "refId": "A", "legendFormat": "P50" },
+          { "expr": "performance_p95_ms", "refId": "B", "legendFormat": "P95" },
+          { "expr": "performance_p99_ms", "refId": "C", "legendFormat": "P99" },
+          { "expr": "performance_avg_ms", "refId": "D", "legendFormat": "Avg" }
+        ],
+        "fieldConfig": { "defaults": { "unit": "ms" } }
+      },
+      {
+        "id": 7,
+        "title": "HTTP Requests Rate",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+        "targets": [
+          { "expr": "rate(http_requests_total[1m])", "refId": "A", "legendFormat": "Requests/sec" }
+        ]
+      }
+    ],
+    "templating": { "list": [] },
+    "annotations": { "list": [] }
+  },
+  "folderId": 0,
+  "overwrite": false
+}

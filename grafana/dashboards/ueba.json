@@ -1,0 +1,66 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "ueba-dashboard",
+    "title": "UEBA Dashboard",
+    "description": "User Entity Behavior Analytics dashboard showing risk scores, anomaly detection, and behavioral metrics",
+    "tags": ["ueba", "analytics", "security"],
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": { "from": "now-1h", "to": "now" },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Profiles Analyzed",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+        "targets": [{ "expr": "ueba_profiles_analyzed_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 2,
+        "title": "Anomalies Detected",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+        "targets": [{ "expr": "ueba_anomalies_detected_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" } } }
+      },
+      {
+        "id": 3,
+        "title": "Risk Scores Computed",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+        "targets": [{ "expr": "ueba_risk_scores_computed_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 4,
+        "title": "Anomaly Detection Rate",
+        "type": "gauge",
+        "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+        "targets": [
+          {
+            "expr": "ueba_anomalies_detected_total / ueba_profiles_analyzed_total * 100",
+            "refId": "A",
+            "legendFormat": "Anomaly Rate %"
+          }
+        ],
+        "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } }
+      },
+      {
+        "id": 5,
+        "title": "UEBA Events Over Time",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+        "targets": [
+          { "expr": "rate(ueba_profiles_analyzed_total[5m])", "refId": "A", "legendFormat": "Profiles/sec" },
+          { "expr": "rate(ueba_anomalies_detected_total[5m])", "refId": "B", "legendFormat": "Anomalies/sec" }
+        ]
+      }
+    ],
+    "templating": { "list": [] },
+    "annotations": { "list": [] }
+  },
+  "folderId": 0,
+  "overwrite": false
+}

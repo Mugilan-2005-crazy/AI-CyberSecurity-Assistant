@@ -1,0 +1,116 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "executive-dashboard",
+    "title": "Executive Dashboard",
+    "description": "Executive overview dashboard with system health score, infrastructure health, performance, availability, and live metrics",
+    "tags": ["executive", "overview", "management"],
+    "timezone": "browser",
+    "refresh": "15s",
+    "time": { "from": "now-1h", "to": "now" },
+    "panels": [
+      {
+        "id": 1,
+        "title": "System Health Score",
+        "type": "gauge",
+        "gridPos": { "h": 8, "w": 6, "x": 0, "y": 0 },
+        "targets": [{ "expr": "system_health_score", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "yellow", "value": 60 }, { "color": "green", "value": 80 }] } } }
+      },
+      {
+        "id": 2,
+        "title": "Infrastructure Health",
+        "type": "gauge",
+        "gridPos": { "h": 8, "w": 6, "x": 6, "y": 0 },
+        "targets": [{ "expr": "infrastructure_health_overall", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "yellow", "value": 60 }, { "color": "green", "value": 80 }] } } }
+      },
+      {
+        "id": 3,
+        "title": "Performance Score",
+        "type": "gauge",
+        "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 },
+        "targets": [{ "expr": "performance_score", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "yellow", "value": 60 }, { "color": "green", "value": 80 }] } } }
+      },
+      {
+        "id": 4,
+        "title": "Availability",
+        "type": "gauge",
+        "gridPos": { "h": 8, "w": 6, "x": 18, "y": 0 },
+        "targets": [{ "expr": "availability_percentage", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "yellow", "value": 95 }, { "color": "green", "value": 99 }] } } }
+      },
+      {
+        "id": 5,
+        "title": "Error Rate",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+        "targets": [
+          { "expr": "error_total", "refId": "A", "legendFormat": "Total Errors" },
+          { "expr": "rate(error_total[5m])", "refId": "B", "legendFormat": "Errors/sec" }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Latency Trends",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+        "targets": [
+          { "expr": "performance_p50_ms", "refId": "A", "legendFormat": "P50" },
+          { "expr": "performance_p95_ms", "refId": "B", "legendFormat": "P95" },
+          { "expr": "performance_p99_ms", "refId": "C", "legendFormat": "P99" }
+        ],
+        "fieldConfig": { "defaults": { "unit": "ms" } }
+      },
+      {
+        "id": 7,
+        "title": "Service Status",
+        "type": "table",
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+        "targets": [
+          { "expr": "service_status", "refId": "A" }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Live Metrics",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+        "targets": [
+          { "expr": "cpu_usage_percent", "refId": "A", "legendFormat": "CPU %" },
+          { "expr": "memory_heap_used_bytes / memory_heap_total_bytes * 100", "refId": "B", "legendFormat": "Memory %" },
+          { "expr": "disk_usage_percent", "refId": "C", "legendFormat": "Disk %" }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Cloud Health",
+        "type": "gauge",
+        "gridPos": { "h": 6, "w": 6, "x": 12, "y": 24 },
+        "targets": [{ "expr": "cloud_health_score", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } }
+      },
+      {
+        "id": 10,
+        "title": "Container Health",
+        "type": "gauge",
+        "gridPos": { "h": 6, "w": 6, "x": 18, "y": 24 },
+        "targets": [{ "expr": "container_health_score", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } }
+      },
+      {
+        "id": 11,
+        "title": "AI Health",
+        "type": "gauge",
+        "gridPos": { "h": 6, "w": 6, "x": 0, "y": 32 },
+        "targets": [{ "expr": "ai_health_score", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } }
+      }
+    ],
+    "templating": { "list": [] },
+    "annotations": { "list": [] }
+  },
+  "folderId": 0,
+  "overwrite": false
+}

@@ -242,6 +242,60 @@ export const getK8sResourceDetail = (id) => api.get(`/container-security/k8s/res
 export const getContainerDashboard = () => api.get('/container-security/dashboard').then((r) => r.data);
 export const getExecutiveCloudDashboard = () => api.get('/executive/cloud-dashboard').then((r) => r.data);
 
+// Observability API (Phase 9)
+export const getObservabilityMetrics = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/observability/metrics${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+
+export const getObservabilityMetricsSnapshot = () =>
+  api.get('/observability/metrics/snapshot').then((r) => r.data);
+
+export const getObservabilityHealth = () => api.get('/observability/health').then((r) => r.data);
+
+export const getObservabilityHealthAll = () => api.get('/observability/health/all').then((r) => r.data);
+
+export const getObservabilityHealthCheck = (name) => api.get(`/observability/health/${name}`).then((r) => r.data);
+
+export const getObservabilityAlerts = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/observability/alerts${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+
+export const getObservabilityActiveAlerts = () => api.get('/observability/alerts/active').then((r) => r.data);
+
+export const acknowledgeObservabilityAlert = (id) => api.patch(`/observability/alerts/${id}/acknowledge`).then((r) => r.data);
+
+export const resolveObservabilityAlert = (id) => api.patch(`/observability/alerts/${id}/resolve`).then((r) => r.data);
+
+export const getObservabilityLogs = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/observability/logs${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+
+export const getObservabilityAuditLogs = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/observability/logs/audit${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+
+export const getObservabilityLogMetrics = () => api.get('/observability/logs/metrics').then((r) => r.data);
+
+export const getObservabilityDashboard = (type = 'system') => api.get(`/observability/dashboard/${type}`).then((r) => r.data);
+
+export const getObservabilitySystemDashboard = () => api.get('/observability/dashboard/system').then((r) => r.data);
+
+export const getObservabilityInfrastructureDashboard = () => api.get('/observability/dashboard/infrastructure').then((r) => r.data);
+
+export const getObservabilityApplicationDashboard = () => api.get('/observability/dashboard/application').then((r) => r.data);
+
+export const getObservabilitySecurityDashboard = () => api.get('/observability/dashboard/security').then((r) => r.data);
+
+export const getObservabilityAIDashboard = () => api.get('/observability/dashboard/ai').then((r) => r.data);
+
+export const getObservabilityCloudDashboard = () => api.get('/observability/dashboard/cloud').then((r) => r.data);
+
+export const getObservabilityExecutiveDashboard = () => api.get('/observability/dashboard/executive').then((r) => r.data);
+
 // Web search for cybersecurity intelligence.
 export const webSearch = (query, sessionId) =>
   api.post('/chat/web-search', { query, sessionId }).then((r) => r);

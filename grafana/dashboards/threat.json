@@ -1,0 +1,95 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "threat-dashboard",
+    "title": "Threat Intelligence Dashboard",
+    "description": "Threat intelligence monitoring dashboard showing IOC analysis, CVE matches, and threat feed metrics",
+    "tags": ["threat-intel", "security", "monitoring"],
+    "timezone": "browser",
+    "refresh": "15s",
+    "time": { "from": "now-1h", "to": "now" },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Threat Intel Queries",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+        "targets": [{ "expr": "threat_intel_queries_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 2,
+        "title": "Cache Hits",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+        "targets": [{ "expr": "threat_intel_cache_hits_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 3,
+        "title": "Cache Hit Rate",
+        "type": "gauge",
+        "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+        "targets": [
+          {
+            "expr": "threat_intel_cache_hits_total / threat_intel_queries_total * 100",
+            "refId": "A",
+            "legendFormat": "Cache Hit Rate %"
+          }
+        ],
+        "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } }
+      },
+      {
+        "id": 4,
+        "title": "Threat Intel Errors",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+        "targets": [{ "expr": "threat_intel_errors_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" } } }
+      },
+      {
+        "id": 5,
+        "title": "Threat Intel Queries Over Time",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+        "targets": [
+          { "expr": "rate(threat_intel_queries_total[5m])", "refId": "A", "legendFormat": "Queries/sec" }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Cache Hit Rate Over Time",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+        "targets": [
+          {
+            "expr": "rate(threat_intel_cache_hits_total[5m]) / rate(threat_intel_queries_total[5m]) * 100",
+            "refId": "A",
+            "legendFormat": "Hit Rate %"
+          }
+        ],
+        "fieldConfig": { "defaults": { "unit": "percent" } }
+      },
+      {
+        "id": 7,
+        "title": "CVE Matches",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 0, "y": 14 },
+        "targets": [{ "expr": "cve_matches_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 8,
+        "title": "IOC Analyses",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 6, "y": 14 },
+        "targets": [{ "expr": "ioc_analyses_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      }
+    ],
+    "templating": { "list": [] },
+    "annotations": { "list": [] }
+  },
+  "folderId": 0,
+  "overwrite": false
+}

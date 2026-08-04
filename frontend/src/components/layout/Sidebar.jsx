@@ -12,6 +12,7 @@ import {
   UsersIcon, ChartBarIcon, UserCircleIcon, ClockIcon, CogIcon,
   BeakerIcon, SparklesIcon, GlobeAltIcon, BellIcon, BuildingOfficeIcon,
   ExclamationTriangleIcon, ShareIcon, CloudIcon, CubeIcon, ServerStackIcon,
+  SignalIcon, HeartIcon, ChartPieIcon, MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../context/AuthContext.jsx';
 
@@ -47,6 +48,12 @@ const alertsNav = [
   { to: '/ueba', labelKey: 'UEBA Analytics', icon: ExclamationTriangleIcon },
 ];
 
+const observabilityNav = [
+  { to: '/admin/observability', labelKey: 'Observability', icon: SignalIcon },
+  { to: '/admin/observability/system', labelKey: 'System Overview', icon: ChartBarIcon },
+  { to: '/admin/observability/health', labelKey: 'Health Dashboard', icon: HeartIcon },
+];
+
 const adminNav = [
   { to: '/admin/soc', labelKey: 'dashboard.title', icon: BeakerIcon },
   { to: '/admin/users', labelKey: 'settings.account', icon: UsersIcon },
@@ -58,6 +65,7 @@ const adminNav = [
   { to: '/admin/cloud-security', labelKey: 'Cloud Security', icon: CloudIcon },
   { to: '/admin/container-security', labelKey: 'Container Security', icon: CubeIcon },
   { to: '/admin/kubernetes', labelKey: 'Kubernetes Security', icon: ServerStackIcon },
+  { to: '/admin/observability', labelKey: 'Observability', icon: SignalIcon },
 ];
 
 export default function Sidebar({ open, onClose }) {

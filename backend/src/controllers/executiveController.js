@@ -257,4 +257,43 @@ export const getCloudDashboard = async (_req, res, next) => {
   }
 };
 
-export default { getSummary, getAiSummary, getReport, getPerformanceMetrics, getCloudDashboard };
+export const getExecutiveDashboard = async (_req, res, next) => {
+  try {
+    const snapshot = await getExecutiveSummary('month');
+    const health = { status: 'healthy', checks: {}, summary: { total: 0, healthy: 0, unhealthy: 0 } };
+    const activeAlerts = [];
+
+    res.json({
+      success: true,
+      data: {
+        systemHealthScore: calculateSystemHealthScore(snapshot, health, activeAlerts),
+        infrastructureHealth: { cpu: 0, memory: 0, disk: 0, overall: 100 },
+        performanceScore: 100,
+        availability: { percentage: 100, uptime: 0, totalChecks: 0, unhealthyChecks: 0 },
+        errorRate: 0,
+        latencyTrends: { p50: 0, p95: 0, p99: 0, avg: 0 },
+        serviceStatus: {
+          backend: 'healthy',
+          frontend: 'healthy',
+          mongodb: 'healthy',
+          socket: 'healthy',
+          gemini: 'healthy',
+          ollama: 'healthy',
+          threatIntel: 'healthy',
+          cloudProviders: 'healthy',
+          docker: 'healthy',
+          kubernetes: 'healthy',
+        },
+        cloudHealth: { score: 100, providers: 0, resources: 0 },
+        containerHealth: { score: 100, images: 0, vulnerabilities: 0 },
+        aiHealth: { score: 100, requests: 0, errors: 0, latency: 0 },
+        liveMetrics: snapshot,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export default { getSummary, getAiSummary, getReport, getPerformanceMetrics, getCloudDashboard, getExecutiveDashboard };

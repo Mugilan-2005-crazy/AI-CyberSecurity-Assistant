@@ -99,6 +99,14 @@ const EVENTS = {
   // Dashboard events
   DASHBOARD_REFRESH: 'dashboard.refresh',
   DASHBOARD_STATS_UPDATE: 'dashboard.stats_update',
+
+  // Observability events
+  METRICS_UPDATED: 'metrics.updated',
+  HEALTH_UPDATED: 'health.updated',
+  ALERT_CREATED: 'alert.created',
+  TRACE_COMPLETED: 'trace.completed',
+  PERFORMANCE_UPDATED: 'performance.updated',
+  DASHBOARD_UPDATED: 'dashboard.updated',
 };
 
 export { EVENTS };

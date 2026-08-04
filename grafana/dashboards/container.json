@@ -1,0 +1,92 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "container-dashboard",
+    "title": "Container Dashboard",
+    "description": "Container security monitoring dashboard for Docker and Kubernetes container runtime metrics",
+    "tags": ["container", "docker", "kubernetes", "security"],
+    "timezone": "browser",
+    "refresh": "15s",
+    "time": { "from": "now-1h", "to": "now" },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Images Scanned",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+        "targets": [{ "expr": "container_images_scanned_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 2,
+        "title": "Vulnerabilities Found",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+        "targets": [{ "expr": "container_vulnerabilities_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" } } }
+      },
+      {
+        "id": 3,
+        "title": "Secrets Detected",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+        "targets": [{ "expr": "container_secrets_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" } } }
+      },
+      {
+        "id": 4,
+        "title": "Runtime Checks",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+        "targets": [{ "expr": "container_runtime_checks_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 5,
+        "title": "Kubernetes Clusters",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 0, "y": 6 },
+        "targets": [{ "expr": "kubernetes_clusters_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 6,
+        "title": "K8s Resources Scanned",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 6, "y": 6 },
+        "targets": [{ "expr": "kubernetes_resources_scanned_total", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 7,
+        "title": "K8s High Risk Resources",
+        "type": "stat",
+        "gridPos": { "h": 6, "w": 6, "x": 12, "y": 6 },
+        "targets": [{ "expr": "kubernetes_high_risk_resources", "refId": "A" }],
+        "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" } } }
+      },
+      {
+        "id": 8,
+        "title": "Container Scan Rate",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+        "targets": [
+          { "expr": "rate(container_images_scanned_total[5m])", "refId": "A", "legendFormat": "Images/sec" }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Kubernetes Resources Over Time",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+        "targets": [
+          { "expr": "rate(kubernetes_resources_scanned_total[5m])", "refId": "A", "legendFormat": "Resources/sec" }
+        ]
+      }
+    ],
+    "templating": { "list": [] },
+    "annotations": { "list": [] }
+  },
+  "folderId": 0,
+  "overwrite": false
+}

@@ -33,6 +33,7 @@ import executiveRoutes from './routes/executiveRoutes.js';
 import incidentReportRoutes from './routes/incidentReportRoutes.js';
 import knowledgeGraphRoutes from './routes/knowledgeGraphRoutes.js';
 import uebaRoutes from './routes/uebaRoutes.js';
+import observabilityRoutes from './routes/observabilityRoutes.js';
 import cloudSecurityRoutes from './routes/cloudSecurityRoutes.js';
 import containerSecurityRoutes from './routes/containerSecurityRoutes.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
@@ -156,6 +157,7 @@ app.use(`${config.apiPrefix}/knowledge-graph`, knowledgeGraphRoutes);
 app.use(`${config.apiPrefix}/ueba`, uebaRoutes);
 app.use(`${config.apiPrefix}/cloud-security`, cloudSecurityRoutes);
 app.use(`${config.apiPrefix}/container-security`, containerSecurityRoutes);
+app.use(`${config.apiPrefix}/observability`, observabilityRoutes);
 
 // --- Swagger docs (lazy init to avoid blocking app export) ---
 let swaggerInitialized = false;

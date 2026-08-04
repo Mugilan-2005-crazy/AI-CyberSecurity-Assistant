@@ -1,0 +1,94 @@
+{
+  "dashboards": [
+    {
+      "id": null,
+      "uid": "system-overview",
+      "title": "System Overview",
+      "tags": ["system", "overview"],
+      "timezone": "browser",
+      "refresh": "15s",
+      "time": { "from": "now-1h", "to": "now" }
+    },
+    {
+      "id": null,
+      "uid": "infrastructure",
+      "title": "Infrastructure Dashboard",
+      "tags": ["infrastructure", "monitoring"],
+      "timezone": "browser",
+      "refresh": "15s",
+      "time": { "from": "now-1h", "to": "now" }
+    },
+    {
+      "id": null,
+      "uid": "application",
+      "title": "Application Dashboard",
+      "tags": ["application", "performance"],
+      "timezone": "browser",
+      "refresh": "15s",
+      "time": { "from": "now-1h", "to": "now" }
+    },
+    {
+      "id": null,
+      "uid": "security",
+      "title": "Security Dashboard",
+      "tags": ["security", "alerts"],
+      "timezone": "browser",
+      "refresh": "15s",
+      "time": { "from": "now-1h", "to": "now" }
+    },
+    {
+      "id": null,
+      "uid": "ai-dashboard",
+      "title": "AI Dashboard",
+      "tags": ["ai", "monitoring"],
+      "timezone": "browser",
+      "refresh": "15s",
+      "time": { "from": "now-1h", "to": "now" }
+    },
+    {
+      "id": null,
+      "uid": "cloud-dashboard",
+      "title": "Cloud Dashboard",
+      "tags": ["cloud", "security"],
+      "timezone": "browser",
+      "refresh": "15s",
+      "time": { "from": "now-1h", "to": "now" }
+    },
+    {
+      "id": null,
+      "uid": "container-dashboard",
+      "title": "Container Dashboard",
+      "tags": ["container", "docker", "kubernetes"],
+      "timezone": "browser",
+      "refresh": "15s",
+      "time": { "from": "now-1h", "to": "now" }
+    },
+    {
+      "id": null,
+      "uid": "threat-dashboard",
+      "title": "Threat Intelligence Dashboard",
+      "tags": ["threat-intel", "security"],
+      "timezone": "browser",
+      "refresh": "15s",
+      "time": { "from": "now-1h", "to": "now" }
+    },
+    {
+      "id": null,
+      "uid": "executive-dashboard",
+      "title": "Executive Dashboard",
+      "tags": ["executive", "overview", "management"],
+      "timezone": "browser",
+      "refresh": "15s",
+      "time": { "from": "now-1h", "to": "now" }
+    },
+    {
+      "id": null,
+      "uid": "ueba-dashboard",
+      "title": "UEBA Dashboard",
+      "tags": ["ueba", "analytics", "security"],
+      "timezone": "browser",
+      "refresh": "30s",
+      "time": { "from": "now-1h", "to": "now" }
+    }
+  ]
+}
