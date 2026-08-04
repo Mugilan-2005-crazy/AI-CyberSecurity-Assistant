@@ -52,6 +52,9 @@ const AIIncidentReportCenter = lazy(() => import('./pages/admin/AIIncidentReport
 const SecurityKnowledgeGraphCenter = lazy(() => import('./pages/admin/SecurityKnowledgeGraphCenter.jsx'));
 const EnterpriseUEBADashboard = lazy(() => import('./pages/admin/EnterpriseUEBADashboard.jsx'));
 const UserUEBAView = lazy(() => import('./pages/UserUEBAView.jsx'));
+const CloudSecurityDashboard = lazy(() => import('./pages/admin/CloudSecurityDashboard.jsx'));
+const ContainerSecurityDashboard = lazy(() => import('./pages/admin/ContainerSecurityDashboard.jsx'));
+const KubernetesDashboard = lazy(() => import('./pages/admin/KubernetesDashboard.jsx'));
 
 const Fallback = () => (
   <div className="flex h-[60vh] items-center justify-center">
@@ -110,6 +113,10 @@ export default function App() {
           <Route path="admin/knowledge-graph" element={<ProtectedRoute role={['admin','security_manager']}><SecurityKnowledgeGraphCenter /></ProtectedRoute>} />
           <Route path="admin/ueba" element={<ProtectedRoute role={['admin','security_manager']}><EnterpriseUEBADashboard /></ProtectedRoute>} />
           <Route path="ueba" element={<ProtectedRoute><UserUEBAView /></ProtectedRoute>} />
+
+          <Route path="admin/cloud-security" element={<ProtectedRoute role={['admin','security_manager','cloud_admin','devops','auditor']}><CloudSecurityDashboard /></ProtectedRoute>} />
+          <Route path="admin/container-security" element={<ProtectedRoute role={['admin','container_admin','security_manager','devops','auditor']}><ContainerSecurityDashboard /></ProtectedRoute>} />
+          <Route path="admin/kubernetes" element={<ProtectedRoute role={['admin','container_admin','security_manager','devops','auditor']}><KubernetesDashboard /></ProtectedRoute>} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />

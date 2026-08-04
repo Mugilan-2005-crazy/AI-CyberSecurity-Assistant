@@ -8,7 +8,7 @@ const behaviorTimelineSchema = new mongoose.Schema(
 
     category: {
       type: String,
-      enum: ['authentication', 'security_activity', 'network_behavior', 'user_action'],
+      enum: ['authentication', 'security_activity', 'network_behavior', 'user_action', 'cloud_activity'],
       required: true,
       index: true,
     },

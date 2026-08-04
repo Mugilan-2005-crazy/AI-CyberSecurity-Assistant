@@ -12,6 +12,8 @@ import {
   getGraphInsights,
   removeGraphEntity,
   resetGraph,
+  buildCloudGraph,
+  getCloudThreatPredictions,
 } from '../controllers/knowledgeGraphController.js';
 
 const router = Router();
@@ -214,5 +216,8 @@ router.get('/insights', getGraphInsights);
  *         description: Graph cleared
  */
 router.post('/reset', resetGraph);
+
+router.post('/cloud/build', authorize('admin', 'cloud_admin', 'security_manager', 'devops', 'auditor'), buildCloudGraph);
+router.get('/cloud/threat-predictions', authorize('admin', 'cloud_admin', 'security_manager', 'devops', 'auditor'), getCloudThreatPredictions);
 
 export default router;

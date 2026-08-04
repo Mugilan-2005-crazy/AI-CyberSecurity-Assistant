@@ -13,12 +13,12 @@ import {
   getAiSummary,
   getReport,
   getPerformanceMetrics,
+  getCloudDashboard,
 } from '../controllers/executiveController.js';
 
 const router = Router();
 
-// All executive routes require authentication AND an executive role.
-router.use(protect, authorize('admin', 'security_manager'));
+router.use(protect, authorize('admin', 'security_manager', 'cloud_admin', 'container_admin', 'devops'));
 
 const execLimiter = rateLimiter(60 * 1000, 60, 'Too many executive requests, slow down');
 
@@ -26,5 +26,6 @@ router.get('/summary', execLimiter, getSummary);
 router.get('/ai-summary', execLimiter, getAiSummary);
 router.get('/report', execLimiter, getReport);
 router.get('/metrics', execLimiter, getPerformanceMetrics);
+router.get('/cloud-dashboard', execLimiter, getCloudDashboard);
 
 export default router;

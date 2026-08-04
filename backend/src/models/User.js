@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema(
       index: true,
     },
     password: { type: String, required: true, minlength: 8, select: false },
-    role: { type: String, enum: ['user', 'admin', 'security_manager'], default: 'user' },
+    role: { type: String, enum: ['user', 'admin', 'security_manager', 'cloud_admin', 'cloud_viewer', 'container_admin', 'devops', 'auditor'], default: 'user' },
 
     isEmailVerified: { type: Boolean, default: false },
     emailVerificationToken: { type: String, select: false },

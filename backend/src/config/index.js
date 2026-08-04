@@ -64,7 +64,7 @@ const config = {
   otx: { apiKey: process.env.OTX_API_KEY || '', baseUrl: 'https://otx.alienvault.com/api/v1' },
   nvd: { apiKey: process.env.NVD_API_KEY || '', baseUrl: 'https://services.nvd.nist.gov/rest/json/cves/2.0' },
 
-  threatIntel: {
+   threatIntel: {
     cacheTtl: Number(process.env.THREAT_INTEL_CACHE_TTL) || 3600000,
     requestTimeout: Number(process.env.THREAT_INTEL_TIMEOUT) || 15000,
     maxRetries: Number(process.env.THREAT_INTEL_MAX_RETRIES) || 3,
@@ -72,6 +72,36 @@ const config = {
   abuseipdb: { apiKey: process.env.ABUSEIPDB_API_KEY || '', baseUrl: 'https://api.abuseipdb.com/api/v2' },
   otx: { apiKey: process.env.OTX_API_KEY || '', baseUrl: 'https://otx.alienvault.com/api/v1' },
   nvd: { apiKey: process.env.NVD_API_KEY || '', baseUrl: 'https://services.nvd.nist.gov/rest/json/cves/2.0' },
+
+  cloud: {
+    scanTimeout: Number(process.env.CLOUD_SCAN_TIMEOUT) || 120000,
+    maxConcurrentProviders: Number(process.env.CLOUD_MAX_CONCURRENT) || 3,
+    aws: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+      region: process.env.AWS_DEFAULT_REGION || 'us-east-1',
+    },
+    azure: {
+      tenantId: process.env.AZURE_TENANT_ID || '',
+      clientId: process.env.AZURE_CLIENT_ID || '',
+      clientSecret: process.env.AZURE_CLIENT_SECRET || '',
+      subscriptionId: process.env.AZURE_SUBSCRIPTION_ID || '',
+    },
+    gcp: {
+      projectId: process.env.GCP_PROJECT_ID || '',
+      keyFile: process.env.GCP_KEY_FILE || '',
+    },
+    kubernetes: {
+      kubeconfigPath: process.env.KUBECONFIG || '',
+      inCluster: process.env.K8S_IN_CLUSTER || 'false',
+      defaultNamespace: process.env.K8S_DEFAULT_NAMESPACE || 'default',
+    },
+    container: {
+      dockerHost: process.env.DOCKER_HOST || 'unix:///var/run/docker.sock',
+      scanInterval: Number(process.env.CONTAINER_SCAN_INTERVAL) || 3600000,
+      maxImages: Number(process.env.CONTAINER_MAX_IMAGES) || 100,
+    },
+  },
 
   admin: {
     email: process.env.ADMIN_EMAIL || 'admin@cybersec.io',

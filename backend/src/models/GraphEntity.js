@@ -4,7 +4,7 @@ const graphEntitySchema = new mongoose.Schema(
   {
     entityType: {
       type: String,
-      enum: ['User', 'IP', 'Domain', 'URL', 'Hash', 'Malware', 'ThreatActor', 'CVE', 'MITRETechnique', 'SecurityAlert', 'SecurityIncident', 'IncidentReport', 'CloudAsset', 'Vulnerability'],
+      enum: ['User', 'IP', 'Domain', 'URL', 'Hash', 'Malware', 'ThreatActor', 'CVE', 'MITRETechnique', 'SecurityAlert', 'SecurityIncident', 'IncidentReport', 'CloudAsset', 'Vulnerability', 'AWSAccount', 'AzureTenant', 'GCPProject', 'Container', 'Image', 'KubernetesCluster', 'Pod', 'Namespace', 'IAMUser', 'CloudSecret', 'ServiceAccount'],
       required: true,
       index: true,
     },

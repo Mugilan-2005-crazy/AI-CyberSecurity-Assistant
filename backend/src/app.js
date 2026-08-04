@@ -33,6 +33,8 @@ import executiveRoutes from './routes/executiveRoutes.js';
 import incidentReportRoutes from './routes/incidentReportRoutes.js';
 import knowledgeGraphRoutes from './routes/knowledgeGraphRoutes.js';
 import uebaRoutes from './routes/uebaRoutes.js';
+import cloudSecurityRoutes from './routes/cloudSecurityRoutes.js';
+import containerSecurityRoutes from './routes/containerSecurityRoutes.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import { rateLimiter } from './middleware/rateLimiter.js';
 import { sanitize } from './middleware/sanitize.js';
@@ -152,6 +154,8 @@ app.use(`${config.apiPrefix}/executive`, executiveRoutes);
 app.use(`${config.apiPrefix}/incident-reports`, incidentReportRoutes);
 app.use(`${config.apiPrefix}/knowledge-graph`, knowledgeGraphRoutes);
 app.use(`${config.apiPrefix}/ueba`, uebaRoutes);
+app.use(`${config.apiPrefix}/cloud-security`, cloudSecurityRoutes);
+app.use(`${config.apiPrefix}/container-security`, containerSecurityRoutes);
 
 // --- Swagger docs (lazy init to avoid blocking app export) ---
 let swaggerInitialized = false;

@@ -192,6 +192,56 @@ export const getMyTimeline = (params = {}) => {
 
 export const runMyDetection = () => api.post('/ueba/me/detect').then((r) => r.data);
 
+// Cloud Security Posture Management API (Phase 8)
+export const getCloudProviders = () => api.get('/cloud-security/providers').then((r) => r.data);
+export const addCloudProvider = (providerData) => api.post('/cloud-security/providers', providerData).then((r) => r.data);
+export const removeCloudProvider = (id) => api.delete(`/cloud-security/providers/${id}`).then((r) => r);
+export const triggerCloudScan = (provider) => api.post('/cloud-security/scan', { provider }).then((r) => r);
+export const scanAllClouds = () => api.post('/cloud-security/scan/all').then((r) => r);
+export const getCloudFindings = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/cloud-security/findings${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+export const getCloudFinding = (id) => api.get(`/cloud-security/findings/${id}`).then((r) => r.data);
+export const updateCloudFinding = (id, status) => api.patch(`/cloud-security/findings/${id}`, { status }).then((r) => r.data);
+export const getCloudSecurityMetrics = () => api.get('/cloud-security/metrics').then((r) => r.data);
+export const getCloudRiskScore = () => api.get('/cloud-security/risk-score').then((r) => r.data);
+export const getCloudExecutiveSummary = () => api.get('/cloud-security/analysis/executive-summary').then((r) => r.data);
+export const getCloudTechnicalFindings = () => api.get('/cloud-security/analysis/technical-findings').then((r) => r.data);
+export const getCloudRemediationPlan = (findingIds = []) => api.post('/cloud-security/analysis/remediation-plan', { findingIds }).then((r) => r.data);
+export const getCloudBusinessImpact = () => api.get('/cloud-security/analysis/business-impact').then((r) => r.data);
+export const getCloudAttackPossibility = () => api.get('/cloud-security/analysis/attack-possibility').then((r) => r.data);
+export const getCloudComplianceImpact = (standards = []) => api.post('/cloud-security/analysis/compliance-impact', { standards }).then((r) => r.data);
+export const getCloudFullAnalysis = () => api.get('/cloud-security/analysis/full').then((r) => r.data);
+export const getCloudResources = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/cloud-security/resources${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+export const getCloudProviderDashboard = (provider) => api.get(`/cloud-security/providers/${provider}/dashboard`).then((r) => r.data);
+export const buildCloudKnowledgeGraph = (params = {}) => api.post('/knowledge-graph/cloud/build', params).then((r) => r.data);
+export const getCloudThreatPredictions = () => api.get('/knowledge-graph/cloud/threat-predictions').then((r) => r.data);
+
+// Container Security API (Phase 8)
+export const scanContainerImage = (imageName) => api.post('/container-security/scan/image', { imageName }).then((r) => r);
+export const scanRunningContainers = () => api.post('/container-security/scan/containers').then((r) => r);
+export const scanDockerCompose = (composePath) => api.post('/container-security/scan/compose', { composePath }).then((r) => r);
+export const getContainerImages = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/container-security/images${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+export const getContainerImage = (id) => api.get(`/container-security/images/${id}`).then((r) => r.data);
+export const getContainerMetrics = () => api.get('/container-security/metrics').then((r) => r.data);
+export const k8sScan = (options = {}) => api.post('/container-security/k8s/scan', options).then((r) => r);
+export const getK8sClusters = () => api.get('/container-security/k8s/clusters').then((r) => r.data);
+export const getK8sResources = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/container-security/k8s/resources${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+export const getK8sMetrics = () => api.get('/container-security/k8s/metrics').then((r) => r.data);
+export const getK8sResourceDetail = (id) => api.get(`/container-security/k8s/resources/${id}`).then((r) => r.data);
+export const getContainerDashboard = () => api.get('/container-security/dashboard').then((r) => r.data);
+export const getExecutiveCloudDashboard = () => api.get('/executive/cloud-dashboard').then((r) => r.data);
+
 // Web search for cybersecurity intelligence.
 export const webSearch = (query, sessionId) =>
   api.post('/chat/web-search', { query, sessionId }).then((r) => r);
@@ -311,5 +361,7 @@ export default {
   getExecutiveSummary, getExecutiveAiSummary, getExecutiveReport, getExecutiveMetrics,
   generateIncidentReport, getIncidentReports, getIncidentReport, shareIncidentReport, getSharedIncidentReport, emailIncidentReport, exportIncidentReport,
   buildKnowledgeGraph, getKnowledgeGraph, getGraphEntity, addGraphEntity, addGraphRelationship, getAttackPaths, searchKnowledgeGraph, getGraphInsights, deleteGraphEntity,   resetKnowledgeGraph,
-  getUebaDashboard, getUserRiskRanking, getUserBehaviorProfile, getUserTimeline, getUserAnomalies, getUserRiskTrend, runAnomalyDetection, getAnomalyDetail, resolveAnomaly, getAllAnomalies,   getMyProfile, getMyAnomalies, getMyRiskScore, getMyTimeline, runMyDetection,
+   getUebaDashboard, getUserRiskRanking, getUserBehaviorProfile, getUserTimeline, getUserAnomalies, getUserRiskTrend, runAnomalyDetection, getAnomalyDetail, resolveAnomaly, getAllAnomalies,   getMyProfile, getMyAnomalies, getMyRiskScore, getMyTimeline, runMyDetection,
+   getCloudProviders, addCloudProvider, removeCloudProvider, triggerCloudScan, scanAllClouds, getCloudFindings, getCloudFinding, updateCloudFinding, getCloudSecurityMetrics, getCloudRiskScore, getCloudExecutiveSummary, getCloudTechnicalFindings, getCloudRemediationPlan, getCloudBusinessImpact, getCloudAttackPossibility, getCloudComplianceImpact, getCloudFullAnalysis, getCloudResources, getCloudProviderDashboard, buildCloudKnowledgeGraph, getCloudThreatPredictions,
+   scanContainerImage, scanRunningContainers, scanDockerCompose, getContainerImages, getContainerImage, getContainerMetrics, k8sScan, getK8sClusters, getK8sResources, getK8sMetrics, getK8sResourceDetail, getContainerDashboard, getExecutiveCloudDashboard,
 };

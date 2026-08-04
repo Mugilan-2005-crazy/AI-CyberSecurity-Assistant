@@ -20,6 +20,9 @@ export default function ProtectedRoute({ children, role }) {
     );
   }
   if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
-  if (role && user.role !== role) return <Navigate to="/dashboard" replace />;
+  if (role) {
+    const allowedRoles = Array.isArray(role) ? role : [role];
+    if (!allowedRoles.includes(user.role)) return <Navigate to="/dashboard" replace />;
+  }
   return children;
 }

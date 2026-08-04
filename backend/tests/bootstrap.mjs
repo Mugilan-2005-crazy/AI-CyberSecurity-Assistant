@@ -16,6 +16,19 @@ process.env.GEMINI_API_KEY = '';
 process.env.OLLAMA_URL = 'http://localhost:11434';
 process.env.OLLAMA_TIMEOUT = '1000';
 
+process.env.AWS_ACCESS_KEY_ID = '';
+process.env.AWS_SECRET_ACCESS_KEY = '';
+process.env.AWS_DEFAULT_REGION = 'us-east-1';
+process.env.AZURE_TENANT_ID = '';
+process.env.AZURE_CLIENT_ID = '';
+process.env.AZURE_CLIENT_SECRET = '';
+process.env.AZURE_SUBSCRIPTION_ID = '';
+process.env.GCP_PROJECT_ID = '';
+process.env.CLOUD_SCAN_TIMEOUT = '60000';
+process.env.KUBECONFIG = '';
+process.env.K8S_IN_CLUSTER = 'false';
+process.env.DOCKER_HOST = 'unix:///var/run/docker.sock';
+
 import { connectDB } from '../src/config/db.js';
 import User from '../src/models/User.js';
 import Notification from '../src/models/Notification.js';

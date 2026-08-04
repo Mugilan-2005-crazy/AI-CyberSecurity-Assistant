@@ -4,6 +4,9 @@ import {
   createOrUpdateEntity,
   createRelationship,
   buildGraphFromUserData,
+  buildUebaSubgraph,
+  buildCloudSubgraph,
+  predictCloudThreats,
   getGraph,
   getEntityDetails,
   findAttackPaths,
@@ -171,6 +174,31 @@ export const resetGraph = async (req, res, next) => {
   }
 };
 
+export const buildCloudGraph = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { provider } = req.query;
+    const filters = provider ? { provider } : {};
+    const result = await buildCloudSubgraph(userId, filters);
+    recordActivity(userId, { type: 'graph_search', action: 'Cloud knowledge graph built', ip: req.ip || '', metadata: { source: 'buildCloudGraph', provider } }).catch((err) => logger.warn('[ueba] Cloud graph build activity failed', { error: err.message }));
+    res.json({ success: true, data: result });
+  } catch (err) {
+    logger.error('[knowledgeGraphController] buildCloudGraph failed', { error: err.message });
+    next(err);
+  }
+};
+
+export const getCloudThreatPredictions = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const result = await predictCloudThreats(userId);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    logger.error('[knowledgeGraphController] getCloudThreatPredictions failed', { error: err.message });
+    next(err);
+  }
+};
+
 export default {
   buildGraph,
   listGraph,
@@ -182,4 +210,6 @@ export default {
   getGraphInsights,
   removeGraphEntity,
   resetGraph,
+  buildCloudGraph,
+  getCloudThreatPredictions,
 };

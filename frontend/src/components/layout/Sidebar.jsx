@@ -11,7 +11,7 @@ import {
   QrCodeIcon, ChatBubbleLeftRightIcon, DocumentTextIcon,
   UsersIcon, ChartBarIcon, UserCircleIcon, ClockIcon, CogIcon,
   BeakerIcon, SparklesIcon, GlobeAltIcon, BellIcon, BuildingOfficeIcon,
-  ExclamationTriangleIcon, ShareIcon,
+  ExclamationTriangleIcon, ShareIcon, CloudIcon, CubeIcon, ServerStackIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../context/AuthContext.jsx';
 
@@ -55,6 +55,9 @@ const adminNav = [
   { to: '/admin/incident-reports', labelKey: 'AI Incident Reports', icon: ExclamationTriangleIcon },
   { to: '/admin/knowledge-graph', labelKey: 'Security Knowledge Graph', icon: ShareIcon },
   { to: '/admin/ueba', labelKey: 'UEBA Dashboard', icon: ExclamationTriangleIcon },
+  { to: '/admin/cloud-security', labelKey: 'Cloud Security', icon: CloudIcon },
+  { to: '/admin/container-security', labelKey: 'Container Security', icon: CubeIcon },
+  { to: '/admin/kubernetes', labelKey: 'Kubernetes Security', icon: ServerStackIcon },
 ];
 
 export default function Sidebar({ open, onClose }) {

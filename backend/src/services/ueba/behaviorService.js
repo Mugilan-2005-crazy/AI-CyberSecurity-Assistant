@@ -44,6 +44,40 @@ export async function recordActivity(userId, entry) {
   }
 }
 
+export async function recordCloudActivity(userId, entry) {
+  try {
+    const { type, action, ip, location, device, riskScore, metadata } = entry;
+
+    await BehaviorTimeline.create({
+      userId,
+      eventType: type,
+      category: 'cloud_activity',
+      description: action,
+      details: { ip, location, device, provider: metadata?.provider, resourceId: metadata?.resourceId, cloudMetadata: metadata },
+      riskScore: riskScore || 0,
+    });
+
+    const profile = await UserBehaviorProfile.findOneAndUpdate(
+      { userId: userId },
+      {
+        $push: {
+          activityHistory: {
+            $each: [{ type, action, timestamp: new Date(), ip, location, device, riskScore: riskScore || 0, metadata: metadata || {} }],
+            $slice: ACTIVITY_HISTORY_LIMIT,
+          },
+        },
+        $set: { lastUpdated: new Date() },
+      },
+      { upsert: true, new: true }
+    );
+
+    await updateBaseline(profile, type, entry);
+    logger.info('[behaviorService] Cloud activity recorded', { userId, type, action });
+  } catch (err) {
+    logger.warn('[behaviorService] Record cloud activity failed', { error: err.message, userId, type: entry.type });
+  }
+}
+
 function categorize(type) {
   const mapping = {
     login: 'authentication',
@@ -54,6 +88,13 @@ function categorize(type) {
     export: 'user_action',
     report_generation: 'user_action',
     graph_search: 'security_activity',
+    cloud_login: 'cloud_activity',
+    cloud_api_call: 'cloud_activity',
+    iam_abuse: 'cloud_activity',
+    privilege_escalation: 'cloud_activity',
+    container_abuse: 'cloud_activity',
+    service_account_abuse: 'cloud_activity',
+    kubernetes_activity: 'cloud_activity',
   };
   return mapping[type] || 'user_action';
 }

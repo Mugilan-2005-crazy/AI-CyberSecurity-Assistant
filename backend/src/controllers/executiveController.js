@@ -14,6 +14,10 @@
 import { getExecutiveSummary, getPerfMetrics, recordApiTime } from '../services/executive/executiveAnalytics.js';
 import { audit, AUDIT_ACTIONS } from '../services/executive/auditLog.js';
 import { routeAI } from '../services/ai/aiRouter.js';
+import { getCloudSecurityMetrics } from '../services/cloud/cloudScanner.js';
+import { getContainerSecurityMetrics } from '../services/cloud/containerScanner.js';
+import { getKubernetesMetrics } from '../services/cloud/kubernetesScanner.js';
+import { generateCloudRiskScore } from '../services/cloud/aiCloudAnalysis.js';
 import logger from '../utils/logger.js';
 
 const VALID_PERIODS = ['day', 'week', 'month', 'quarter'];
@@ -197,4 +201,60 @@ export const getPerformanceMetrics = async (_req, res, next) => {
   }
 };
 
-export default { getSummary, getAiSummary, getReport, getPerformanceMetrics };
+export const getCloudDashboard = async (_req, res, next) => {
+  try {
+    const start = Date.now();
+    const [cloudMetrics, containerMetrics, k8sMetrics, cloudRiskScore] = await Promise.all([
+      getCloudSecurityMetrics().catch(() => null),
+      getContainerSecurityMetrics().catch(() => null),
+      getKubernetesMetrics().catch(() => null),
+      generateCloudRiskScore().catch(() => null),
+    ]);
+
+    const cloudScore = cloudRiskScore?.score || 0;
+    const containerScore = containerMetrics ? Math.min(100, 100 - (containerMetrics.highRiskImages / Math.max(1, containerMetrics.totalImages)) * 100) : 0;
+    const k8sScore = k8sMetrics ? Math.min(100, 100 - (k8sMetrics.highRiskResources / Math.max(1, k8sMetrics.totalResources || 1)) * 100) : 0;
+
+    const overallScore = cloudScore > 0 ? cloudScore : Math.round((containerScore + k8sScore) / 2);
+
+    const apiMs = Date.now() - start;
+    audit({
+      action: 'cloud_dashboard',
+      userId: _req.user.id,
+      email: _req.user.email,
+      details: { apiMs },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        cloudSecurityScore: cloudScore,
+        containerHealthScore: Math.round(containerScore),
+        kubernetesHealthScore: Math.round(k8sScore),
+        overallScore,
+        providerMetrics: cloudMetrics?.providerMetrics || {},
+        providers: cloudMetrics?.providers || [],
+        containerMetrics: containerMetrics || {},
+        kubernetesMetrics: k8sMetrics || {},
+        riskScore: cloudRiskScore || {},
+        topMisconfigurations: (cloudMetrics?.providers || [])
+          .flatMap((p) => {
+            const provKey = Object.keys(cloudMetrics?.categoryDistribution || {})[0];
+            return provKey ? [{ provider: p.name, category: provKey, count: cloudMetrics?.categoryDistribution[provKey] || 0 }] : [];
+          })
+          .slice(0, 10),
+        compliance: {
+          overall: cloudMetrics?.complianceScore || 100,
+          providers: {},
+        },
+        generatedAt: new Date().toISOString(),
+        apiMs,
+      },
+    });
+  } catch (err) {
+    logger.error('[executive] Cloud dashboard failed', { error: err.message });
+    next(err);
+  }
+};
+
+export default { getSummary, getAiSummary, getReport, getPerformanceMetrics, getCloudDashboard };

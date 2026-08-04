@@ -558,11 +558,259 @@ export async function predictInsiderThreats(userId) {
   }
 }
 
+export async function buildCloudSubgraph(userId, filters = {}) {
+  try {
+    const userObjectId = new ObjectId(userId);
+
+    const CloudProvider = (await import('../models/CloudProvider.js')).default;
+    const CloudResource = (await import('../models/CloudResource.js')).default;
+    const CloudFinding = (await import('../models/CloudFinding.js')).default;
+    const ContainerImage = (await import('../models/ContainerImage.js')).default;
+    const KubernetesResource = (await import('../models/KubernetesResource.js')).default;
+    const ThreatIntel = (await import('../models/ThreatIntel.js')).default;
+
+    const userEntity = await createOrUpdateEntity('User', userId.toString(), 'User', { userId: userId.toString() }, userId, 0, 'Low');
+
+    const providers = await CloudProvider.find({}).lean();
+    const resources = await CloudResource.find(filters.provider ? { cloudProvider: filters.provider } : {}).lean();
+    const findings = await CloudFinding.find({}).sort({ createdAt: -1 }).limit(100).lean();
+    const images = await ContainerImage.find({}).sort({ createdAt: -1 }).limit(50).lean();
+    const kubeResources = await KubernetesResource.find({}).sort({ lastScanned: -1 }).limit(100).lean();
+    const threatIntel = await ThreatIntel.find({}).limit(50).lean();
+
+    for (const provider of providers) {
+      const entityType = provider.provider === 'aws' ? 'AWSAccount' : provider.provider === 'azure' ? 'AzureTenant' : 'GCPProject';
+      const providerEntity = await createOrUpdateEntity(
+        entityType,
+        `${provider.provider}:${provider.accountId}`,
+        `${provider.name || provider.accountName}`,
+        { accountId: provider.accountId, region: provider.region, provider: provider.provider, status: provider.status, riskScore: provider.riskScore },
+        userId,
+        provider.riskScore || 0,
+        provider.riskScore >= 70 ? 'High' : provider.riskScore >= 50 ? 'Medium' : 'Low'
+      );
+
+      if (userEntity && providerEntity) {
+        await createRelationship(userEntity.entityId, providerEntity.entityId, 'manages', 60, 0.8, userId, { source: 'CloudProvider' });
+      }
+
+      for (const resource of resources.filter((r) => r.providerAccountId === provider.accountId)) {
+        const resourceEntity = await createOrUpdateEntity(
+          'CloudAsset',
+          `cloud:${provider.provider}:${resource.resourceId}`,
+          resource.name || resource.resourceId,
+          { resourceType: resource.resourceType, provider: resource.cloudProvider, region: resource.region, riskScore: resource.riskScore, isPublic: resource.isPublic, tags: resource.tags },
+          userId,
+          resource.riskScore || 0,
+          resource.riskScore >= 80 ? 'Critical' : resource.riskScore >= 60 ? 'High' : resource.riskScore >= 30 ? 'Medium' : 'Low'
+        );
+
+        if (providerEntity && resourceEntity) {
+          await createRelationship(providerEntity.entityId, resourceEntity.entityId, 'contains', 70, 0.9, userId, { source: 'CloudResource' });
+        }
+
+        if (resource.riskScore >= 70) {
+          await createRelationship(resourceEntity.entityId, userEntity.entityId, 'monitored_by', 60, 0.7, userId, { source: 'CloudResource' });
+        }
+
+        for (const finding of findings.filter((f) => f.resourceId === resource.resourceId)) {
+          const findingEntity = await createOrUpdateEntity(
+            'SecurityAlert',
+            `cloudfinding:${finding._id}`,
+            finding.title,
+            { checkId: finding.checkId, category: finding.checkCategory, severity: finding.severity, description: finding.description, recommendation: finding.recommendation },
+            userId,
+            finding.riskScore,
+            finding.severity === 'Critical' ? 'Critical' : finding.severity === 'High' ? 'High' : finding.severity === 'Medium' ? 'Medium' : 'Low'
+          );
+          if (resourceEntity && findingEntity) {
+            await createRelationship(resourceEntity.entityId, findingEntity.entityId, 'has_finding', 80, 0.95, userId, { source: 'CloudFinding' });
+          }
+        }
+      }
+    }
+
+    for (const finding of findings) {
+      const findingEntity = await createOrUpdateEntity(
+        'SecurityAlert',
+        `cloudfinding:${finding._id}`,
+        finding.title,
+        { checkId: finding.checkId, category: finding.checkCategory, severity: finding.severity, description: finding.description, recommendation: finding.recommendation, provider: finding.cloudProvider },
+        userId,
+        finding.riskScore,
+        finding.severity === 'Critical' ? 'Critical' : finding.severity === 'High' ? 'High' : finding.severity === 'Medium' ? 'Medium' : 'Low'
+      );
+
+      const relatedIntel = threatIntel.find((t) => JSON.stringify(t).includes(finding.title.substring(0, 10).toLowerCase()));
+      if (relatedIntel && findingEntity) {
+        const intelEntity = await createOrUpdateEntity(
+          'ThreatIntel',
+          `ti:${relatedIntel._id}`,
+          `${relatedIntel.iocType}: ${relatedIntel.ioc}`,
+          { ioc: relatedIntel.ioc, iocType: relatedIntel.iocType, classification: relatedIntel.classification },
+          userId,
+          relatedIntel.reputationScore || 50,
+          relatedIntel.classification === 'malicious' ? 'High' : 'Medium'
+        );
+        if (intelEntity) {
+          await createRelationship(findingEntity.entityId, intelEntity.entityId, 'indicates_threat', 65, 0.8, userId, { source: 'CloudFinding-ThreatIntel' });
+        }
+      }
+    }
+
+    for (const image of images) {
+      const imageEntity = await createOrUpdateEntity(
+        'Image',
+        `image:${image.imageName}:${image.imageTag}`,
+        `${image.imageName}:${image.imageTag}`,
+        { riskScore: image.riskScore, riskLevel: image.riskLevel, source: image.source, vulnerabilityCount: image.vulnerabilities?.length || 0, secretCount: image.secrets?.length || 0 },
+        userId,
+        image.riskScore || 0,
+        image.riskScore >= 80 ? 'Critical' : image.riskScore >= 60 ? 'High' : image.riskScore >= 30 ? 'Medium' : 'Low'
+      );
+
+      for (const vuln of image.vulnerabilities || []) {
+        const cveEntity = await createOrUpdateEntity(
+          'CVE',
+          `cve:${vuln.cveId}`,
+          vuln.cveId,
+          { cvssScore: vuln.cvssScore, severity: vuln.severity, title: vuln.title, pkgName: vuln.pkgName, installedVersion: vuln.installedVersion, fixedVersion: vuln.fixedVersion },
+          userId,
+          vuln.cvssScore ? Math.round(vuln.cvssScore * 10) : 50,
+          vuln.severity === 'Critical' ? 'Critical' : vuln.severity === 'High' ? 'High' : vuln.severity === 'Medium' ? 'Medium' : 'Low'
+        );
+        if (imageEntity && cveEntity) {
+          await createRelationship(imageEntity.entityId, cveEntity.entityId, 'contains_vulnerability', 85, 0.95, userId, { source: 'ContainerImage' });
+        }
+      }
+
+      for (const secret of image.secrets || []) {
+        const secretEntity = await createOrUpdateEntity(
+          'CloudSecret',
+          `container-secret:${image.imageName}:${secret.type}`,
+          `Secret: ${secret.type}`,
+          { file: secret.file, match: '***', description: secret.description, severity: secret.severity },
+          userId,
+          secret.severity === 'Critical' ? 90 : secret.severity === 'High' ? 75 : 50,
+          secret.severity === 'Critical' ? 'Critical' : secret.severity === 'High' ? 'High' : 'Medium'
+        );
+        if (imageEntity && secretEntity) {
+          await createRelationship(imageEntity.entityId, secretEntity.entityId, 'contains_secret', 80, 0.9, userId, { source: 'ContainerImage' });
+        }
+      }
+    }
+
+    const pods = kubeResources.filter((r) => r.kind === 'Pod');
+    const namespaces = kubeResources.filter((r) => r.kind === 'Namespace');
+    const clusters = kubeResources.filter((r) => r.kind === 'KubernetesCluster');
+    const serviceAccounts = kubeResources.filter((r) => r.kind === 'ServiceAccount');
+
+    for (const ns of namespaces) {
+      const nsEntity = await createOrUpdateEntity('Namespace', `ns:${ns.clusterName}:${ns.name}`, `Namespace: ${ns.name}`, { clusterName: ns.clusterName, labels: ns.labels }, userId, 0, 'Low');
+      if (userEntity && nsEntity) {
+        await createRelationship(userEntity.entityId, nsEntity.entityId, 'owns', 50, 0.7, userId, { source: 'KubernetesResource' });
+      }
+
+      for (const pod of pods.filter((p) => p.namespace === ns.name)) {
+        const podEntity = await createOrUpdateEntity('Pod', `pod:${ns.clusterName}:${ns.name}:${pod.name}`, `Pod: ${pod.name}`, { clusterName: pod.clusterName, namespace: pod.namespace, labels: pod.labels, riskScore: pod.riskScore }, userId, pod.riskScore || 0, pod.riskScore >= 80 ? 'Critical' : pod.riskScore >= 60 ? 'High' : 'Low');
+
+        if (nsEntity && podEntity) {
+          await createRelationship(nsEntity.entityId, podEntity.entityId, 'contains', 70, 0.9, userId, { source: 'KubernetesNamespace' });
+        }
+
+        for (const finding of pod.findings || []) {
+          const findingEntity = await createOrUpdateEntity('SecurityAlert', `k8sfinding:${pod._id}:${finding.checkId}`, finding.title || finding.checkId, { severity: finding.severity, category: finding.category, namespace: pod.namespace, pod: pod.name }, userId, finding.riskScore || 50, finding.severity === 'Critical' ? 'Critical' : finding.severity === 'High' ? 'High' : 'Medium');
+          if (podEntity && findingEntity) {
+            await createRelationship(podEntity.entityId, findingEntity.entityId, 'has_finding', 85, 0.95, userId, { source: 'K8sFinding' });
+          }
+        }
+      }
+
+      for (const sa of serviceAccounts.filter((s) => s.namespace === ns.name)) {
+        const saEntity = await createOrUpdateEntity('CloudSecret', `sa:${ns.clusterName}:${ns.name}:${sa.name}`, `ServiceAccount: ${sa.name}`, { clusterName: sa.clusterName, namespace: sa.namespace, roleRef: sa.spec?.roleRef }, userId, 0, 'Low');
+        if (nsEntity && saEntity) {
+          await createRelationship(nsEntity.entityId, saEntity.entityId, 'has_service_account', 60, 0.8, userId, { source: 'Namespace' });
+        }
+      }
+    }
+
+    for (const image of images) {
+      const containerEntity = await createOrUpdateEntity('Container', `container:${image.imageName}:${image.imageTag}`, `${image.imageName}:${image.imageTag}`, { source: image.source, riskScore: image.riskScore, vulnerabilityCount: image.vulnerabilities?.length || 0 }, userId, image.riskScore || 0, getThreatLevel(image.riskScore || 0));
+      const imageEntity = await createOrUpdateEntity('Image', `image:${image.imageName}:${image.imageTag}`, `${image.imageName}:${image.imageTag}`, { riskScore: image.riskScore }, userId, image.riskScore || 0, getThreatLevel(image.riskScore || 0));
+      if (containerEntity && imageEntity) {
+        await createRelationship(containerEntity.entityId, imageEntity.entityId, 'uses_image', 80, 0.95, userId, { source: 'Container' });
+      }
+    }
+
+    logger.info('[knowledgeGraph] Cloud subgraph built', { userId, providers: providers.length, resources: resources.length, images: images.length, kubeResources: kubeResources.length });
+    return { success: true, providers: providers.length, resources: resources.length, images: images.length, findings: findings.length, kubeResources: kubeResources.length };
+  } catch (err) {
+    logger.error('[knowledgeGraph] buildCloudSubgraph failed', { error: err.message });
+    return { success: false, error: err.message };
+  }
+}
+
+function getThreatLevel(score) {
+  if (score >= 80) return 'Critical';
+  if (score >= 60) return 'High';
+  if (score >= 30) return 'Medium';
+  return 'Low';
+}
+
+export async function predictCloudThreats(userId) {
+  try {
+    const CloudFinding = (await import('../models/CloudFinding.js')).default;
+    const recentFindings = await CloudFinding.find({})
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .lean();
+
+    const threatIndicators = [];
+    const criticalCount = recentFindings.filter((f) => f.severity === 'Critical').length;
+    const highCount = recentFindings.filter((f) => f.severity === 'High').length;
+
+    if (criticalCount >= 3) {
+      threatIndicators.push({ indicator: 'Multiple critical cloud misconfigurations', weight: 0.35, detail: `Count: ${criticalCount}` });
+    }
+    if (highCount >= 5) {
+      threatIndicators.push({ indicator: 'Multiple high severity cloud findings', weight: 0.3, detail: `Count: ${highCount}` });
+    }
+
+    const privEsc = recentFindings.filter((f) => f.checkCategory === 'privilege_escalation' || f.checkCategory === 'iam_misconfiguration');
+    if (privEsc.length >= 2) {
+      threatIndicators.push({ indicator: 'Privilege escalation paths detected', weight: 0.25, detail: `Count: ${privEsc.length}` });
+    }
+
+    const publicStorage = recentFindings.filter((f) => f.checkCategory === 'public_storage');
+    if (publicStorage.length >= 1) {
+      threatIndicators.push({ indicator: 'Public storage exposure', weight: 0.2, detail: `Count: ${publicStorage.length}` });
+    }
+
+    const openSGs = recentFindings.filter((f) => f.checkCategory === 'open_security_groups');
+    if (openSGs.length >= 2) {
+      threatIndicators.push({ indicator: 'Multiple open security groups', weight: 0.2, detail: `Count: ${openSGs.length}` });
+    }
+
+    const confidence = Math.min(1, Math.round(threatIndicators.reduce((sum, i) => sum + i.weight, 0) * 100) / 100);
+
+    return {
+      threats: confidence >= 0.3 ? threatIndicators : [],
+      confidence,
+      isSuspicious: confidence >= 0.3,
+    };
+  } catch (err) {
+    logger.error('[knowledgeGraph] predictCloudThreats failed', { error: err.message });
+    return { threats: [], confidence: 0, isSuspicious: false };
+  }
+}
+
 export default {
   createOrUpdateEntity,
   createRelationship,
   buildGraphFromUserData,
   buildUebaSubgraph,
+  buildCloudSubgraph,
+  predictCloudThreats,
   getGraph,
   getEntityDetails,
   findAttackPaths,

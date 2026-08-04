@@ -69,6 +69,27 @@ const EVENTS = {
   UEBA_RISK_UPDATED: 'ueba.risk.updated',
   UEBA_PROFILE_UPDATED: 'ueba.profile.updated',
 
+  // Cloud security events
+  CLOUD_SCAN_STARTED: 'cloud.scan.started',
+  CLOUD_SCAN_COMPLETED: 'cloud.scan.completed',
+  CLOUD_RISK_UPDATED: 'cloud.risk.updated',
+  CLOUD_FINDING_UPDATED: 'cloud.finding.updated',
+  CLOUD_PROVIDER_ADDED: 'cloud.provider.added',
+  CLOUD_PROVIDER_REMOVED: 'cloud.provider.removed',
+  CLOUD_INCIDENT_CREATED: 'cloud.incident.created',
+  CLOUD_COMPLIANCE_UPDATED: 'cloud.compliance.updated',
+
+  // Container security events
+  CONTAINER_SCAN_STARTED: 'container.scan.started',
+  CONTAINER_SCAN_COMPLETED: 'container.scan.completed',
+  CONTAINER_VULNERABILITY_DETECTED: 'container.vulnerability.detected',
+  CONTAINER_SECRET_DETECTED: 'container.secret.detected',
+
+  // Kubernetes security events
+  K8S_SCAN_STARTED: 'k8s.scan.started',
+  K8S_SCAN_COMPLETED: 'k8s.scan.completed',
+  K8S_FINDING_DETECTED: 'k8s.finding.detected',
+
   // Notification events
   NOTIFICATION_CREATED: 'notification.created',
   NOTIFICATION_UNREAD_COUNT: 'notification.unread_count',
@@ -198,6 +219,68 @@ export function registerSocketHandlers(io, namespace) {
         socket.emit('ueba:anomaly.acknowledged', { eventId, status: 'acknowledged' });
       } catch (err) {
         logger.warn('[socketEvents] UEBA acknowledge failed', { error: err.message, socketId: socket.id });
+      }
+    });
+
+    socket.on('cloud:scan', async (payload) => {
+      try {
+        const { provider, type = 'all' } = payload || {};
+        if (userRole !== 'admin' && userRole !== 'cloud_admin' && userRole !== 'security_manager' && userRole !== 'devops') {
+          socket.emit('cloud:scan_error', { error: 'Unauthorized', message: 'Insufficient permissions' });
+          return;
+        }
+        const { runCloudScan } = await import('../services/cloud/cloudScanner.js');
+        runCloudScan(provider)
+          .then((result) => {
+            socket.emit('cloud.scan.completed', { provider, result: { totalFindings: result.totalFindings, averageRisk: result.averageRisk }, timestamp: new Date().toISOString() });
+          })
+          .catch((err) => {
+            socket.emit('cloud:scan_error', { error: err.message, provider });
+          });
+        socket.emit('cloud.scan.started', { provider, timestamp: new Date().toISOString() });
+      } catch (err) {
+        logger.warn('[socketEvents] cloud:scan failed', { error: err.message, socketId: socket.id });
+      }
+    });
+
+    socket.on('container:scan', async (payload) => {
+      try {
+        const { imageName } = payload || {};
+        if (!imageName) {
+          socket.emit('container:scan_error', { error: 'imageName is required' });
+          return;
+        }
+        const { scanDockerImage } = await import('../services/cloud/containerScanner.js');
+        scanDockerImage(imageName, userId)
+          .then((result) => {
+            socket.emit('container.scan.completed', { imageName, ...result, timestamp: new Date().toISOString() });
+          })
+          .catch((err) => {
+            socket.emit('container:scan_error', { error: err.message, imageName });
+          });
+        socket.emit('container.scan.started', { imageName, timestamp: new Date().toISOString() });
+      } catch (err) {
+        logger.warn('[socketEvents] container:scan failed', { error: err.message, socketId: socket.id });
+      }
+    });
+
+    socket.on('k8s:scan', async (payload) => {
+      try {
+        if (userRole !== 'admin' && userRole !== 'container_admin' && userRole !== 'security_manager' && userRole !== 'devops') {
+          socket.emit('k8s:scan_error', { error: 'Unauthorized', message: 'Insufficient permissions' });
+          return;
+        }
+        const { scanKubernetesCluster } = await import('../services/cloud/kubernetesScanner.js');
+        scanKubernetesCluster({ ...(payload || {}) })
+          .then((result) => {
+            socket.emit('k8s.scan.completed', { ...result, timestamp: new Date().toISOString() });
+          })
+          .catch((err) => {
+            socket.emit('k8s:scan_error', { error: err.message });
+          });
+        socket.emit('k8s.scan.started', { timestamp: new Date().toISOString() });
+      } catch (err) {
+        logger.warn('[socketEvents] k8s:scan failed', { error: err.message, socketId: socket.id });
       }
     });
 

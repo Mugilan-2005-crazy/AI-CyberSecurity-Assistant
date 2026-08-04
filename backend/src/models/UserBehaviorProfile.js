@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const ACTIVITY_ENTRY_SCHEMA = new mongoose.Schema(
   {
-    type: { type: String, enum: ['login', 'scan', 'threat_investigation', 'export', 'report_generation', 'graph_search', 'password_change', 'logout'], required: true, index: true },
+    type: { type: String, enum: ['login', 'scan', 'threat_investigation', 'export', 'report_generation', 'graph_search', 'password_change', 'logout', 'cloud_login', 'cloud_api_call', 'iam_abuse', 'privilege_escalation', 'container_abuse', 'service_account_abuse', 'kubernetes_activity'], required: true, index: true },
     action: { type: String, required: true, trim: true },
     timestamp: { type: Date, default: Date.now, index: true },
     ip: { type: String, default: '' },
