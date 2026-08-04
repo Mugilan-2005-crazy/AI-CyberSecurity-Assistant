@@ -49,6 +49,7 @@ const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics.jsx'));
 const SOCDashboard = lazy(() => import('./pages/admin/SOCDashboard.jsx'));
 const ExecutiveDashboard = lazy(() => import('./pages/admin/ExecutiveDashboard.jsx'));
 const AIIncidentReportCenter = lazy(() => import('./pages/admin/AIIncidentReportCenter.jsx'));
+const SecurityKnowledgeGraphCenter = lazy(() => import('./pages/admin/SecurityKnowledgeGraphCenter.jsx'));
 
 const Fallback = () => (
   <div className="flex h-[60vh] items-center justify-center">
@@ -104,6 +105,7 @@ export default function App() {
           <Route path="admin/soc" element={<ProtectedRoute role="admin"><SOCDashboard /></ProtectedRoute>} />
           <Route path="admin/executive" element={<ProtectedRoute role={['admin','security_manager']}><ExecutiveDashboard /></ProtectedRoute>} />
           <Route path="admin/incident-reports" element={<ProtectedRoute role={['admin','security_manager']}><AIIncidentReportCenter /></ProtectedRoute>} />
+          <Route path="admin/knowledge-graph" element={<ProtectedRoute role={['admin','security_manager']}><SecurityKnowledgeGraphCenter /></ProtectedRoute>} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />

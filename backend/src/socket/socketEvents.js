@@ -59,6 +59,11 @@ const EVENTS = {
   INCIDENT_REPORT_COMPLETED: 'incident.report.completed',
   INCIDENT_REPORT_SHARED: 'incident.report.shared',
 
+  // Knowledge Graph events
+  GRAPH_ENTITY_CREATED: 'graph.entity.created',
+  GRAPH_RELATIONSHIP_CREATED: 'graph.relationship.created',
+  GRAPH_RISK_UPDATED: 'graph.risk.updated',
+
   // Notification events
   NOTIFICATION_CREATED: 'notification.created',
   NOTIFICATION_UNREAD_COUNT: 'notification.unread_count',

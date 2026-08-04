@@ -11,7 +11,7 @@ import {
   QrCodeIcon, ChatBubbleLeftRightIcon, DocumentTextIcon,
   UsersIcon, ChartBarIcon, UserCircleIcon, ClockIcon, CogIcon,
   BeakerIcon, SparklesIcon, GlobeAltIcon, BellIcon, BuildingOfficeIcon,
-  ExclamationTriangleIcon,
+  ExclamationTriangleIcon, ShareIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../context/AuthContext.jsx';
 
@@ -52,6 +52,7 @@ const adminNav = [
   { to: '/admin/analytics', labelKey: 'settings.title', icon: ChartBarIcon },
   { to: '/admin/executive', labelKey: 'Executive Command Center', icon: BuildingOfficeIcon },
   { to: '/admin/incident-reports', labelKey: 'AI Incident Reports', icon: ExclamationTriangleIcon },
+  { to: '/admin/knowledge-graph', labelKey: 'Security Knowledge Graph', icon: ShareIcon },
 ];
 
 export default function Sidebar({ open, onClose }) {

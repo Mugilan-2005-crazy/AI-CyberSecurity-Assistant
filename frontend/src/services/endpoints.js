@@ -118,6 +118,27 @@ export const emailIncidentReport = (id, email) =>
 export const exportIncidentReport = (id, format = 'pdf') =>
   api.post(`/incident-reports/${id}/export?format=${format}`).then((r) => r.data);
 
+// Security Knowledge Graph API (Phase 6)
+export const buildKnowledgeGraph = () => api.post('/knowledge-graph/build').then((r) => r.data);
+export const getKnowledgeGraph = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/knowledge-graph${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+export const getGraphEntity = (id) => api.get(`/knowledge-graph/entity/${id}`).then((r) => r.data);
+export const addGraphEntity = (entity) => api.post('/knowledge-graph/entity', entity).then((r) => r.data);
+export const addGraphRelationship = (rel) => api.post('/knowledge-graph/relationship', rel).then((r) => r.data);
+export const getAttackPaths = (source, target, maxDepth = 5) => {
+  const query = new URLSearchParams({ source, target, maxDepth }).toString();
+  return api.get(`/knowledge-graph/path?${query}`).then((r) => r.data);
+};
+export const searchKnowledgeGraph = (q) => {
+  const query = new URLSearchParams({ q }).toString();
+  return api.get(`/knowledge-graph/search?${query}`).then((r) => r.data);
+};
+export const getGraphInsights = () => api.get('/knowledge-graph/insights').then((r) => r.data);
+export const deleteGraphEntity = (id) => api.delete(`/knowledge-graph/entity/${id}`).then((r) => r.data);
+export const resetKnowledgeGraph = () => api.post('/knowledge-graph/reset').then((r) => r.data);
+
 // Web search for cybersecurity intelligence.
 export const webSearch = (query, sessionId) =>
   api.post('/chat/web-search', { query, sessionId }).then((r) => r);
@@ -236,4 +257,5 @@ export default {
   getNotificationsList, getUnreadCount, markNotificationRead, markAllNotificationsRead, deleteNotification, deleteAllReadNotifications,
   getExecutiveSummary, getExecutiveAiSummary, getExecutiveReport, getExecutiveMetrics,
   generateIncidentReport, getIncidentReports, getIncidentReport, shareIncidentReport, getSharedIncidentReport, emailIncidentReport, exportIncidentReport,
+  buildKnowledgeGraph, getKnowledgeGraph, getGraphEntity, addGraphEntity, addGraphRelationship, getAttackPaths, searchKnowledgeGraph, getGraphInsights, deleteGraphEntity, resetKnowledgeGraph,
 };
