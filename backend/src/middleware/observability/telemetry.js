@@ -1,6 +1,7 @@
 import logger from '../../utils/logger.js';
 import metricsService from '../../services/observability/metricsService.js';
 import loggingService from '../../services/observability/loggingService.js';
+import { trace } from '@opentelemetry/api';
 
 function generateTraceId() {
   return `trace-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -24,6 +25,17 @@ export function telemetryMiddleware(req, res, next) {
 
   const startTime = process.hrtime.bigint();
 
+  const activeSpan = trace.getTracer('express').startSpan(`${req.method} ${req.route?.path || req.path}`, {
+    attributes: {
+      'http.method': req.method,
+      'http.url': req.path,
+      'http.user_agent': req.get('User-Agent'),
+      'http.request.header.x-trace-id': traceId,
+      'user.id': req.user?.id || undefined,
+      'user.role': req.user?.role || undefined,
+    },
+  });
+
   res.on('finish', () => {
     const endTime = process.hrtime.bigint();
     const latencyNs = Number(endTime - startTime);
@@ -31,6 +43,14 @@ export function telemetryMiddleware(req, res, next) {
 
     metricsService.recordHttpRequest(req.method, req.route?.path || req.path, res.statusCode, latencyMs);
     metricsService.recordApiLatency(req.route?.path || req.path, latencyMs);
+
+    activeSpan.setAttribute('http.status_code', res.statusCode);
+    activeSpan.setAttribute('http.response.latency_ms', latencyMs);
+    if (res.statusCode >= 400) {
+      activeSpan.setAttribute('error', true);
+      activeSpan.setAttribute('error.type', `HTTP ${res.statusCode}`);
+    }
+    activeSpan.end();
 
     loggingService.log('info', `Request completed`, {
       correlationId: req.id,

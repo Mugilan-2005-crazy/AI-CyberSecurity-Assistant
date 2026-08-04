@@ -70,6 +70,7 @@ import {
   register, login, verifyEmail, forgotPassword, resetPassword,
   refreshToken, logout, me, updateName, changePassword, updateLanguage,
   sendOTP, verifyOTP, resetPasswordWithOTP, verify2FA, loginEnhanced,
+  setupTOTP, enableTOTP, verifyTOTP, getBackupCodes, disableTOTP,
 } from '../controllers/authController.js';
 import { validate } from '../middleware/validate.js';
 import { authLimiter, rateLimiter } from '../middleware/rateLimiter.js';
@@ -306,5 +307,59 @@ router.post('/2fa/verify', otpLimiter, validate([
 ]), verify2FA);
 
 router.post('/login-enhanced', authLimiter, validate([body('email').isEmail(), body('password').exists()]), loginEnhanced);
+
+// TOTP MFA endpoints (RFC 6238)
+/**
+ * @openapi
+ * /api/auth/2fa/totp/setup:
+ *   get:
+ *     tags: [Authentication]
+ *     summary: Generate TOTP secret + QR code for MFA setup
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/2fa/totp/setup', protect, otpLimiter, setupTOTP);
+
+/**
+ * @openapi
+ * /api/auth/2fa/totp/enable:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Enable TOTP MFA by verifying initial token
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/2fa/totp/enable', protect, otpLimiter, validate([body('token').isLength({ min: 6, max: 6 }).withMessage('TOTP token must be 6 digits')]), enableTOTP);
+
+/**
+ * @openapi
+ * /api/auth/2fa/totp/verify:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Verify TOTP token during login flow
+ */
+router.post('/2fa/totp/verify', otpLimiter, validate([body('twoFactorToken').exists(), body('otp').isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits')]), verifyTOTP);
+
+/**
+ * @openapi
+ * /api/auth/2fa/totp/backup-codes:
+ *   get:
+ *     tags: [Authentication]
+ *     summary: Get TOTP backup codes
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/2fa/totp/backup-codes', protect, getBackupCodes);
+
+/**
+ * @openapi
+ * /api/auth/2fa/totp/disable:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Disable TOTP MFA (requires current TOTP or backup code)
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/2fa/totp/disable', protect, otpLimiter, disableTOTP);
 
 export default router;

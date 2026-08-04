@@ -33,9 +33,29 @@ services:
       retries: 5
       start_period: 30s
 
-  # --------------------------------------------------------
-  # Backend API
-  # --------------------------------------------------------
+   # --------------------------------------------------------
+   # Redis Cache
+   # --------------------------------------------------------
+   redis:
+     image: redis:7-alpine
+     restart: always
+     ports:
+       - "6379:6379"
+     command: ["redis-server", "--appendonly", "yes", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
+     volumes:
+       - redis_data:/data
+     networks:
+       - app-network
+     healthcheck:
+       test: ["CMD", "redis-cli", "ping"]
+       interval: 10s
+       timeout: 5s
+       retries: 5
+       start_period: 15s
+
+   # --------------------------------------------------------
+   # Backend API
+   # --------------------------------------------------------
   backend:
     build:
       context: ./backend
@@ -75,12 +95,23 @@ services:
       THREAT_INTEL_CACHE_TTL: ${THREAT_INTEL_CACHE_TTL:-3600000}
       THREAT_INTEL_TIMEOUT: ${THREAT_INTEL_TIMEOUT:-15000}
       THREAT_INTEL_MAX_RETRIES: ${THREAT_INTEL_MAX_RETRIES:-3}
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      # OpenTelemetry
+      OTEL_ENABLED: "true"
+      OTEL_SERVICE_NAME: cybersec-backend
+      OTEL_PROMETHEUS_PORT: 9464
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
       # Admin bootstrap
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@cybersec.io}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       ADMIN_NAME: ${ADMIN_NAME:-Super Admin}
     depends_on:
       mongodb:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - app-network
@@ -210,7 +241,9 @@ networks:
 volumes:
   mongodb_data:
     driver: local
-  ollama_data:
+   ollama_data:
+    driver: local
+  redis_data:
     driver: local
   prometheus_data:
     driver: local

@@ -67,7 +67,12 @@ threatIntelSchema.index({ ioc: 1, iocType: 1 });
 threatIntelSchema.index({ reputationScore: -1 });
 threatIntelSchema.index({ classification: 1, createdAt: -1 });
 threatIntelSchema.index({ threatCategory: 1, createdAt: -1 });
+threatIntelSchema.index({ threatPriority: 1, createdAt: -1 });
 threatIntelSchema.index({ user: 1, ioc: 1, iocType: 1 }, { unique: true });
+// Scale: indexes for analytics dashboards and pagination
+threatIntelSchema.index({ user: 1, classification: 1, createdAt: -1 });
+threatIntelSchema.index({ user: 1, iocType: 1, createdAt: -1 });
+threatIntelSchema.index({ ioc: 'text', threatCategory: 'text' });
 
 const ThreatIntel = mongoose.model('ThreatIntel', threatIntelSchema);
 export default ThreatIntel;

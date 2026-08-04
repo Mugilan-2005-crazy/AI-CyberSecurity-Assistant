@@ -8,6 +8,7 @@ import ObservabilityMetric from '../models/observability/ObservabilityMetric.js'
 import HealthCheck from '../models/observability/HealthCheck.js';
 import Alert from '../models/observability/Alert.js';
 import LogEntry from '../models/observability/LogEntry.js';
+import { getAuditEvents, exportAuditEvents } from '../services/audit/soc2AuditService.js';
 import logger from '../utils/logger.js';
 
 const router = Router();
@@ -187,6 +188,79 @@ router.get('/logs/audit', async (_req, res, next) => {
   }
 });
 
+/**
+ * @openapi
+ * /api/observability/soc2/events:
+ *   get:
+ *     tags: [Observability]
+ *     summary: Query SOC2 audit events (admin/security_manager only)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: eventType
+ *         schema: { type: string }
+ *         description: Filter by SOC2 event type
+ *       - in: query
+ *         name: userId
+ *         schema: { type: string }
+ *         description: Filter by user ID
+ *       - in: query
+ *         name: severity
+ *         schema: { type: string, enum: [info, low, medium, high, critical] }
+ *       - in: query
+ *         name: from
+ *         schema: { type: string, format: date-time }
+ *       - in: query
+ *         name: to
+ *         schema: { type: string, format: date-time }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 100 }
+ *     responses:
+ *       200:
+ *         description: SOC2 audit events
+ */
+router.get('/soc2/events', authorize('admin', 'security_manager'), (req, res) => {
+  try {
+    const { eventType, userId, severity, from, to, limit = 100 } = req.query;
+    const filter = {};
+    if (eventType) filter.eventType = eventType;
+    if (userId) filter.userId = userId;
+    if (severity) filter.severity = severity;
+    if (from) filter.from = from;
+    if (to) filter.to = to;
+
+    const events = getAuditEvents(filter, Number(limit));
+    res.json({ success: true, data: events, count: events.length });
+  } catch (err) {
+    logger.error('[observability] SOC2 events query failed', { error: err.message });
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/observability/soc2/export:
+ *   get:
+ *     tags: [Observability]
+ *     summary: Export all SOC2 audit events for SIEM integration (admin only)
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: All SOC2 audit events
+ */
+router.get('/soc2/export', authorize('admin'), (req, res) => {
+  try {
+    const events = exportAuditEvents();
+    res.json({ success: true, data: events, count: events.length });
+  } catch (err) {
+    logger.error('[observability] SOC2 export failed', { error: err.message });
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.get('/logs/metrics', async (_req, res, next) => {
   try {
     res.json({ success: true, data: loggingService.getMetrics() });
@@ -353,7 +427,7 @@ router.get('/dashboard/executive', async (_req, res, next) => {
   }
 });
 
-function calculateSystemHealthScore(snapshot, health, activeAlerts) {
+export function calculateSystemHealthScore(snapshot, health, activeAlerts) {
   let score = 100;
   if (health.status !== 'healthy') score -= 20;
   score -= activeAlerts.filter((a) => a.severity === 'CRITICAL').length * 10;

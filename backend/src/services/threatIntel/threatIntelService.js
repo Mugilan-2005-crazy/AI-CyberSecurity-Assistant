@@ -3,11 +3,13 @@ import ThreatIntelAudit from './threatIntelAudit.js';
 import { analyzeIoc, detectIocType, validateIoc, IOC_TYPES } from './iocAnalyzer.js';
 import { buildCorrelation } from './reputationEngine.js';
 import { routeAI } from '../ai/aiRouter.js';
+import cacheManager from '../cache/cacheManager.js';
 import logger from '../../utils/logger.js';
 import { emitThreatAnalysisStarted, emitThreatAnalysisCompleted, createNotification } from '../../socket/realtimeNotificationService.js';
 
 const IOC_CACHE = new Map();
 const IOC_CACHE_TTL = 30 * 60 * 1000;
+const REDIS_CACHE_TTL = 3600;
 
 function getIocCacheKey(ioc) {
   return ioc.toLowerCase();
@@ -29,6 +31,21 @@ function setCachedIocResult(ioc, result) {
   IOC_CACHE.set(key, { result, timestamp: Date.now() });
 }
 
+async function getCachedIocResultRedis(ioc) {
+  const key = `ioc:${getIocCacheKey(ioc)}`;
+  const cached = await cacheManager.get(key);
+  return cached;
+}
+
+async function setCachedIocResultRedis(ioc, result) {
+  const key = `ioc:${getIocCacheKey(ioc)}`;
+  await cacheManager.set(key, result, REDIS_CACHE_TTL);
+}
+
+export async function clearIocRedisCache() {
+  await cacheManager.delPattern('ioc:*');
+}
+
 export async function analyzeIocWithIntel(ioc, iocType, userId) {
   logger.info('[threatIntelService] Starting IOC analysis', { ioc: iocType === IOC_TYPES.EMAIL ? '[redacted]' : ioc, iocType, userId });
 
@@ -41,12 +58,21 @@ export async function analyzeIocWithIntel(ioc, iocType, userId) {
     return { success: false, error: validation.error };
   }
 
-  const effectiveType = validation.effectiveType || detectIocType(ioc);
+   const effectiveType = validation.effectiveType || detectIocType(ioc);
 
-  const cached = getCachedIocResult(ioc);
+   const cached = getCachedIocResult(ioc);
   if (cached) {
-    logger.info('[threatIntelService] Cache hit for IOC', { ioc });
+    logger.info('[threatIntelService] Cache hit for IOC (memory)', { ioc });
     const cacheResult = { ...cached, cached: true };
+    emitThreatAnalysisCompleted(userId, ioc, effectiveType, cacheResult).catch(() => {});
+    return cacheResult;
+  }
+
+  const redisCached = await getCachedIocResultRedis(ioc);
+  if (redisCached) {
+    logger.info('[threatIntelService] Cache hit for IOC (redis)', { ioc });
+    setCachedIocResult(ioc, redisCached);
+    const cacheResult = { ...redisCached, cached: true };
     emitThreatAnalysisCompleted(userId, ioc, effectiveType, cacheResult).catch(() => {});
     return cacheResult;
   }
@@ -83,6 +109,7 @@ export async function analyzeIocWithIntel(ioc, iocType, userId) {
 
     await saveIocHistory(result, userId);
     setCachedIocResult(ioc, result);
+    await setCachedIocResultRedis(ioc, result);
 
     ThreatIntelAudit.logAnalysis(ioc, effectiveType, correlation.reputationScore, correlation.classification, correlation.threatPriority, userId)
       .catch((err) => logger.warn('[threatIntelService] Audit log failed', { error: err.message }));
@@ -335,6 +362,7 @@ export async function getThreatIntelDashboardData(userId) {
 
 export function clearIocCache() {
   IOC_CACHE.clear();
+  clearIocRedisCache().catch((err) => logger.warn('[threatIntelService] Redis cache clear failed', { error: err.message }));
 }
 
 export default { analyzeIocWithIntel, getIocHistory, getIocReport, getThreatIntelDashboardData, detectIocType, validateIoc, clearIocCache };

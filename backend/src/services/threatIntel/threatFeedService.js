@@ -1,4 +1,5 @@
 import logger from '../../utils/logger.js';
+import cacheManager from '../cache/cacheManager.js';
 
 const SAMPLE_FEEDS = {
   phishingDomains: [
@@ -30,6 +31,8 @@ const SAMPLE_FEEDS = {
 };
 
 const cache = { timestamp: null, data: null };
+const REDIS_CACHE_KEY = 'threatintel:feeds';
+const REDIS_CACHE_TTL = 3600;
 
 export async function getAllThreatFeeds() {
   const now = Date.now();
@@ -37,9 +40,18 @@ export async function getAllThreatFeeds() {
     return cache.data;
   }
 
+  const redisCached = await cacheManager.get(REDIS_CACHE_KEY);
+  if (redisCached) {
+    logger.info('[threatFeedService] Cache hit for threat feeds (redis)');
+    cache.data = redisCached;
+    cache.timestamp = now;
+    return redisCached;
+  }
+
   const data = JSON.parse(JSON.stringify(SAMPLE_FEEDS));
   cache.data = data;
   cache.timestamp = now;
+  await cacheManager.set(REDIS_CACHE_KEY, data, REDIS_CACHE_TTL);
   logger.info('[threatFeedService] Threat feeds loaded from local sample data');
   return data;
 }
@@ -83,6 +95,7 @@ export async function normalizeThreat(rawThreat) {
 export async function refreshCache() {
   cache.timestamp = null;
   cache.data = null;
+  await cacheManager.del(REDIS_CACHE_KEY);
   await getAllThreatFeeds();
   logger.info('[threatFeedService] Cache refreshed');
 }

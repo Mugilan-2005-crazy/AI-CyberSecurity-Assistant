@@ -1,0 +1,72 @@
+---
+# ============================================================
+# Namespace — isolates the CyberSec platform resources
+# ============================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cybersec-platform
+  labels:
+    app.kubernetes.io/name: cybersec-platform
+    app.kubernetes.io/version: "2.1"
+    environment: production
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cybersec-sa
+  namespace: cybersec-platform
+  labels:
+    app.kubernetes.io/name: cybersec-platform
+---
+# ============================================================
+# NetworkPolicy — restrict traffic between pods
+# ============================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cybersec-networkpolicy
+  namespace: cybersec-platform
+spec:
+  podSelector:
+    matchLabels:
+      app: cybersec-platform
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: nginx-ingress
+        - podSelector:
+            matchLabels:
+              app: cybersec-platform
+      ports:
+        - protocol: TCP
+          port: 5000
+        - protocol: TCP
+          port: 9464
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: cybersec-platform
+      ports:
+        - protocol: TCP
+          port: 27017
+        - protocol: TCP
+          port: 6379
+        - protocol: TCP
+          port: 4318
+        - protocol: TCP
+          port: 11434
+        - protocol: TCP
+          port: 9090

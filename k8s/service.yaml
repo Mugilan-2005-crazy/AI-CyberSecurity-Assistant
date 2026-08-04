@@ -1,0 +1,81 @@
+---
+# ============================================================
+# Services — expose backend, frontend, redis within cluster
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: cybersec-backend-svc
+  namespace: cybersec-platform
+  labels:
+    app: cybersec-platform
+    component: backend
+spec:
+  selector:
+    app: cybersec-platform
+    component: backend
+  ports:
+    - name: http
+      port: 5000
+      targetPort: http
+    - name: metrics
+      port: 9464
+      targetPort: metrics
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cybersec-frontend-svc
+  namespace: cybersec-platform
+  labels:
+    app: cybersec-platform
+    component: frontend
+spec:
+  selector:
+    app: cybersec-platform
+    component: frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cybersec-redis-svc
+  namespace: cybersec-platform
+  labels:
+    app: cybersec-platform
+    component: redis
+spec:
+  selector:
+    app: cybersec-platform
+    component: redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+  type: ClusterIP
+---
+# ============================================================
+# Headless service — for potential Redis Cluster or StatefulSet
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: cybersec-redis-headless
+  namespace: cybersec-platform
+  labels:
+    app: cybersec-platform
+    component: redis
+spec:
+  clusterIP: None
+  selector:
+    app: cybersec-platform
+    component: redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis

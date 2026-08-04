@@ -213,7 +213,7 @@ export const chat = async (req, res, next) => {
         : '';
       const prompt = context ? `${context}${docContext}\n\nUser: ${safeMessage}` : `${safeMessage}${docContext}`;
       logger.info('[chatController] Calling routeAI with prompt', { promptPreview: prompt.slice(0, 150) });
-      const result = await routeAI(prompt, safeHistory, effectiveLanguage);
+      const result = await routeAI(prompt, safeHistory, effectiveLanguage, req.user.id);
       reply = result.response;
       provider = result.provider;
       logger.info('[chatController] AI result received', { provider, replyPreview: reply.slice(0, 100) });
@@ -288,7 +288,7 @@ export const multimodalChat = async (req, res, next) => {
         attachmentAnalysisId = multimodalResult.result?.attachmentAnalysisId || null;
         logger.info('[chatController] Multimodal AI response received', { provider, replyPreview: reply.slice(0, 100) });
       } else {
-        const result = await routeAI(safeMessage, [], effectiveLanguage);
+        const result = await routeAI(safeMessage, [], effectiveLanguage, req.user.id);
         reply = result.response;
         provider = result.provider;
         logger.info('[chatController] Text-only AI response received', { provider, replyPreview: reply.slice(0, 100) });
@@ -382,7 +382,7 @@ export const webSearch = async (req, res, next) => {
 
     try {
       const summaryPrompt = `Summarize these web search results for a cybersecurity professional. Provide a concise, actionable summary.\n\nSearch results:\n${searchResult.summary}\n\nUser query: ${safeQuery}`;
-      const aiResult = await routeAI(summaryPrompt, [], req.language || 'en');
+      const aiResult = await routeAI(summaryPrompt, [], req.language || 'en', req.user.id);
       aiSummary = aiResult.response;
       provider = aiResult.provider;
     } catch (aiErr) {

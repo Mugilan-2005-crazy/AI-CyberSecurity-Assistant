@@ -7,6 +7,8 @@
  */
 import app from './app.js';
 import { connectDB } from './config/db.js';
+import { connectRedis, closeRedis } from './services/cache/redisClient.js';
+import { initOpenTelemetry, shutdownOpenTelemetry } from './services/observability/opentelemetry.js';
 import config from './config/index.js';
 import logger from './utils/logger.js';
 import User from './models/User.js';
@@ -31,6 +33,8 @@ const seedAdmin = async () => {
 
 const start = async () => {
   await connectDB();
+  await connectRedis();
+  await initOpenTelemetry();
   await seedAdmin();
   const server = app.listen(config.port, () => {
     logger.info(`Server running on port ${config.port} [${config.env}]`);
@@ -56,6 +60,17 @@ const start = async () => {
         }
       } catch (err) {
         logger.warn(`MongoDB disconnect error: ${err.message}`);
+      }
+      try {
+        await closeRedis();
+        logger.info('Redis connection closed');
+      } catch (err) {
+        logger.warn(`Redis disconnect error: ${err.message}`);
+      }
+      try {
+        await shutdownOpenTelemetry();
+      } catch (err) {
+        logger.warn(`OpenTelemetry shutdown error: ${err.message}`);
       }
       process.exit(0);
     });

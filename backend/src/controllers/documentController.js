@@ -203,7 +203,7 @@ export const chat = catchAsync(async (req, res, next) => {
   let provider = 'none';
 
   try {
-    const result = await routeAI(prompt, [], effectiveLanguage);
+    const result = await routeAI(prompt, [], effectiveLanguage, req.user.id);
     reply = result.response;
     provider = result.provider;
   } catch (err) {
@@ -261,7 +261,7 @@ export const getChatHistory = catchAsync(async (req, res, next) => {
   });
 });
 
-export const getSupportedLanguages = (_req, _res, next) => {
+export const getSupportedLanguages = (_req, res, next) => {
   res.json({
     success: true,
     languages: ['en', 'ta', 'tanglish', 'hi'],

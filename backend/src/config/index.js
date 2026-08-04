@@ -109,6 +109,44 @@ const config = {
   security: {
     maxLoginAttempts: Number(process.env.MAX_LOGIN_ATTEMPTS) || 5,
     lockoutDuration: Number(process.env.LOCKOUT_DURATION) || 15 * 60 * 1000,
+    otp: {
+      windowMs: Number(process.env.OTP_WINDOW_MS) || 60000,
+      maxAttempts: Number(process.env.OTP_MAX_ATTEMPTS) || 5,
+    },
+  },
+
+  redis: {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: Number(process.env.REDIS_PORT) || 6379,
+    password: process.env.REDIS_PASSWORD || '',
+    db: Number(process.env.REDIS_DB) || 0,
+    tls: process.env.REDIS_TLS === 'true',
+    keyPrefix: process.env.REDIS_KEY_PREFIX || 'csa:',
+    connectTimeoutMs: Number(process.env.REDIS_CONNECT_TIMEOUT_MS) || 5000,
+    lazyConnect: true,
+    retryStrategy: {
+      retries: Number(process.env.REDIS_MAX_RETRIES) || 3,
+      baseDelayMs: Number(process.env.REDIS_RETRY_BASE_DELAY_MS) || 100,
+      maxDelayMs: Number(process.env.REDIS_RETRY_MAX_DELAY_MS) || 5000,
+    },
+  },
+
+  mfa: {
+    totp: {
+      window: Number(process.env.MFA_TOTP_WINDOW) || 1,
+      algorithm: 'sha1',
+      secretEncoding: 'base32',
+    },
+    backupCodesCount: Number(process.env.MFA_BACKUP_CODES_COUNT) || 10,
+    verificationRateLimit: Number(process.env.MFA_VERIFICATION_RATE_LIMIT) || 5,
+    verificationRateWindow: Number(process.env.MFA_VERIFICATION_RATE_WINDOW) || 60000,
+  },
+
+  otel: {
+    enabled: process.env.OTEL_ENABLED !== 'false',
+    serviceName: process.env.OTEL_SERVICE_NAME || 'cybersec-backend',
+    prometheusPort: Number(process.env.OTEL_PROMETHEUS_PORT) || 9464,
+    otlpEndpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318',
   },
 };
 
@@ -124,6 +162,8 @@ const logConfig = () => {
   logger.info('Ollama URL', { url: config.ollama.url });
   logger.info('Ollama Model', { model: config.ollama.model });
   logger.info('Gemini Enabled', { enabled: Boolean(config.gemini.apiKey) });
+  logger.info('Redis Host', { host: config.redis.host, port: config.redis.port });
+  logger.info('MFA TOTP Enabled', { enabled: true });
   logger.info('Mongo URI', { uri: config.mongoUri.replace(/\/\/.*@/, '//***@') });
 };
 

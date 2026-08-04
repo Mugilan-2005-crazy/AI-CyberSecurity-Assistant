@@ -15,13 +15,20 @@ process.env.NVD_API_KEY = '';
 process.env.GEMINI_API_KEY = '';
 process.env.OLLAMA_URL = 'http://localhost:11434';
 process.env.OLLAMA_TIMEOUT = '1000';
+process.env.REDIS_HOST = 'localhost';
+process.env.REDIS_PORT = '6379';
+process.env.REDIS_DB = '0';
+process.env.REDIS_KEY_PREFIX = 'test:';
+process.env.ENCRYPTION_KEY = 'test-encryption-key-for-mfa';
 
 module.exports = {
-   testEnvironment: 'node',
+  testEnvironment: 'node',
   globalTeardown: './tests/globalTeardown.mjs',
   forceExit: true,
   testTimeout: 30000,
   testMatch: ['**/tests/**/*.test.mjs'],
+  transform: {},
+  transformIgnorePatterns: ['/node_modules/(?!supertest|mongoose-memory-server)'],
   collectCoverageFrom: [
     'src/**/*.js',
     '!src/middleware/upload.js',

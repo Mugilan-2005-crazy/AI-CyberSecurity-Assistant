@@ -18,6 +18,7 @@ import { getCloudSecurityMetrics } from '../services/cloud/cloudScanner.js';
 import { getContainerSecurityMetrics } from '../services/cloud/containerScanner.js';
 import { getKubernetesMetrics } from '../services/cloud/kubernetesScanner.js';
 import { generateCloudRiskScore } from '../services/cloud/aiCloudAnalysis.js';
+import { calculateSystemHealthScore } from '../routes/observabilityRoutes.js';
 import logger from '../utils/logger.js';
 
 const VALID_PERIODS = ['day', 'week', 'month', 'quarter'];
@@ -96,7 +97,7 @@ export const getAiSummary = async (req, res, next) => {
         `Open incidents: ${summary.kpis.openIncidents}. Critical alerts: ${summary.kpis.criticalAlerts}. ` +
         `Threats detected: ${summary.kpis.threatsDetected}. ` +
         `Top categories: ${summary.threatCategories.map((c) => c.category).join(', ') || 'none'}.`;
-      const result = await routeAI(prompt, [], 'en');
+      const result = await routeAI(prompt, [], 'en', req.user.id);
       ai = { provider: result.provider, response: result.response };
     } catch (err) {
       logger.warn('[executive] AI summary fallback to local narrative', { error: err.message });

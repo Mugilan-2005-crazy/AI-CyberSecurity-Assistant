@@ -42,6 +42,12 @@ const userSchema = new mongoose.Schema(
     // 2FA fields
     twoFactorEnabled: { type: Boolean, default: false },
     twoFactorSecret: { type: String, select: false },
+    twoFactorType: { type: String, enum: ['otp', 'totp'], default: 'totp' },
+    totpSecret: { type: String, select: false },
+    totpBackupCodes: [{ type: String, select: false }],
+    totpBackupCodesUsed: [{ type: String }],
+    totpAttempts: { type: Number, default: 0 },
+    totpLockedUntil: { type: Date, default: null },
 
     // Login activity tracking
     lastLoginIp: { type: String, default: '' },
@@ -72,6 +78,12 @@ const userSchema = new mongoose.Schema(
 userSchema.index({ emailVerificationExpire: 1 }, { expireAfterSeconds: 0 });
 userSchema.index({ passwordResetExpire: 1 }, { expireAfterSeconds: 0 });
 userSchema.index({ passwordResetOTPExpire: 1 }, { expireAfterSeconds: 0 });
+userSchema.index({ totpLockedUntil: 1 }, { expireAfterSeconds: 0 });
+// Scale: indexes for admin panel user listing + search
+userSchema.index({ role: 1, isActive: 1, createdAt: 1 });
+userSchema.index({ isActive: 1, lastLogin: 1 });
+userSchema.index({ twoFactorEnabled: 1 });
+userSchema.index({ name: 'text', email: 'text' });
 
 // Hash password on every save where the password field changed.
 userSchema.pre('save', async function (next) {
