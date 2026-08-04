@@ -50,6 +50,8 @@ const SOCDashboard = lazy(() => import('./pages/admin/SOCDashboard.jsx'));
 const ExecutiveDashboard = lazy(() => import('./pages/admin/ExecutiveDashboard.jsx'));
 const AIIncidentReportCenter = lazy(() => import('./pages/admin/AIIncidentReportCenter.jsx'));
 const SecurityKnowledgeGraphCenter = lazy(() => import('./pages/admin/SecurityKnowledgeGraphCenter.jsx'));
+const EnterpriseUEBADashboard = lazy(() => import('./pages/admin/EnterpriseUEBADashboard.jsx'));
+const UserUEBAView = lazy(() => import('./pages/UserUEBAView.jsx'));
 
 const Fallback = () => (
   <div className="flex h-[60vh] items-center justify-center">
@@ -106,6 +108,8 @@ export default function App() {
           <Route path="admin/executive" element={<ProtectedRoute role={['admin','security_manager']}><ExecutiveDashboard /></ProtectedRoute>} />
           <Route path="admin/incident-reports" element={<ProtectedRoute role={['admin','security_manager']}><AIIncidentReportCenter /></ProtectedRoute>} />
           <Route path="admin/knowledge-graph" element={<ProtectedRoute role={['admin','security_manager']}><SecurityKnowledgeGraphCenter /></ProtectedRoute>} />
+          <Route path="admin/ueba" element={<ProtectedRoute role={['admin','security_manager']}><EnterpriseUEBADashboard /></ProtectedRoute>} />
+          <Route path="ueba" element={<ProtectedRoute><UserUEBAView /></ProtectedRoute>} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />

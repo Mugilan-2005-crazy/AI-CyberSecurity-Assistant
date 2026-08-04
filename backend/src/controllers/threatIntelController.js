@@ -11,6 +11,7 @@ import { detectIocType, validateIoc, IOC_TYPES } from '../services/threatIntel/i
 import { correlateThreats } from '../services/threatIntel/threatCorrelation.js';
 import ApiError from '../utils/ApiError.js';
 import logger from '../utils/logger.js';
+import { recordActivity } from '../services/ueba/behaviorService.js';
 
 export async function getThreatFeeds(req, res, next) {
   try {
@@ -73,6 +74,16 @@ export async function analyzeIOC(req, res, next) {
 
     if (!result.success) {
       throw new ApiError(400, result.error || 'IOC analysis failed');
+    }
+
+    if (userId) {
+      recordActivity(userId, {
+        type: 'threat_investigation',
+        action: `IOC lookup: ${ioc}`,
+        ip: req.ip || '',
+        riskScore: result.reputationScore || 0,
+        metadata: { ioc, iocType, classification: result.classification, reputationScore: result.reputationScore },
+      }).catch((err) => logger.warn('[ueba] IOC activity recording failed', { error: err.message }));
     }
 
     res.json({ success: true, data: result });

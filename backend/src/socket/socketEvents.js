@@ -64,6 +64,11 @@ const EVENTS = {
   GRAPH_RELATIONSHIP_CREATED: 'graph.relationship.created',
   GRAPH_RISK_UPDATED: 'graph.risk.updated',
 
+  // UEBA events
+  UEBA_ANOMALY_DETECTED: 'ueba.anomaly.detected',
+  UEBA_RISK_UPDATED: 'ueba.risk.updated',
+  UEBA_PROFILE_UPDATED: 'ueba.profile.updated',
+
   // Notification events
   NOTIFICATION_CREATED: 'notification.created',
   NOTIFICATION_UNREAD_COUNT: 'notification.unread_count',
@@ -170,6 +175,29 @@ export function registerSocketHandlers(io, namespace) {
         socket.emit('notification:filter_result', { notifications, count: notifications.length });
       } catch (err) {
         logger.warn('[socketEvents] Filter notifications failed', { error: err.message, socketId: socket.id });
+      }
+    });
+
+    socket.on('ueba:get_risk_score', async () => {
+      try {
+        const UserBehaviorProfile = (await import('../models/UserBehaviorProfile.js')).default;
+        const profile = await UserBehaviorProfile.findOne({ userId }).lean();
+        const data = profile
+          ? { riskScore: profile.riskScore, riskLevel: profile.riskLevel, averageRisk: profile.averageRisk, anomalyCount: profile.anomalyCount, highRiskAnomalyCount: profile.highRiskAnomalyCount, lastUpdated: profile.lastUpdated }
+          : { riskScore: 0, riskLevel: 'Low', averageRisk: 0, anomalyCount: 0, highRiskAnomalyCount: 0 };
+        socket.emit(EVENTS.UEBA_RISK_UPDATED, data);
+      } catch (err) {
+        logger.warn('[socketEvents] UEBA risk score request failed', { error: err.message, socketId: socket.id });
+      }
+    });
+
+    socket.on('ueba:acknowledge_anomaly', async ({ eventId }) => {
+      try {
+        const UserRiskEvent = (await import('../models/UserRiskEvent.js')).default;
+        await UserRiskEvent.updateOne({ _id: eventId, userId }, { status: 'acknowledged' });
+        socket.emit('ueba:anomaly.acknowledged', { eventId, status: 'acknowledged' });
+      } catch (err) {
+        logger.warn('[socketEvents] UEBA acknowledge failed', { error: err.message, socketId: socket.id });
       }
     });
 

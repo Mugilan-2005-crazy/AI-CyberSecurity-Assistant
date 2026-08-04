@@ -7,6 +7,9 @@ import ThreatIntel from '../models/ThreatIntel.js';
 import ScanHistory from '../models/ScanHistory.js';
 import AIAnalysis from '../models/AIAnalysis.js';
 import IncidentResponse from '../models/IncidentResponse.js';
+import UserBehaviorProfile from '../models/UserBehaviorProfile.js';
+import UserRiskEvent from '../models/UserRiskEvent.js';
+import BehaviorTimeline from '../models/BehaviorTimeline.js';
 import { routeAI } from './ai/aiRouter.js';
 import logger from '../utils/logger.js';
 
@@ -441,10 +444,125 @@ export async function clearUserGraph(userId) {
   }
 }
 
+export async function buildUebaSubgraph(userId) {
+  try {
+    const userObjectId = new ObjectId(userId);
+
+    const [profile, riskEvents, timelines] = await Promise.all([
+      UserBehaviorProfile.findOne({ userId: userObjectId }).lean(),
+      UserRiskEvent.find({ userId: userObjectId }).sort({ createdAt: -1 }).limit(50).lean(),
+      BehaviorTimeline.find({ userId: userObjectId }).sort({ timestamp: -1 }).limit(100).lean(),
+    ]);
+
+    const userEntity = await createOrUpdateEntity('User', userId.toString(), 'User', { userId: userId.toString() }, userId, profile?.riskScore || 0, profile?.riskLevel || 'Low');
+
+    for (const event of riskEvents) {
+      const entity = await createOrUpdateEntity(
+        'SecurityAlert',
+        `ueba:${event._id}`,
+        `${event.title}`,
+        { eventType: event.eventType, severity: event.severity, riskScore: event.riskScore, description: event.description, status: event.status, createdAt: event.createdAt },
+        userId,
+        event.riskScore,
+        event.severity === 'Critical' ? 'Critical' : event.severity === 'High' ? 'High' : event.severity === 'Medium' ? 'Medium' : 'Low'
+      );
+
+      if (userEntity && entity) {
+        await createRelationship(userEntity.entityId, entity.entityId, 'generated_by', 75, 0.9, userId, { source: 'UserRiskEvent' });
+      }
+
+      if (event.relatedAlert) {
+        await createRelationship(entity.entityId, event.relatedAlert.toString(), 'indicates', 80, 0.85, userId, { source: 'UserRiskEvent' });
+      }
+    }
+
+    for (const tl of timelines.slice(0, 50)) {
+      const entity = await createOrUpdateEntity(
+        'BehaviorTimeline',
+        `behavior:${tl._id}`,
+        `${tl.eventType} — ${tl.description}`,
+        { category: tl.category, riskScore: tl.riskScore, anomalyMatched: tl.anomalyMatched, timestamp: tl.timestamp },
+        userId,
+        tl.riskScore,
+        tl.riskScore >= 70 ? 'Critical' : tl.riskScore >= 50 ? 'High' : tl.riskScore >= 30 ? 'Medium' : 'Low'
+      );
+
+      if (userEntity && entity) {
+        await createRelationship(userEntity.entityId, entity.entityId, 'performs', 60, 0.8, userId, { source: 'BehaviorTimeline' });
+      }
+    }
+
+    const riskEventsWithAlerts = riskEvents.filter((e) => e.relatedAlert);
+    const alerts = await SecurityAlert.find({ 'metadata.riskEventId': { $in: riskEventsWithAlerts.map((e) => e._id) } }).lean();
+    for (const alert of alerts) {
+      await createOrUpdateEntity(
+        'SecurityAlert',
+        alert._id.toString(),
+        alert.title,
+        { alertType: alert.alertType, severity: alert.severity, status: alert.status },
+        userId,
+        alert.severity === 'CRITICAL' ? 90 : alert.severity === 'HIGH' ? 70 : alert.severity === 'MEDIUM' ? 50 : 30,
+        alert.severity === 'CRITICAL' ? 'Critical' : alert.severity === 'HIGH' ? 'High' : alert.severity === 'MEDIUM' ? 'Medium' : 'Low'
+      );
+    }
+
+    logger.info('[knowledgeGraph] UEBA subgraph built', { userId });
+    return { success: true, riskEvents: riskEvents.length, timelineEntries: timelines.length };
+  } catch (err) {
+    logger.error('[knowledgeGraph] buildUebaSubgraph failed', { error: err.message });
+    return { success: false, error: err.message };
+  }
+}
+
+export async function predictInsiderThreats(userId) {
+  try {
+    const profile = await UserBehaviorProfile.findOne({ userId }).lean();
+    if (!profile) return { threats: [], confidence: 0 };
+
+    const recentEvents = await UserRiskEvent.find({ userId, status: 'active' })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean();
+
+    const threatIndicators = [];
+
+    if (profile.riskScore >= 70) {
+      threatIndicators.push({ indicator: 'High aggregate risk score', weight: 0.3, detail: `Score: ${profile.riskScore}` });
+    }
+    if (profile.highRiskAnomalyCount >= 3) {
+      threatIndicators.push({ indicator: 'Multiple high-risk anomalies', weight: 0.25, detail: `Count: ${profile.highRiskAnomalyCount}` });
+    }
+
+    const criticalOrHigh = recentEvents.filter((e) => ['Critical', 'High'].includes(e.severity));
+    if (criticalOrHigh.length >= 2) {
+      threatIndicators.push({ indicator: 'Multiple critical/high anomalies active', weight: 0.3, detail: `Count: ${criticalOrHigh.length}` });
+    }
+
+    const impossibleTravel = recentEvents.find((e) => e.eventType === 'impossible_travel');
+    if (impossibleTravel) {
+      threatIndicators.push({ indicator: 'Impossible travel detected', weight: 0.15, detail: 'Potential account takeover' });
+    }
+
+    const confidence = threatIndicators.reduce((sum, i) => sum + i.weight, 0);
+    const isInsiderThreat = confidence >= 0.5;
+
+    return {
+      threats: isInsiderThreat ? threatIndicators : [],
+      confidence: Math.min(1, Math.round(confidence * 100) / 100),
+      isInsiderThreat,
+      profile: { riskScore: profile.riskScore, riskLevel: profile.riskLevel, anomalyCount: profile.anomalyCount },
+    };
+  } catch (err) {
+    logger.error('[knowledgeGraph] predictInsiderThreats failed', { error: err.message });
+    return { threats: [], confidence: 0 };
+  }
+}
+
 export default {
   createOrUpdateEntity,
   createRelationship,
   buildGraphFromUserData,
+  buildUebaSubgraph,
   getGraph,
   getEntityDetails,
   findAttackPaths,
@@ -452,4 +570,5 @@ export default {
   generateGraphInsights,
   deleteEntity,
   clearUserGraph,
+  predictInsiderThreats,
 };

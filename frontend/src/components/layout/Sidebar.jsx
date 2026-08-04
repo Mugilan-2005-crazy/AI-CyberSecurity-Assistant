@@ -44,6 +44,7 @@ const threatIntelNav = [
 
 const alertsNav = [
   { to: '/notifications', labelKey: 'Notifications', icon: BellIcon },
+  { to: '/ueba', labelKey: 'UEBA Analytics', icon: ExclamationTriangleIcon },
 ];
 
 const adminNav = [
@@ -53,6 +54,7 @@ const adminNav = [
   { to: '/admin/executive', labelKey: 'Executive Command Center', icon: BuildingOfficeIcon },
   { to: '/admin/incident-reports', labelKey: 'AI Incident Reports', icon: ExclamationTriangleIcon },
   { to: '/admin/knowledge-graph', labelKey: 'Security Knowledge Graph', icon: ShareIcon },
+  { to: '/admin/ueba', labelKey: 'UEBA Dashboard', icon: ExclamationTriangleIcon },
 ];
 
 export default function Sidebar({ open, onClose }) {

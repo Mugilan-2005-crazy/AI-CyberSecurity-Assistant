@@ -12,11 +12,13 @@ import {
   deleteEntity,
   clearUserGraph,
 } from '../services/knowledgeGraphService.js';
+import { recordActivity } from '../services/ueba/behaviorService.js';
 
 export const buildGraph = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const result = await buildGraphFromUserData(userId);
+    recordActivity(userId, { type: 'graph_search', action: 'Knowledge graph built', ip: req.ip || '', metadata: { source: 'buildGraph' } }).catch((err) => logger.warn('[ueba] Graph build activity failed', { error: err.message }));
     res.json({ success: true, data: result });
   } catch (err) {
     logger.error('[knowledgeGraphController] buildGraph failed', { error: err.message });
@@ -120,6 +122,7 @@ export const searchKnowledgeGraph = async (req, res, next) => {
     }
 
     const results = await searchGraph(userId, q.trim());
+    recordActivity(userId, { type: 'graph_search', action: `Graph search: ${q.trim()}`, ip: req.ip || '', metadata: { query: q.trim(), resultCount: results.entities?.length || 0 } }).catch((err) => logger.warn('[ueba] Graph search activity failed', { error: err.message }));
     res.json({ success: true, data: results });
   } catch (err) {
     logger.error('[knowledgeGraphController] searchKnowledgeGraph failed', { error: err.message });

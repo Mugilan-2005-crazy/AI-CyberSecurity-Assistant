@@ -13,6 +13,7 @@ import Notification from '../models/Notification.js';
 import AIAnalysis from '../models/AIAnalysis.js';
 import logger from '../utils/logger.js';
 import { emitScanStarted, emitScanCompleted, createNotification } from '../socket/realtimeNotificationService.js';
+import { recordActivity } from './ueba/behaviorService.js';
 
 let aiAnalysisEnabled = true;
 
@@ -37,6 +38,14 @@ export const recordScan = async (userId, type, input, result, ip) => {
         metadata: { scanId: scan._id, scanType: type, riskScore },
       });
     }
+
+    recordActivity(userId, {
+      type: 'scan',
+      action: `Scan: ${type}`,
+      ip,
+      riskScore,
+      metadata: { scanId: scan._id, scanType: type, verdict, input },
+    }).catch((err) => logger.warn('[ueba] Scan activity recording failed', { error: err.message }));
 
     emitScanCompleted(userId, scan._id ?? null, result).catch((err) => {
       logger.warn(`[scanService] Failed to emit scan.completed: ${err.message}`);

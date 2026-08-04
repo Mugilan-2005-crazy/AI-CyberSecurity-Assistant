@@ -139,6 +139,59 @@ export const getGraphInsights = () => api.get('/knowledge-graph/insights').then(
 export const deleteGraphEntity = (id) => api.delete(`/knowledge-graph/entity/${id}`).then((r) => r.data);
 export const resetKnowledgeGraph = () => api.post('/knowledge-graph/reset').then((r) => r.data);
 
+// UEBA API (Phase 7)
+export const getUebaDashboard = () => api.get('/ueba/dashboard').then((r) => r.data);
+
+export const getUserRiskRanking = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/ueba/users/risk-ranking${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+
+export const getUserBehaviorProfile = (userId) => api.get(`/ueba/users/${userId}/profile`).then((r) => r.data);
+
+export const getUserTimeline = (userId, params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/ueba/users/${userId}/timeline${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+
+export const getUserAnomalies = (userId, params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/ueba/users/${userId}/anomalies${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+
+export const getUserRiskTrend = (userId, params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/ueba/users/${userId}/risk-trend${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+
+export const runAnomalyDetection = (userId) => api.post(`/ueba/users/${userId}/detect`).then((r) => r.data);
+
+export const getAnomalyDetail = (id) => api.get(`/ueba/anomaly/${id}`).then((r) => r.data);
+
+export const resolveAnomaly = (id, status) => api.patch(`/ueba/anomaly/${id}/resolve`, { status }).then((r) => r.data);
+
+export const getAllAnomalies = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/ueba/anomalies${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+
+// User self-service UEBA endpoints
+export const getMyProfile = () => api.get('/ueba/me/profile').then((r) => r.data);
+
+export const getMyAnomalies = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/ueba/me/anomalies${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+
+export const getMyRiskScore = () => api.get('/ueba/me/risk-score').then((r) => r.data);
+
+export const getMyTimeline = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return api.get(`/ueba/me/timeline${query ? `?${query}` : ''}`).then((r) => r.data);
+};
+
+export const runMyDetection = () => api.post('/ueba/me/detect').then((r) => r.data);
+
 // Web search for cybersecurity intelligence.
 export const webSearch = (query, sessionId) =>
   api.post('/chat/web-search', { query, sessionId }).then((r) => r);
@@ -257,5 +310,6 @@ export default {
   getNotificationsList, getUnreadCount, markNotificationRead, markAllNotificationsRead, deleteNotification, deleteAllReadNotifications,
   getExecutiveSummary, getExecutiveAiSummary, getExecutiveReport, getExecutiveMetrics,
   generateIncidentReport, getIncidentReports, getIncidentReport, shareIncidentReport, getSharedIncidentReport, emailIncidentReport, exportIncidentReport,
-  buildKnowledgeGraph, getKnowledgeGraph, getGraphEntity, addGraphEntity, addGraphRelationship, getAttackPaths, searchKnowledgeGraph, getGraphInsights, deleteGraphEntity, resetKnowledgeGraph,
+  buildKnowledgeGraph, getKnowledgeGraph, getGraphEntity, addGraphEntity, addGraphRelationship, getAttackPaths, searchKnowledgeGraph, getGraphInsights, deleteGraphEntity,   resetKnowledgeGraph,
+  getUebaDashboard, getUserRiskRanking, getUserBehaviorProfile, getUserTimeline, getUserAnomalies, getUserRiskTrend, runAnomalyDetection, getAnomalyDetail, resolveAnomaly, getAllAnomalies,   getMyProfile, getMyAnomalies, getMyRiskScore, getMyTimeline, runMyDetection,
 };

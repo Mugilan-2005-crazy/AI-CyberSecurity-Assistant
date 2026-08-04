@@ -20,6 +20,7 @@ import { generateToken, hashToken } from '../utils/tokens.js';
 import { sendVerificationEmail, sendPasswordResetEmail, sendOTPEmail, sendSuspiciousLoginEmail } from '../utils/email.js';
 import logger from '../utils/logger.js';
 import config from '../config/index.js';
+import { recordActivity } from '../services/ueba/behaviorService.js';
 
 const cookieOpts = {
   httpOnly: true,
@@ -97,6 +98,15 @@ export const login = async (req, res, next) => {
         logger.warn(`Account locked: ${email} after ${user.failedLoginAttempts} failed attempts`, { email, ip: req.ip });
       }
       await user.save();
+      recordActivity(user._id, {
+        type: 'login',
+        action: 'Failed login attempt',
+        ip: req.ip || '',
+        location: '',
+        device: req.headers['user-agent'] || '',
+        success: false,
+        metadata: { source: 'login', failedAttempts: user.failedLoginAttempts },
+      }).catch((err) => logger.warn('[ueba] Failed login activity recording failed', { error: err.message }));
       throw new ApiError(401, 'Invalid credentials');
     }
 
@@ -106,6 +116,16 @@ export const login = async (req, res, next) => {
     const { access, refresh } = issueTokens(user);
     user.refreshTokens.push(refresh);
     await user.save();
+
+    recordActivity(user._id, {
+      type: 'login',
+      action: 'User logged in',
+      ip: req.ip || '',
+      location: user.lastLoginLocation || '',
+      device: user.lastLoginDevice || '',
+      success: true,
+      metadata: { source: 'login' },
+    }).catch((err) => logger.warn('[ueba] Login activity recording failed', { error: err.message }));
 
     res.cookie('refreshToken', refresh, cookieOpts);
     res.json({
@@ -255,6 +275,12 @@ export const changePassword = async (req, res, next) => {
     user.password = newPassword;
     user.refreshTokens = [];
     await user.save();
+    recordActivity(user._id, {
+      type: 'password_change',
+      action: 'User changed password',
+      ip: req.ip || '',
+      metadata: { source: 'changePassword' },
+    }).catch((err) => logger.warn('[ueba] Password change activity recording failed', { error: err.message }));
     res.json({ success: true, message: 'Password updated successfully' });
   } catch (err) { next(err); }
 };
@@ -410,6 +436,15 @@ export const loginEnhanced = async (req, res, next) => {
         logger.warn(`Account locked: ${email} after ${user.failedLoginAttempts} failed attempts`, { email, ip: req.ip });
       }
       await user.save();
+      recordActivity(user._id, {
+        type: 'login',
+        action: 'Failed login attempt (enhanced)',
+        ip: req.ip || '',
+        location: location || '',
+        device: device || '',
+        success: false,
+        metadata: { source: 'loginEnhanced', failedAttempts: user.failedLoginAttempts },
+      }).catch((err) => logger.warn('[ueba] Failed login activity recording failed', { error: err.message }));
       throw new ApiError(401, 'Invalid credentials');
     }
 
@@ -440,6 +475,16 @@ export const loginEnhanced = async (req, res, next) => {
       success: true,
     });
     if (user.loginHistory.length > 50) user.loginHistory = user.loginHistory.slice(-50);
+
+    recordActivity(user._id, {
+      type: 'login',
+      action: 'User logged in (enhanced)',
+      ip: req.ip || '',
+      location: location || user.lastLoginLocation || '',
+      device: device || user.lastLoginDevice || '',
+      success: true,
+      metadata: { source: 'loginEnhanced', suspicious: isSuspicious, device, location },
+    }).catch((err) => logger.warn('[ueba] Login activity recording failed', { error: err.message }));
 
     if (user.twoFactorEnabled) {
       const otp = crypto.randomInt(100000, 1000000).toString();

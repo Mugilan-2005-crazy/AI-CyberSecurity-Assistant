@@ -16,6 +16,7 @@ import { checkQr } from '../services/security/qrChecker.js';
 import { decodeQr } from '../services/security/qrDecoder.js';
 import { recordScan } from '../services/scanService.js';
 import { buildReport } from '../services/security/reportGenerator.js';
+import { recordActivity } from '../services/ueba/behaviorService.js';
 import logger from '../utils/logger.js';
 
 // Redact long targets so we never store full sensitive payloads.
@@ -294,6 +295,13 @@ export const generateReport = async (req, res, next) => {
     }
 
     // 5. Stream the PDF using the existing PDFKit service.
+    recordActivity(userId, {
+      type: 'report_generation',
+      action: 'Security report generated',
+      ip: req.ip || '',
+      metadata: { period: { from, to }, totalScans: scans.length },
+    }).catch((err) => logger.warn('[ueba] Report activity recording failed', { error: err.message }));
+
     const { buildPdfReport } = await import('../services/reportService.js');
     const doc = buildPdfReport({ report: report || { _id: 'preview', title: 'Security Report' }, scans, reportData });
 
