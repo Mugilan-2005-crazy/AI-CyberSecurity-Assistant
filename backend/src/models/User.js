@@ -69,6 +69,10 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+userSchema.index({ emailVerificationExpire: 1 }, { expireAfterSeconds: 0 });
+userSchema.index({ passwordResetExpire: 1 }, { expireAfterSeconds: 0 });
+userSchema.index({ passwordResetOTPExpire: 1 }, { expireAfterSeconds: 0 });
+
 // Hash password on every save where the password field changed.
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();

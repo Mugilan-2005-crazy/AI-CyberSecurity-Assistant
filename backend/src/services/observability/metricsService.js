@@ -92,10 +92,11 @@ class MetricsService {
     this.metrics.responseTime.count++;
     this.metrics.responseTime.min = Math.min(this.metrics.responseTime.min, responseTimeMs);
     this.metrics.responseTime.max = Math.max(this.metrics.responseTime.max, responseTimeMs);
-    this.metrics.responseTime.buckets.push(responseTimeMs);
-    if (this.metrics.responseTime.buckets.length > 1000) {
-      this.metrics.responseTime.buckets.shift();
+
+    if (this.metrics.responseTime.buckets.length >= 1000) {
+      this.metrics.responseTime.buckets = this.metrics.responseTime.buckets.slice(-500);
     }
+    this.metrics.responseTime.buckets.push(responseTimeMs);
 
     if (responseTimeMs > 1000) {
       this.metrics.errors.total++;

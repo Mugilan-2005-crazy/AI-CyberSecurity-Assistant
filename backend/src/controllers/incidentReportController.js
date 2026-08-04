@@ -142,7 +142,7 @@ export const exportReport = async (req, res, next) => {
     }
 
     if (format === 'pdf') {
-      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=incident-report-${report.incidentId}.pdf`);
       res.json({
         success: true,
@@ -151,7 +151,7 @@ export const exportReport = async (req, res, next) => {
         message: 'PDF generation should be handled client-side with jsPDF',
       });
     } else if (format === 'docx') {
-      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
       res.setHeader('Content-Disposition', `attachment; filename=incident-report-${report.incidentId}.docx`);
       res.json({
         success: true,

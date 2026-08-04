@@ -36,6 +36,21 @@ export function initSocketServer(httpServer, config) {
       skipMiddlewares: true,
     },
     connectionTimeout: 10000,
+    maxHttpBufferSize: 1e6,
+  });
+
+  ioInstance.use((socket, next) => {
+    const ip = socket.handshake.address;
+    const key = `${ip}:${socket.nsp.name}`;
+    if (ioInstance._rateLimitMap && ioInstance._rateLimitMap[key] > 10) {
+      return next(new Error('RATE_LIMIT_EXCEEDED'));
+    }
+    ioInstance._rateLimitMap = ioInstance._rateLimitMap || {};
+    ioInstance._rateLimitMap[key] = (ioInstance._rateLimitMap[key] || 0) + 1;
+    setTimeout(() => {
+      ioInstance._rateLimitMap[key] = Math.max(0, (ioInstance._rateLimitMap[key] || 0) - 1);
+    }, 60000);
+    next();
   });
 
   const ns = ioInstance.of(NAMESPACE_PATH);
@@ -48,8 +63,6 @@ export function initSocketServer(httpServer, config) {
       logger.error('[socketServer] Cleanup cycle error', { error: err.message });
     });
   }, 5 * 60 * 1000);
-
-  globalThis.io = ioInstance;
 
   ioInstance.on('connection_error', (err) => {
     logger.error('[socketServer] Connection error', { error: err.message, code: err.code, err });

@@ -37,6 +37,7 @@ const chatLogSchema = new mongoose.Schema(
 );
 
 chatLogSchema.index({ user: 1, sessionId: 1 });
+chatLogSchema.index({ updatedAt: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 90 });
 
 const ChatLog = mongoose.model('ChatLog', chatLogSchema);
 export default ChatLog;

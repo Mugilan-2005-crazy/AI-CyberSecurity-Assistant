@@ -12,7 +12,14 @@ import ApiError from '../utils/ApiError.js';
 export const listUsers = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, q } = req.query;
-    const filter = q ? { $or: [{ name: new RegExp(q, 'i') }, { email: new RegExp(q, 'i') }] } : {};
+    const filter = {};
+    if (q && typeof q === 'string' && q.trim().length > 0) {
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.$or = [
+        { name: new RegExp(escaped, 'i') },
+        { email: new RegExp(escaped, 'i') },
+      ];
+    }
     const users = await User.find(filter)
       .select('-password -refreshTokens -emailVerificationToken -passwordResetToken')
       .sort({ createdAt: -1 })

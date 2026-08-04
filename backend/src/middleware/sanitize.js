@@ -8,9 +8,10 @@
 const stripNoSql = (value) => {
   if (Array.isArray(value)) return value.map(stripNoSql);
   if (value && typeof value === 'object') {
+    if (Object.prototype.toString.call(value) !== '[object Object]') return value;
     return Object.fromEntries(
       Object.entries(value)
-        .filter(([k]) => !['$where', '$gt', '$lt', '$ne', '$regex', '$exists'].includes(k))
+        .filter(([k]) => !['$where', '$gt', '$lt', '$ne', '$regex', '$exists', '__proto__', 'constructor', 'prototype'].includes(k))
         .map(([k, v]) => [k, stripNoSql(v)])
     );
   }

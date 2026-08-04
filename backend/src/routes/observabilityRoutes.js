@@ -1,14 +1,14 @@
 import { Router } from 'express';
 import { protect, authorize } from '../middleware/auth.js';
-import metricsService from '../../services/observability/metricsService.js';
-import healthService from '../../services/observability/healthService.js';
-import alertEngine from '../../services/observability/alertEngine.js';
-import loggingService from '../../services/observability/loggingService.js';
-import ObservabilityMetric from '../../models/observability/ObservabilityMetric.js';
-import HealthCheck from '../../models/observability/HealthCheck.js';
-import Alert from '../../models/observability/Alert.js';
-import LogEntry from '../../models/observability/LogEntry.js';
-import logger from '../../utils/logger.js';
+import metricsService from '../services/observability/metricsService.js';
+import healthService from '../services/observability/healthService.js';
+import alertEngine from '../services/observability/alertEngine.js';
+import loggingService from '../services/observability/loggingService.js';
+import ObservabilityMetric from '../models/observability/ObservabilityMetric.js';
+import HealthCheck from '../models/observability/HealthCheck.js';
+import Alert from '../models/observability/Alert.js';
+import LogEntry from '../models/observability/LogEntry.js';
+import logger from '../utils/logger.js';
 
 const router = Router();
 router.use(protect);

@@ -1,8 +1,26 @@
-import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
+import { describe, test, expect, beforeAll, afterAll, jest } from '@jest/globals';
 import request from 'supertest';
 import { initDB, seedAdmin, createTestUser, cleanupDB } from './bootstrap.mjs';
 import { detectIocType, validateIoc, IOC_TYPES } from '../src/services/threatIntel/iocAnalyzer.js';
 import { calculateReputation, classifyIoc, buildCorrelation } from '../src/services/threatIntel/reputationEngine.js';
+
+jest.unstable_mockModule('../src/services/ai/ollamaService.js', () => ({
+  askOllama: jest.fn().mockResolvedValue({ success: true, response: 'Mocked Ollama response' }),
+  isOllamaAvailable: jest.fn().mockResolvedValue(true),
+  default: {
+    askOllama: jest.fn().mockResolvedValue({ success: true, response: 'Mocked Ollama response' }),
+    isOllamaAvailable: jest.fn().mockResolvedValue(true),
+  },
+}));
+
+jest.unstable_mockModule('../src/services/ai/aiRouter.js', () => ({
+  routeAI: jest.fn().mockResolvedValue({ response: 'Mocked AI threat analysis', provider: 'mock' }),
+  routeMultimodalAI: jest.fn().mockResolvedValue({ response: 'Mocked multimodal response', provider: 'mock' }),
+  default: {
+    routeAI: jest.fn().mockResolvedValue({ response: 'Mocked AI threat analysis', provider: 'mock' }),
+    routeMultimodalAI: jest.fn().mockResolvedValue({ response: 'Mocked multimodal response', provider: 'mock' }),
+  },
+}));
 
 let app;
 let adminToken;
@@ -308,10 +326,10 @@ describe('Threat Intelligence', () => {
   });
 
   describe('POST /api/threat-intel/cache/refresh', () => {
-    test('refreshes cache', async () => {
+    test('refreshes cache as admin', async () => {
       const res = await request(app)
         .post('/api/threat-intel/cache/refresh')
-        .set(userAuth());
+        .set(adminAuth());
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);

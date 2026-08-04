@@ -148,11 +148,11 @@ export const getFindingById = async (req, res, next) => {
 export const updateFinding = async (req, res, next) => {
   try {
     const { status, assignedTo } = req.body;
-    const finding = await updateFindingStatus(req.params.id, status || finding?.status, req.user.id);
-    if (assignedTo) {
-      finding.assignedTo = assignedTo;
-      await finding.save();
-    }
+    const finding = await CloudFinding.findById(req.params.id);
+    if (!finding) throw new ApiError(404, 'Finding not found');
+    if (status) finding.status = status;
+    if (assignedTo) finding.assignedTo = assignedTo;
+    await finding.save();
     res.json({ success: true, data: finding });
   } catch (err) {
     logger.error('[cloudSecurityController] updateFinding failed', { error: err.message });

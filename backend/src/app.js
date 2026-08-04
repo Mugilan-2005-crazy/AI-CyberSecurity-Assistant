@@ -39,6 +39,8 @@ import containerSecurityRoutes from './routes/containerSecurityRoutes.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import { rateLimiter } from './middleware/rateLimiter.js';
 import { sanitize } from './middleware/sanitize.js';
+import { csrfProtection } from './middleware/csrf.js';
+import { requestSizeLimit } from './middleware/requestSizeLimit.js';
 
 const app = express();
 logger.info('APP.JS loaded');
@@ -46,9 +48,11 @@ logger.info('APP.JS loaded');
 app.set('trust proxy', true);
 
 // Request correlation ID middleware
-app.use((req, _res, next) => {
+app.use((req, res, next) => {
   req.id = req.headers['x-request-id'] || `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  req.traceId = req.id;
   req.logger = createRequestLogger(req.id);
+  res.setHeader('X-Request-ID', req.id);
   next();
 });
 
@@ -61,14 +65,21 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:", "blob:"],
       connectSrc: ["'self'", "http://localhost:5000", "http://127.0.0.1:5000"],
       fontSrc: ["'self'", "data:"],
       objectSrc: ["'none'"],
       frameAncestors: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
     },
+  },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true,
   },
   permissionsPolicy: {
     camera: ['none'],
@@ -77,13 +88,19 @@ app.use(helmet({
     payment: ['none'],
     usb: ['none'],
   },
+  referrerPolicy: { policy: 'no-referrer' },
+  crossOriginEmbedderPolicy: false,
 }));
+
 app.use(
   cors({
     origin: config.clientOrigin,
     credentials: true,
   })
 );
+
+app.use(requestSizeLimit(10 * 1024 * 1024));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

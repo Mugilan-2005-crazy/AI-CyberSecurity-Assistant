@@ -16,6 +16,7 @@ import i18n from './i18n/config.js';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Layout from './components/layout/Layout.jsx';
 import Loader from './components/ui/Loader.jsx';
+import ErrorBoundary from './components/common/ErrorBoundary.jsx';
 
 // Public pages
 const Login = lazy(() => import('./pages/Login.jsx'));
@@ -68,6 +69,7 @@ const Fallback = () => (
 export default function App() {
   return (
     <I18nextProvider i18n={i18n}>
+    <ErrorBoundary>
     <Suspense fallback={<Fallback />}>
       <Routes>
         {/* Public */}
@@ -133,6 +135,7 @@ export default function App() {
   theme="dark"
 />
     </Suspense>
+    </ErrorBoundary>
     </I18nextProvider>
   );
 }

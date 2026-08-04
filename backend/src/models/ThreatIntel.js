@@ -67,6 +67,7 @@ threatIntelSchema.index({ ioc: 1, iocType: 1 });
 threatIntelSchema.index({ reputationScore: -1 });
 threatIntelSchema.index({ classification: 1, createdAt: -1 });
 threatIntelSchema.index({ threatCategory: 1, createdAt: -1 });
+threatIntelSchema.index({ user: 1, ioc: 1, iocType: 1 }, { unique: true });
 
 const ThreatIntel = mongoose.model('ThreatIntel', threatIntelSchema);
 export default ThreatIntel;

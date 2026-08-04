@@ -48,20 +48,6 @@ router.use(protect); // all scan routes protected
 router.get('/dashboard', dashboard);
 /**
  * @openapi
- * /api/scan/dashboard:
- *   get:
- *     tags:
- *       - Security Scans
- *     summary: Get dashboard aggregate data
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Dashboard data
- */
-router.get('/dashboard', dashboard);
-/**
- * @openapi
  * /api/scan/url:
  *   post:
  *     tags:

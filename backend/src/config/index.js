@@ -64,14 +64,11 @@ const config = {
   otx: { apiKey: process.env.OTX_API_KEY || '', baseUrl: 'https://otx.alienvault.com/api/v1' },
   nvd: { apiKey: process.env.NVD_API_KEY || '', baseUrl: 'https://services.nvd.nist.gov/rest/json/cves/2.0' },
 
-   threatIntel: {
+  threatIntel: {
     cacheTtl: Number(process.env.THREAT_INTEL_CACHE_TTL) || 3600000,
     requestTimeout: Number(process.env.THREAT_INTEL_TIMEOUT) || 15000,
     maxRetries: Number(process.env.THREAT_INTEL_MAX_RETRIES) || 3,
   },
-  abuseipdb: { apiKey: process.env.ABUSEIPDB_API_KEY || '', baseUrl: 'https://api.abuseipdb.com/api/v2' },
-  otx: { apiKey: process.env.OTX_API_KEY || '', baseUrl: 'https://otx.alienvault.com/api/v1' },
-  nvd: { apiKey: process.env.NVD_API_KEY || '', baseUrl: 'https://services.nvd.nist.gov/rest/json/cves/2.0' },
 
   cloud: {
     scanTimeout: Number(process.env.CLOUD_SCAN_TIMEOUT) || 120000,
