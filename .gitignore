@@ -32,3 +32,25 @@ coverage/
 # Temporary files
 tmp/
 temp/
+
+# Tauri / Rust
+frontend/src-tauri/target/
+frontend/src-tauri/gen/
+**/*.rs.bk
+
+# Uploads
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Misc
+*.pem
+*.key
+*.crt
+
+# Debug/test output files
+test_chat.mjs
+jest-full-output.txt
+build-output.txt
+coverage/
+backend/coverage/
+frontend/build-output.txt

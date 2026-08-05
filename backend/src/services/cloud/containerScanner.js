@@ -301,10 +301,12 @@ export const scanDockerImage = async (imageName, userId) => {
     logger.warn('[containerScanner] Docker history failed', { error: err.message, imageName });
   }
 
-  const existing = await ContainerImage.findOne({ imageName, imageTag: imageName.includes(':') ? imageName.split(':')[1] : 'latest' });
+  const baseImageName = imageName.includes(':') ? imageName.split(':')[0] : imageName;
+  const imageTag = imageName.includes(':') ? imageName.split(':')[1] : 'latest';
+  const existing = await ContainerImage.findOne({ imageName: baseImageName, imageTag });
   const imageEntry = existing || new ContainerImage({
-    imageName: imageName.includes(':') ? imageName.split(':')[0] : imageName,
-    imageTag: imageName.includes(':') ? imageName.split(':')[1] : 'latest',
+    imageName: baseImageName,
+    imageTag,
     source: 'docker',
     scannedBy: userId,
   });

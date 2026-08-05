@@ -3,7 +3,8 @@
  * ------------------------------------------------------------
  * React entry point. Registers the Chart.js components used by
  * the dashboard/admin charts and wraps the app in the Auth and
- * Theme providers.
+ * Theme providers. Also registers the service worker for PWA
+ * offline support.
  */
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -14,6 +15,20 @@ import { ThemeProvider } from './context/ThemeContext.jsx';
 import ErrorBoundary from './components/common/ErrorBoundary.jsx';
 import Loader from './components/ui/Loader.jsx';
 import './index.css';
+
+// PWA service worker registration
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((registration) => {
+        console.log('Service Worker registered:', registration.scope);
+      })
+      .catch((error) => {
+        console.error('Service Worker registration failed:', error);
+      });
+  });
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
