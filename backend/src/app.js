@@ -61,6 +61,13 @@ app.get("/", (req, res) => {
 });
 
 // --- Security & base middleware ---
+const connectSrcOrigins = ["'self'"];
+if (config.env === 'development') {
+  connectSrcOrigins.push('http://localhost:5000', 'http://127.0.0.1:5000');
+} else {
+  connectSrcOrigins.push(config.clientOrigin);
+}
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -68,7 +75,7 @@ app.use(helmet({
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:", "blob:"],
-      connectSrc: ["'self'", "http://localhost:5000", "http://127.0.0.1:5000"],
+      connectSrc: connectSrcOrigins,
       fontSrc: ["'self'", "data:"],
       objectSrc: ["'none'"],
       frameAncestors: ["'none'"],
@@ -131,7 +138,7 @@ if (config.env !== 'test') app.use(morgan('dev'));
  *                 message:
  *                   type: string
  */
-app.get('/api/health', (_req, res) => res.json({ success: true, message: 'Cyber Security Assistant API running' }));
+app.get('/api/health', (_req, res) => res.json({ success: true, message: 'Enterprise Cyber Security Platform API running' }));
 /**
  * @openapi
  * /health:

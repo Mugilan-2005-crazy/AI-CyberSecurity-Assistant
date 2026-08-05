@@ -20,7 +20,7 @@ describe('Health', () => {
     const res = await request(app).get('/api/health');
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.message).toContain('Cyber Security Assistant API running');
+    expect(res.body.message).toContain('Enterprise Cyber Security Platform API running');
   });
 
   test('GET /health returns 200', async () => {

@@ -1,6 +1,6 @@
-# 🛡️ Cyber Security Assistant
+# 🛡️ Enterprise Cyber Security Platform
 
-![CI/CD](https://github.com/Mugilan-2005-crazy/AI-CyberSecurity-Assistant/actions/workflows/ci.yml/badge.svg)
+![CI/CD](https://github.com/Mugilan-2005-crazy/Enterprise-Cyber-Security-Platform/actions/workflows/ci.yml/badge.svg)
 ![Node.js](https://img.shields.io/badge/Node.js-18%2B-green?logo=node.js)
 ![Express](https://img.shields.io/badge/Express-4.19-black?logo=express)
 ![React](https://img.shields.io/badge/React-18.3-blue?logo=react)
@@ -8,12 +8,63 @@
 ![JWT](https://img.shields.io/badge/JWT-Auth-orange?logo=jsonwebtoken)
 ![Gemini](https://img.shields.io/badge/Google_Gemini-AI-purple?logo=google)
 ![Ollama](https://img.shields.io/badge/Ollama-Llama_3.1-blue?logo=ollama)
+![Tauri](https://img.shields.io/badge/Tauri-Desktop-blue?logo=tauri)
+![PWA](https://img.shields.io/badge/PWA-Installable-green?logo=pwa)
 
-> Production-ready, AI-powered Cyber Security Assistant — full-stack (React + Vite / Node + Express / MongoDB Atlas) with JWT auth, 7 security modules, an AI chatbot with multimodal analysis, admin panel, and PDF reporting.
+> Enterprise AI Cyber Security Platform — full-stack (React + Vite / Node + Express / MongoDB Atlas) with JWT auth, AI SOC Analyst, Threat Intelligence Center, UEBA, Cloud Security, Container Security, Security Knowledge Graph, Incident Response, Redis Cache, TOTP MFA, OpenTelemetry, Kubernetes manifests, and SOC2 audit foundation.
 
 ---
 
-## 🐳 Docker Deployment
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+
+- MongoDB Atlas connection string (or local MongoDB)
+- Google Gemini API key
+- Docker (optional, for containerized deployment)
+
+### Installation
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd Enterprise-Cyber-Security-Platform
+
+# Backend setup
+cd backend
+cp .env.example .env    # fill in your values
+npm install
+npm run seed            # create admin account
+npm run dev             # http://localhost:5000
+
+# Frontend setup
+cd ../frontend
+cp .env.example .env    # set VITE_API_URL and VITE_SOCKET_URL
+npm install
+npm run dev             # http://localhost:5173
+```
+
+### Production Deployment
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.
+
+---
+
+## 🏗 Architecture
+
+```
+User → Custom Domain → Cloudflare CDN → Frontend (Vercel/Cloudflare Pages)
+                                          ↓
+                                    Backend API (Railway/Render/Fly.io)
+                                          ↓
+                                    MongoDB Atlas
+                                          ↓
+                                    Redis Cloud
+                                          ↓
+                                    AI Providers (Gemini/Ollama)
+```
+
+Full architecture details are in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ### Prerequisites
 - Docker 24+
@@ -168,35 +219,56 @@ The **Cyber Security Assistant** is a full-stack web application that combines t
 
 ---
 
-## ✨ Key Features
+## 🛡️ Key Features
 
-### Authentication & User Management
-- Register, Login, Forgot/Reset Password, Email Verification
-- JWT access + refresh tokens, httpOnly cookies
-- Profile management with account statistics
-- Admin panel for user management and platform analytics
-
-### Security Modules
-1. **URL Scanner** — HTTPS/SSL check, suspicious TLDs, URL shorteners, brand impersonation (typosquatting)
-2. **Password Analyzer** — Shannon entropy, crack-time estimates, breach awareness, suggestions
-3. **Email Phishing Detector** — heuristic scan + optional Gemini AI explanation
-4. **File Malware Scanner** — SHA-256 + VirusTotal API
-5. **AI Security Chatbot** — Gemini/Ollama multi-turn chat with multimodal analysis
-6. **QR Code Safety Checker** — live camera decode (jsQR) + safety verdict
-7. **Report Generator** — PDF export via PDFKit
-
-### AI Chatbot Capabilities
-- Text chat with Gemini and Ollama providers
-- Multimodal file analysis (PDF, images, videos)
+### AI SOC Analyst
+- Real-time security analysis with AI-powered insights
+- Multimodal analysis (text, files, images)
 - Web search integration for threat intelligence
-- Text-to-speech output
-- Voice input support
-- Markdown rendering with code blocks
-- Security report visualization cards
-- Copy / Listen / Regenerate message actions
+- Streaming responses with security report cards
 - Chat history with session management
-- Multilingual support (English, Tamil, Tanglish, Hindi)
-- Prompt injection protection
+
+### Threat Intelligence Center
+- IOC analysis and correlation
+- CVE search and tracking
+- Multi-provider threat feeds (AbuseIPDB, OTX, VirusTotal, NVD)
+- Threat correlation engine
+- Cache and rate limiting for API providers
+
+### UEBA (User Entity Behavior Analytics)
+- Anomaly detection across user behavior
+- Risk scoring and ranking
+- Behavioral profiling and timeline analysis
+- Self-service UEBA for end users
+- Real-time anomaly alerts
+
+### Cloud Security Posture Management
+- Multi-cloud provider support (AWS, Azure, GCP)
+- Automated security scanning
+- Compliance impact analysis
+- Remediation planning
+- Cloud knowledge graph integration
+
+### Container Security
+- Docker image scanning
+- Running container analysis
+- Docker Compose security assessment
+- Kubernetes cluster scanning
+- Container runtime monitoring
+
+### Security Knowledge Graph
+- Entity and relationship modeling
+- Attack path analysis
+- Graph-based threat correlation
+- Cloud knowledge graph integration
+- Interactive graph visualization
+
+### Incident Response
+- AI-powered incident analysis
+- Response recommendation engine
+- Incident report generation
+- Report sharing and export
+- Response history tracking
 
 ---
 
@@ -204,10 +276,10 @@ The **Cyber Security Assistant** is a full-stack web application that combines t
 
 ```mermaid
 flowchart TD
-    User[👤 User] --> Frontend[React + Vite Frontend]
-    Frontend -->|REST API| Backend[Express Backend]
-    Backend --> Auth[🔐 Authentication<br/>JWT + RBAC]
-    Auth --> AIRouter[🤖 AI Router]
+    User[👤 User] --> Frontend[React + Vite Frontend<br/>PWA + Tauri Desktop]
+    Frontend -->|REST API| Backend[Express Backend<br/>Enterprise Cyber Security Platform]
+    Backend --> Auth[🔐 Authentication<br/>JWT + RBAC + TOTP MFA]
+    Auth --> AIRouter[🤖 AI Router<br/>Gemini + Ollama]
     AIRouter --> Gemini[☁️ Google Gemini]
     AIRouter --> Ollama[🖥️ Ollama / Llama 3.1]
     AIRouter --> SecurityModules[🛡️ Security Modules]
@@ -216,7 +288,16 @@ flowchart TD
     SecurityModules --> FileScanner[File Malware]
     SecurityModules --> QRScanner[QR Checker]
     SecurityModules --> PasswordAnalyzer[Password Analyzer]
+    SecurityModules --> SOCAnalyst[AI SOC Analyst]
+    SecurityModules --> ThreatIntel[Threat Intelligence]
+    SecurityModules --> UEBA[User Behavior Analytics]
+    SecurityModules --> CloudSec[Cloud Security]
+    SecurityModules --> ContainerSec[Container Security]
+    SecurityModules --> KnowledgeGraph[Security Knowledge Graph]
+    SecurityModules --> IncidentResponse[Incident Response]
     Backend --> MongoDB[(🍃 MongoDB Atlas)]
+    Backend --> Redis[(⚡ Redis Cloud)]
+    Backend --> OTEL[📊 OpenTelemetry<br/>Prometheus + Grafana]
     Gemini -->|External| GoogleCloud[Google Cloud API]
     FileScanner -->|Optional| VirusTotal[VirusTotal API]
 ```
@@ -241,89 +322,48 @@ flowchart TD
 
 | Layer | Technology |
 |-------|------------|
-| **Frontend** | React 18, Vite, Tailwind CSS, Framer Motion, Chart.js, React Router |
+| **Frontend** | React 18, Vite, Tailwind CSS, Framer Motion, Chart.js, React Router, PWA |
 | **Backend** | Node.js, Express, MVC, Mongoose, JWT, express-validator |
 | **Database** | MongoDB Atlas |
+| **Cache** | Redis Cloud / Upstash |
 | **AI** | Google Gemini (`@google/generative-ai`), Ollama (local Llama 3.1) |
-| **Threat Intel** | VirusTotal API |
+| **Threat Intel** | VirusTotal API, AbuseIPDB, OTX, NVD |
 | **PDF** | jsPDF (frontend), PDFKit (backend) |
-| **Auth** | JWT access + refresh tokens, httpOnly cookies, bcrypt |
-| **Security** | Helmet, CORS, rate limiting, input validation, NoSQL sanitization, prompt injection detection |
-| **Deploy** | Vercel (frontend), Render (backend), Docker optional |
+| **Auth** | JWT access + refresh tokens, httpOnly cookies, bcrypt, TOTP MFA |
+| **Security** | Helmet, CORS, rate limiting, input validation, NoSQL sanitization, prompt injection detection, CSP |
+| **Observability** | OpenTelemetry, Prometheus, Grafana |
+| **Deploy** | Vercel (frontend), Railway/Render (backend), Docker, Kubernetes |
+| **Desktop** | Tauri (Windows) |
 
 ---
 
 ## 📁 Project Structure
 
 ```
-cs assistant/
+Enterprise-Cyber-Security-Platform/
 ├── backend/
 │   ├── src/
 │   │   ├── config/                 # Environment & database configuration
 │   │   │   ├── index.js           # Central config loader
 │   │   │   └── db.js              # MongoDB connection
 │   │   ├── models/                 # Mongoose schemas
-│   │   │   ├── User.js
-│   │   │   ├── ScanHistory.js
-│   │   │   ├── Report.js
-│   │   │   ├── Notification.js
-│   │   │   ├── ChatLog.js
-│   │   │   ├── Document.js
-│   │   │   ├── NoteChatLog.js
-│   │   │   └── AttachmentAnalysis.js
 │   │   ├── controllers/            # Request handlers
-│   │   │   ├── authController.js
-│   │   │   ├── scanController.js
-│   │   │   ├── chatController.js
-│   │   │   ├── adminController.js
-│   │   │   ├── documentController.js
-│   │   │   └── aiUploadController.js
 │   │   ├── routes/                 # API route definitions
-│   │   │   ├── authRoutes.js
-│   │   │   ├── scanRoutes.js
-│   │   │   ├── chatRoutes.js
-│   │   │   ├── adminRoutes.js
-│   │   │   ├── documentRoutes.js
-│   │   │   └── aiUploadRoutes.js
 │   │   ├── middleware/             # Express middleware
-│   │   │   ├── auth.js
-│   │   │   ├── validate.js
-│   │   │   ├── rateLimiter.js
-│   │   │   ├── sanitize.js
-│   │   │   ├── upload.js
-│   │   │   ├── errorHandler.js
-│   │   │   └── languageDetector.js
 │   │   ├── services/               # Business logic & external integrations
-│   │   │   ├── security/
-│   │   │   │   ├── urlScanner.js
-│   │   │   │   ├── passwordAnalyzer.js
-│   │   │   │   ├── emailPhishing.js
-│   │   │   │   ├── fileScanner.js
-│   │   │   │   ├── qrChecker.js
-│   │   │   │   ├── qrDecoder.js
-│   │   │   │   ├── gemini.js
-│   │   │   │   └── reportGenerator.js
-│   │   │   ├── ai/
-│   │   │   │   ├── aiRouter.js
-│   │   │   │   ├── ollamaService.js
-│   │   │   │   └── multimodalAI.js
-│   │   │   ├── search/
-│   │   │   │   └── webSearchService.js
-│   │   │   ├── scanService.js
-│   │   │   ├── reportService.js
-│   │   │   ├── documentService.js
-│   │   │   ├── vectorStore/
-│   │   │   │   └── vectorStore.js
-│   │   │   └── fileAnalysisService.js
+│   │   │   ├── ai/                # AI routing and providers
+│   │   │   ├── auth/              # Authentication (TOTP MFA)
+│   │   │   ├── cache/             # Redis cache manager
+│   │   │   ├── observability/     # OpenTelemetry integration
+│   │   │   ├── security/          # Security scanning modules
+│   │   │   ├── soc/               # SOC operations
+│   │   │   ├── threatIntel/       # Threat intelligence
+│   │   │   ├── ueba/              # User behavior analytics
+│   │   │   ├── response/          # Incident response
+│   │   │   ├── rag/               # Retrieval augmented generation
+│   │   │   └── audit/             # SOC2 audit logging
+│   │   ├── socket/                 # Socket.IO server
 │   │   ├── utils/                  # Helpers & utilities
-│   │   │   ├── logger.js
-│   │   │   ├── jwt.js
-│   │   │   ├── tokens.js
-│   │   │   ├── email.js
-│   │   │   ├── ApiError.js
-│   │   │   ├── catchAsync.js
-│   │   │   ├── seedAdmin.js
-│   │   │   └── sanitizePrompt.js
 │   │   ├── app.js                  # Express app assembly
 │   │   └── server.js               # Entry point
 │   ├── scripts/                    # Utility scripts
@@ -331,53 +371,35 @@ cs assistant/
 │   ├── Dockerfile
 │   ├── render.yaml
 │   └── package.json
-└── frontend/
-    ├── src/
-    │   ├── components/
-    │   │   ├── layout/             # Layout wrappers
-    │   │   ├── ui/                 # Reusable UI components
-    │   │   ├── chat/               # Chat-specific components
-    │   │   ├── dashboard/          # Dashboard widgets
-    │   │   ├── modules/            # Scan module shells
-    │   │   └── common/             # Shared components (ErrorBoundary)
-    │   ├── context/                 # React contexts
-    │   │   ├── AuthContext.jsx
-    │   │   └── ThemeContext.jsx
-    │   ├── pages/                   # Route pages
-    │   │   ├── auth/               # Login, Register, ForgotPassword, ResetPassword, VerifyEmail
-    │   │   ├── dashboard/          # Dashboard, ScanHistory, Reports, Settings, Profile
-    │   │   ├── modules/            # Security scan modules
-    │   │   │   ├── UrlScanner.jsx
-    │   │   │   ├── PasswordAnalyzer.jsx
-    │   │   │   ├── EmailPhishing.jsx
-    │   │   │   ├── FileScanner.jsx
-    │   │   │   ├── QrChecker.jsx
-    │   │   │   ├── AIChatbot.jsx
-    │   │   │   ├── Chatbot.jsx
-    │   │   │   └── SecurityNotesAI.jsx
-    │   │   └── admin/              # Admin panels
-    │   │       ├── AdminUsers.jsx
-    │   │       └── AdminAnalytics.jsx
-    │   ├── services/                # API clients
-    │   │   ├── api.js
-    │   │   └── endpoints.js
-    │   ├── hooks/                   # Custom React hooks
-    │   │   ├── useSpeechRecognition.js
-    │   │   └── useTextToSpeech.js
-    │   ├── i18n/                    # Internationalization
-    │   │   └── config.js
-    │   ├── utils/                   # Frontend utilities
-    │   │   └── markdown.js
-    │   ├── App.jsx
-    │   ├── main.jsx
-    │   └── index.css
-    ├── public/
-    ├── vercel.json
-    ├── .env.example
-    ├── tailwind.config.js
-    ├── vite.config.js
-    └── package.json
-```
+├── frontend/
+│   ├── public/
+│   │   ├── manifest.json           # PWA manifest
+│   │   ├── sw.js                   # Service worker
+│   │   └── icons/                  # PWA app icons
+│   ├── src/
+│   │   ├── components/
+│   │   ├── context/
+│   │   ├── hooks/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   └── i18n/
+│   ├── src-tauri/                  # Tauri desktop app
+│   ├── .env.example
+│   ├── vercel.json
+│   ├── vite.config.js
+│   └── package.json
+├── k8s/                            # Kubernetes manifests
+├── docker-compose.yml
+├── prometheus/
+├── grafana/
+├── .github/workflows/
+├── .env.example                    # Root environment template
+├── ARCHITECTURE.md
+├── SECURITY.md
+├── DEPLOYMENT.md
+├── CHANGELOG.md
+├── LICENSE
+└── README.md
 
 ---
 

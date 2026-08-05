@@ -49,7 +49,7 @@ const config = {
     port: Number(process.env.SMTP_PORT) || 587,
     user: process.env.SMTP_USER || '',
     pass: process.env.SMTP_PASS || '',
-    from: process.env.EMAIL_FROM || 'CyberSec <no-reply@cybersec.io>',
+    from: process.env.EMAIL_FROM || 'Enterprise Cyber Security <no-reply@cybersec.io>',
   },
 
   gemini: { apiKey: process.env.GEMINI_API_KEY || '' },

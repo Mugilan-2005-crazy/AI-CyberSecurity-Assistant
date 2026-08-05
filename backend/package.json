@@ -1,5 +1,5 @@
 {
-  "name": "cyber-security-assistant-backend",
+  "name": "enterprise-cyber-security-backend",
   "version": "1.0.0",
   "description": "Production-ready AI-powered Cyber Security Assistant backend (Express + MongoDB)",
   "main": "src/server.js",

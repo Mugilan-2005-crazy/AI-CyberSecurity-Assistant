@@ -19,6 +19,13 @@ import { useToast } from 'react-toastify';
 
 const SOCKET_PATH = '/api/socket.io';
 
+const getSocketUrl = () => {
+  const envUrl = import.meta.env.VITE_SOCKET_URL;
+  if (envUrl) return envUrl;
+  if (import.meta.env.DEV) return 'http://localhost:5000';
+  return window.location.origin;
+};
+
 const connectionConfig = {
   path: SOCKET_PATH,
   withCredentials: true,
@@ -51,7 +58,7 @@ export const useSocket = (autoConnect = true) => {
 
     setConnectionState('connecting');
 
-    const socket = io('security', {
+    const socket = io(getSocketUrl(), {
       ...connectionConfig,
       auth: { token },
       reconnectionDelay: Math.min(1000 * Math.pow(2, reconnectAttempt), 30000),
