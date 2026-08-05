@@ -1,4 +1,4 @@
-# Architecture — Enterprise Cyber Security Platform v2.1
+# Architecture — Enterprise Cyber Security Platform v2.1.1
 
 ## Overview
 

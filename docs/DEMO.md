@@ -1,4 +1,4 @@
-# Demo Experience — Enterprise Cyber Security Platform v2.1
+# Demo Experience — Enterprise Cyber Security Platform v2.1.1
 
 ## Overview
 
