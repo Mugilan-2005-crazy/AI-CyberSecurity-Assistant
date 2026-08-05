@@ -1,0 +1,54 @@
+# ============================================================
+# Caddyfile — Production TLS Termination Reverse Proxy
+# ============================================================
+# Handles HTTPS (port 443) and HTTP→HTTPS redirect (port 80).
+# Proxies /api/* to the backend service and all other traffic
+# to the frontend nginx service.
+# ============================================================
+{
+	# Global options
+	# Auto HTTPS with local CA (self-signed for local deployment)
+	# In production, replace with Let's Encrypt
+}
+
+# HTTP — redirect to HTTPS
+:80 {
+	redir https://{host}{uri} 308
+}
+
+# HTTPS — reverse proxy
+https://localhost {
+	tls internal
+
+	# Security headers
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		X-XSS-Protection "1; mode=block"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+	}
+
+	# Socket.IO proxy — must come before @api (more specific path)
+	@socket {
+		path /api/socket.io/*
+	}
+	reverse_proxy @socket backend:5000 {
+		header_up Connection "Upgrade"
+		header_up X-Forwarded-Proto "https"
+	}
+
+	# Backend API proxy (REST)
+	@api {
+		path /api/*
+	}
+	reverse_proxy @api backend:5000 {
+		header_up X-Forwarded-Proto "https"
+	}
+
+	# Everything else — serve from frontend nginx
+	reverse_proxy frontend:80 {
+		header_up X-Forwarded-Proto "https"
+	}
+}
