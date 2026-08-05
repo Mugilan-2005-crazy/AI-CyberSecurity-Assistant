@@ -1,6 +1,6 @@
 {
   "name": "enterprise-cyber-security-backend",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Enterprise AI Cyber Security Platform backend (Express + MongoDB)",
   "main": "src/server.js",
   "type": "module",

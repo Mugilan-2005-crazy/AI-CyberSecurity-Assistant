@@ -1,5 +1,25 @@
 # Changelog — Enterprise Cyber Security Platform
 
+## v2.1.1 — Production Release
+
+### Added
+- Production deployment configuration (Vercel, Railway, Render, Cloudflare)
+- Cloud deployment documentation and architecture diagrams
+- GitHub public release preparation
+- Performance benchmarks and monitoring setup
+- Professional demo flow documentation
+
+### Changed
+- Version bumped to 2.1.1 across all packages
+- Production environment configuration hardened
+- Security verification completed for HTTPS, CORS, CSP, Helmet, JWT, cookies, CSRF, rate limits, WebSocket auth, MFA, RBAC, tenant isolation
+
+### Security
+- No secrets committed to repository
+- `.env` files properly gitignored
+- Placeholder secrets in k8s manifests clearly marked
+- All API keys and credentials loaded via environment variables
+
 ## v2.1.0 — Product Release
 
 ### Added
