@@ -33,7 +33,7 @@ import ReportPanel from '../../components/executive/ReportPanel.jsx';
 import Skeleton from '../../components/ui/Skeleton.jsx';
 import StateView from '../../components/ui/StateView.jsx';
 import { jsPDF } from 'jspdf';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 const fadeUp = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
 const stagger = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } };
@@ -132,8 +132,8 @@ const buildPdf = (data) => {
   doc.save(`executive-report-${data.period}-${Date.now()}.pdf`);
 };
 
-const buildExcel = (data) => {
-  const wb = XLSX.utils.book_new();
+const buildExcel = async (data) => {
+  const wb = new ExcelJS.Workbook();
 
   const summaryRows = [
     ['Executive Security Command Center'],
@@ -158,19 +158,22 @@ const buildExcel = (data) => {
     ['Forecast'],
     [data.forecast],
   ];
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summaryRows), 'Executive Summary');
+  const summarySheet = wb.addWorksheet('Executive Summary');
+  summaryRows.forEach((row) => summarySheet.addRow(row));
 
   const kpiRows = [
     ['Metric', 'Value'],
     ...Object.entries(data.kpis || {}).map(([k, v]) => [k, v]),
   ];
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(kpiRows), 'KPIs');
+  const kpiSheet = wb.addWorksheet('KPIs');
+  kpiRows.forEach((row) => kpiSheet.addRow(row));
 
   const threatRows = [
     ['Category', 'Count', 'Avg Risk Score'],
     ...(data.threatCategories || []).map((c) => [c.category, c.count, c.avgRiskScore]),
   ];
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(threatRows), 'Threat Trends');
+  const threatSheet = wb.addWorksheet('Threat Trends');
+  threatRows.forEach((row) => threatSheet.addRow(row));
 
   const complianceRows = [
     ['Framework', 'Score', 'Controls'],
@@ -180,15 +183,17 @@ const buildExcel = (data) => {
       (fw.controls || []).map((c) => `${c.id} ${c.name} (${c.score}%)`).join('; '),
     ]),
   ];
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(complianceRows), 'Compliance');
+  const complianceSheet = wb.addWorksheet('Compliance');
+  complianceRows.forEach((row) => complianceSheet.addRow(row));
 
   const riskRows = [
     ['Date', 'Total Scans', 'Threats', 'Avg Risk Score'],
     ...(data.riskTrends || []).map((t) => [t.date, t.totalScans, t.threats, t.avgRiskScore]),
   ];
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(riskRows), 'Risk Data');
+  const riskSheet = wb.addWorksheet('Risk Data');
+  riskRows.forEach((row) => riskSheet.addRow(row));
 
-  XLSX.writeFile(wb, `executive-report-${data.period}-${Date.now()}.xlsx`);
+  await wb.xlsx.writeFile(`executive-report-${data.period}-${Date.now()}.xlsx`);
 };
 
 const buildCsv = (data) => {

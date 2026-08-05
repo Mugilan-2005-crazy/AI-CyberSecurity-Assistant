@@ -82,7 +82,6 @@ export default function Login() {
       }
 
       // Set auth state
-      localStorage.setItem('accessToken', res.accessToken);
       setUser(res.user);
 
       toast.success('Welcome back!');
@@ -108,7 +107,6 @@ export default function Login() {
     setTwoFALoading(true);
     try {
       const res = await api.post('/auth/2fa/verify', { userId, otp: otpStr, trustDevice });
-      localStorage.setItem('accessToken', res.accessToken);
       setUser(res.user);
       toast.success('2FA verified! Welcome back.');
       const role = res.user?.role;

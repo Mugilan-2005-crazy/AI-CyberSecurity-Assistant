@@ -12,11 +12,12 @@ import logger from '../utils/logger.js';
 dotenv.config();
 
 const required = (key, fallback) => {
-  const value = process.env[key] ?? fallback;
-  if (value === undefined && process.env.NODE_ENV === 'production') {
+  const envValue = process.env[key];
+  if (envValue !== undefined) return envValue;
+  if (process.env.NODE_ENV === 'production') {
     throw new Error(`Missing required environment variable: ${key}`);
   }
-  return value;
+  return fallback;
 };
 
 const config = {

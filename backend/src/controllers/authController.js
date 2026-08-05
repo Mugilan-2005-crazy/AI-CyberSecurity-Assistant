@@ -441,7 +441,7 @@ export const enableTOTP = async (req, res, next) => {
       throw new ApiError(401, 'Invalid TOTP token');
     }
 
-    user.totpSecret = req.totpPendingSecret;
+    user.totpSecret = pendingSecret;
     user.twoFactorEnabled = true;
     user.twoFactorType = 'totp';
 

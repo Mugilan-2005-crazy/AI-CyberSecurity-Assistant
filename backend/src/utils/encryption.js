@@ -7,7 +7,10 @@ const KEY_LENGTH = 32;
 const getEncryptionKey = () => {
   const key = process.env.ENCRYPTION_KEY;
   if (!key) {
-    return crypto.scryptSync('default-encryption-key-change-in-prod', 'salt', KEY_LENGTH);
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Missing required environment variable: ENCRYPTION_KEY');
+    }
+    return crypto.scryptSync('dev-encryption-key-change-in-prod', 'salt', KEY_LENGTH);
   }
   return crypto.scryptSync(key, 'salt', KEY_LENGTH);
 };

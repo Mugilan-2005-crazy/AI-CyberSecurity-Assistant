@@ -17,8 +17,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return setLoading(false);
     api
       .get('/auth/me')
       .then((res) => {

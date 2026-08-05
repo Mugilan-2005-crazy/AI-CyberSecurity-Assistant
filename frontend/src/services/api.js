@@ -16,13 +16,11 @@ if (import.meta.env.DEV) {
   console.log("API URL =", import.meta.env.VITE_API_URL);
 }
 
-let accessToken = localStorage.getItem('accessToken') || '';
-let currentLanguage = localStorage.getItem('language') || 'en';
+let accessToken = '';
+let currentLanguage = 'en';
 
 export const setToken = (token) => {
   accessToken = token || '';
-  if (token) localStorage.setItem('accessToken', token);
-  else localStorage.removeItem('accessToken');
 };
 
 export const setLanguage = (language) => {

@@ -44,7 +44,7 @@ export default defineConfig(({ mode }) => {
             'motion-vendor': ['framer-motion'],
             'i18n-vendor': ['i18next', 'react-i18next'],
             'axios-vendor': ['axios'],
-            'xlsx-vendor': ['xlsx', 'jspdf', 'docx'],
+            'exceljs-vendor': ['exceljs', 'jspdf', 'docx'],
             'ui-vendor': ['@heroicons/react', 'react-toastify', 'react-router-dom'],
           },
           chunkFileNames: 'assets/[name]-[hash].js',
