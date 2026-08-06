@@ -109,7 +109,7 @@ jobs:
         env:
           SYFT_ACQUIRE_SCANNER_RIGHTS: 0
       - name: Upload backend SBOM
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sbom-backend
           path: sbom-backend.spdx.json
