@@ -83,7 +83,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build backend image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./backend
           dockerfile: backend/Dockerfile
@@ -93,7 +93,7 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       - name: Build frontend image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./frontend
           dockerfile: frontend/Dockerfile
