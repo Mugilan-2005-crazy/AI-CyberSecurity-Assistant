@@ -11,7 +11,7 @@ let alertId;
 beforeAll(async () => {
   await initDB();
   const admin = await seedAdmin();
-  const user = await createTestUser({ email: 'alertuser@test.com', password: 'password123' });
+  const user = await createTestUser({ email: 'alertuser@test.com', password: 'P@ssw0rd123!' });
   userId = user._id.toString();
 
   const appModule = await import('../src/app.js');
@@ -21,7 +21,7 @@ beforeAll(async () => {
   const adminRes = await request(app).post('/api/auth/login').send({ email: 'admin@test.com', password: 'testpass123' });
   adminToken = adminRes.body?.accessToken;
 
-  const userRes = await request(app).post('/api/auth/login').send({ email: 'alertuser@test.com', password: 'password123' });
+  const userRes = await request(app).post('/api/auth/login').send({ email: 'alertuser@test.com', password: 'P@ssw0rd123!' });
   userToken = userRes.body?.accessToken;
 
   const alert = await createAlert(userId, { title: 'Test Alert', message: 'Test message' });
@@ -88,8 +88,8 @@ describe('Alerts', () => {
     });
 
     test('forbids access to other user alert', async () => {
-      const otherUser = await createTestUser({ email: 'other@test.com', password: 'password123' });
-      const otherRes = await request(app).post('/api/auth/login').send({ email: 'other@test.com', password: 'password123' });
+      const otherUser = await createTestUser({ email: 'other@test.com', password: 'P@ssw0rd123!' });
+      const otherRes = await request(app).post('/api/auth/login').send({ email: 'other@test.com', password: 'P@ssw0rd123!' });
       const otherToken = otherRes.body?.accessToken;
       const res = await request(app).get(`/api/alerts/${alertId}`).set({ Authorization: `Bearer ${otherToken}` });
       expect([403, 404]).toContain(res.status);

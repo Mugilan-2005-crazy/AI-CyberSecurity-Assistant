@@ -106,7 +106,12 @@ router.post(
   validate([
     body('name').isLength({ min: 2 }).withMessage('Name required'),
     body('email').isEmail().withMessage('Valid email required'),
-    body('password').isLength({ min: 8 }).withMessage('Min 8 chars'),
+    body('password')
+      .isLength({ min: 8 }).withMessage('Min 8 chars')
+      .matches(/[a-z]/).withMessage('Password must contain a lowercase letter')
+      .matches(/[A-Z]/).withMessage('Password must contain an uppercase letter')
+      .matches(/[0-9]/).withMessage('Password must contain a number')
+      .matches(/[^a-zA-Z0-9]/).withMessage('Password must contain a special character'),
   ]),
   register
 );
@@ -184,7 +189,11 @@ router.post('/forgot-password', authLimiter, validate([body('email').isEmail()])
  *       200:
  *         description: Password reset successful
  */
-router.post('/reset-password', authLimiter, validate([body('token').exists(), body('password').isLength({ min: 8 })]), resetPassword);
+router.post('/reset-password', authLimiter, validate([body('token').exists(), body('password').isLength({ min: 8 })
+  .matches(/[a-z]/).withMessage('Password must contain a lowercase letter')
+  .matches(/[A-Z]/).withMessage('Password must contain an uppercase letter')
+  .matches(/[0-9]/).withMessage('Password must contain a number')
+  .matches(/[^a-zA-Z0-9]/).withMessage('Password must contain a special character')]), resetPassword);
 /**
  * @openapi
  * /api/auth/refresh:
@@ -293,12 +302,21 @@ router.patch('/me/language', protect, validate([body('language').isIn(['en', 'ta
  */
 router.post('/change-password', protect, validate([
   body('currentPassword').exists().withMessage('Current password required'),
-  body('newPassword').isLength({ min: 8 }).withMessage('Min 8 chars'),
+  body('newPassword')
+    .isLength({ min: 8 }).withMessage('Min 8 chars')
+    .matches(/[a-z]/).withMessage('Password must contain a lowercase letter')
+    .matches(/[A-Z]/).withMessage('Password must contain an uppercase letter')
+    .matches(/[0-9]/).withMessage('Password must contain a number')
+    .matches(/[^a-zA-Z0-9]/).withMessage('Password must contain a special character'),
 ]), changePassword);
 
 router.post('/forgot-password/send-otp', authLimiter, validate([body('email').isEmail()]), sendOTP);
 router.post('/forgot-password/verify-otp', otpLimiter, validate([body('email').isEmail(), body('otp').isLength({ min: 6, max: 6 })]), verifyOTP);
-router.post('/forgot-password/reset', authLimiter, validate([body('resetToken').exists(), body('password').isLength({ min: 8 })]), resetPasswordWithOTP);
+router.post('/forgot-password/reset', authLimiter, validate([body('resetToken').exists(), body('password').isLength({ min: 8 })
+  .matches(/[a-z]/).withMessage('Password must contain a lowercase letter')
+  .matches(/[A-Z]/).withMessage('Password must contain an uppercase letter')
+  .matches(/[0-9]/).withMessage('Password must contain a number')
+  .matches(/[^a-zA-Z0-9]/).withMessage('Password must contain a special character')]), resetPasswordWithOTP);
 
 // Security: verify2FA now requires a signed twoFactorToken instead of userId
 router.post('/2fa/verify', otpLimiter, validate([

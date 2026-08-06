@@ -23,5 +23,8 @@
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
-  "framework": "vite"
+  "framework": "vite",
+  "regions": ["iad1", "sfo1", "fra1"],
+  "cleanUrls": true,
+  "trailingSlash": false
 }

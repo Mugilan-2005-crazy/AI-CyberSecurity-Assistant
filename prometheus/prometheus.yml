@@ -22,10 +22,18 @@ scrape_configs:
           path: '/api/observability/metrics'
           format: 'prometheus'
 
+  - job_name: 'security-metrics'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['backend:5000']
+        labels:
+          service: 'backend'
+          component: 'security-metrics'
+
   - job_name: 'mongodb'
     scrape_interval: 15s
     static_configs:
-      - targets: ['mongodb:27017']
+      - targets: ['mongodb-exporter:9216']
         labels:
           service: 'mongodb'
 

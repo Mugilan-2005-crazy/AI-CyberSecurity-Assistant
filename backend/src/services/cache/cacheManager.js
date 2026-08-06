@@ -24,7 +24,7 @@
  */
 import config from '../../config/index.js';
 import logger from '../../utils/logger.js';
-import redisClient, { getActiveCache, connectRedis } from './redisClient.js';
+import redisClient, { getActiveCache, connectRedis, MemoryFallback } from './redisClient.js';
 
 class CacheManager {
   constructor() {
@@ -88,12 +88,29 @@ class CacheManager {
     try {
       const cache = getActiveCache();
       const fullPattern = this._key(pattern);
-      if (cache.keys) {
-        const keys = await cache.keys(fullPattern);
-        if (keys.length === 0) return 0;
+      if (cache.scan) {
+        let cursor = '0';
+        const matchedKeys = [];
+        do {
+          const result = await cache.scan(cursor, 'MATCH', fullPattern, 'COUNT', '100');
+          cursor = result[0];
+          matchedKeys.push(...result[1]);
+        } while (cursor !== '0');
+        if (matchedKeys.length === 0) return 0;
         let deleted = 0;
-        for (const k of keys) {
+        for (const k of matchedKeys) {
           deleted += await cache.del(k);
+        }
+        return deleted;
+      }
+      if (cache instanceof MemoryFallback) {
+        let deleted = 0;
+        for (const key of cache.store.keys()) {
+          if (key.includes(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))) {
+            cache.store.delete(key);
+            cache.expiry.delete(key);
+            deleted++;
+          }
         }
         return deleted;
       }

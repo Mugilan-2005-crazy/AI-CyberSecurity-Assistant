@@ -1,0 +1,131 @@
+name: Security Pipeline
+
+# ============================================================
+# DevSecOps security gate.
+# Security failures BLOCK release on:
+#   - exposed secrets (gitleaks)
+#   - critical/high dependency vulnerabilities (npm audit)
+#   - critical container vulnerabilities (trivy)
+# ============================================================
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  secret-scan:
+    name: Secret Scanning (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Gitleaks scan
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          fail: true
+          verbose: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dependency-audit:
+    name: Dependency Audit (npm audit)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        workspace: [backend, frontend]
+    defaults:
+      run:
+        working-directory: ${{ matrix.workspace }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: ${{ matrix.workspace }}/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: npm audit (fail on high/critical)
+        run: npm audit --audit-level=high
+
+  container-scan:
+    name: Container Scan (Trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build images
+        run: docker compose build --no-cache
+      - name: Trivy filesystem scan (critical)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL
+          ignore-unfixed: true
+          format: sarif
+          output: trivy-fs-results.sarif
+      - name: Trivy image scan (critical)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: image
+          image-ref: csassistant-backend:latest
+          severity: CRITICAL
+          ignore-unfixed: true
+          format: sarif
+          output: trivy-image-results.sarif
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-fs-results.sarif
+
+  sbom:
+    name: SBOM Generation (Syft)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Generate SBOM (backend)
+        uses: anchore/syft-action@v0.26.0
+        with:
+          path: backend
+          format: spdx-json
+          output-file: sbom-backend.spdx.json
+        env:
+          SYFT_ACQUIRE_SCANNER_RIGHTS: 0
+      - name: Upload backend SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-backend
+          path: sbom-backend.spdx.json
+
+  code-scan:
+    name: Code Security (Semgrep)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Semgrep scan
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: p/ci
+          env: {"SEMGREP_TIMEOUT": "600"}
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}

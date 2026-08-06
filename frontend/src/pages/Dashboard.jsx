@@ -1,17 +1,4 @@
-/**
- * pages/Dashboard.jsx
- * ------------------------------------------------------------
- * Professional cybersecurity analytics dashboard.
- * Sections:
- *   1. Security Overview Hero Card (score, risk, totals)
- *   2. Analytics Cards (URL, phishing, malware, QR, password)
- *   3. Threat Activity Chart (weekly trends)
- *   4. Recent Security Activity Timeline
- *   5. AI Assistant Summary Card
- *   6. Quick Actions Section
- * Uses glassmorphism, Framer Motion, loading skeletons, empty states.
- */
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
@@ -24,6 +11,8 @@ import {
   ChartBarIcon, ClockIcon, ArrowRightIcon,
   ServerIcon, CpuChipIcon, ChatBubbleLeftRightIcon,
   EyeIcon, FingerPrintIcon, ShieldExclamationIcon,
+  BeakerIcon, SignalIcon, HeartIcon, ChartPieIcon,
+  GlobeAltIcon, BuildingOfficeIcon, UsersIcon,
 } from '@heroicons/react/24/outline';
 import endpoints from '../services/endpoints.js';
 import StatCard from '../components/dashboard/StatCard.jsx';
@@ -40,6 +29,10 @@ import ThreatDistributionChart from '../components/dashboard/ThreatDistributionC
 import ActivityTimeline from '../components/dashboard/ActivityTimeline.jsx';
 import NotificationsPanel from '../components/dashboard/NotificationsPanel.jsx';
 import { AnimatePresence } from 'framer-motion';
+import Tooltip from '../design-system/components/Tooltip.jsx';
+import Badge from '../design-system/components/Badge.jsx';
+import Button from '../design-system/components/Button.jsx';
+import Alert from '../design-system/components/Alert.jsx';
 
 const MODULE_ORDER = ['url', 'password', 'email', 'file', 'qr'];
 const MODULE_LABEL = { url: 'URL', password: 'Password', email: 'Email', file: 'File', qr: 'QR' };
@@ -71,6 +64,13 @@ const rel = (iso) => {
   return `${Math.floor(diff / 86400)}d ago`;
 };
 
+const severityConfig = {
+  critical: { color: 'danger', icon: ShieldExclamationIcon, label: 'Critical' },
+  high: { color: 'danger', icon: ExclamationTriangleIcon, label: 'High' },
+  medium: { color: 'warning', icon: EyeIcon, label: 'Medium' },
+  low: { color: 'info', icon: FingerPrintIcon, label: 'Low' },
+};
+
 export default function Dashboard() {
   const { t } = useTranslation();
   const [data, setData] = useState(null);
@@ -83,6 +83,8 @@ export default function Dashboard() {
   const [agentInsights, setAgentInsights] = useState(null);
   const [agentLoading, setAgentLoading] = useState(true);
   const [agentError, setAgentError] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [timeRange, setTimeRange] = useState('7d');
 
   useEffect(() => {
     Promise.all([
@@ -169,7 +171,15 @@ export default function Dashboard() {
     }
   };
 
-  // ─── Loading State ─────────────────────────────────────
+  const threatLevel = useMemo(() => {
+    if (securityScore >= 80) return { level: 'Low', color: 'success', icon: CheckCircleIcon };
+    if (securityScore >= 60) return { level: 'Medium', color: 'warning', icon: EyeIcon };
+    if (securityScore >= 40) return { level: 'High', color: 'warning', icon: ExclamationTriangleIcon };
+    return { level: 'Critical', color: 'danger', icon: ShieldExclamationIcon };
+  }, [securityScore]);
+
+  const ThreatLevelIcon = threatLevel.icon;
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -187,7 +197,14 @@ export default function Dashboard() {
   }
 
   if (error || !data) {
-    return <StateView type="error" title="Couldn't load dashboard" message="Check your connection and try again." />;
+    return (
+      <StateView
+        type="error"
+        title="Couldn't load dashboard"
+        message="Check your connection and try again."
+        action={<Button onClick={() => window.location.reload()}>Retry</Button>}
+      />
+    );
   }
 
   return (
@@ -199,17 +216,69 @@ export default function Dashboard() {
           <p className="text-sm text-slate-400">{t('dashboard.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={handleDownloadReport}
-            disabled={generatingReport}
-            className="btn-primary inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <Tooltip content={`Security level: ${threatLevel.level}`} position="bottom">
+            <Badge tone={threatLevel.color} className="cursor-default">
+              <ThreatLevelIcon className="h-3 w-3 mr-1 inline" />
+              {threatLevel.level} Risk
+            </Badge>
+          </Tooltip>
+          <Button onClick={handleDownloadReport} loading={generatingReport}>
             <DocumentArrowDownIcon className="w-4 h-4" />
             {generatingReport ? t('dashboard.generating') : t('dashboard.downloadReport')}
-          </button>
-          <button onClick={() => setShowNotes((s) => !s)} className="btn-primary">
+          </Button>
+          <Button onClick={() => setShowNotes((s) => !s)}>
             {t('dashboard.notifications')} ({notes.filter((n) => !n.read).length})
-          </button>
+          </Button>
+        </div>
+      </motion.div>
+
+      {/* ─── Security Status Indicators ────────────────── */}
+      <motion.div initial="hidden" animate="show" variants={fadeUp}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Tooltip content="Overall platform security posture">
+            <div className="p-4 rounded-xl bg-white dark:bg-surface-card border border-slate-200 dark:border-slate-700 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-success-500/10 text-success-500">
+                <ShieldCheckIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Security Posture</p>
+                <p className="text-lg font-bold text-success-500">{securityScore}/100</p>
+              </div>
+            </div>
+          </Tooltip>
+          <Tooltip content="Active threats detected">
+            <div className="p-4 rounded-xl bg-white dark:bg-surface-card border border-slate-200 dark:border-slate-700 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-danger-500/10 text-danger-500">
+                <ExclamationTriangleIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Active Threats</p>
+                <p className="text-lg font-bold text-danger-500">{highRisk}</p>
+              </div>
+            </div>
+          </Tooltip>
+          <Tooltip content="AI provider availability">
+            <div className="p-4 rounded-xl bg-white dark:bg-surface-card border border-slate-200 dark:border-slate-700 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary-500/10 text-primary-500">
+                <SparklesIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">AI Status</p>
+                <p className="text-lg font-bold text-primary-500">{aiStatus?.gemini !== false ? 'Online' : 'Offline'}</p>
+              </div>
+            </div>
+          </Tooltip>
+          <Tooltip content="System health indicator">
+            <div className="p-4 rounded-xl bg-white dark:bg-surface-card border border-slate-200 dark:border-slate-700 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-cyber-500/10 text-cyber-400">
+                <ServerIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">System Health</p>
+                <p className="text-lg font-bold text-cyber-400">Operational</p>
+              </div>
+            </div>
+          </Tooltip>
         </div>
       </motion.div>
 
@@ -218,13 +287,10 @@ export default function Dashboard() {
         <Card className="relative overflow-hidden backdrop-blur-sm bg-white/50 dark:bg-surface-card/50 border border-slate-200 dark:border-slate-700">
           <div className="absolute inset-0 bg-gradient-to-br from-cyber-500/5 via-primary/5 to-cyber-500/5 pointer-events-none" />
           <div className="relative grid grid-cols-1 lg:grid-cols-5 gap-6 p-6">
-            {/* Security Score */}
             <div className="lg:col-span-2 flex flex-col items-center justify-center">
               <SecurityGauge score={securityScore} size={180} />
               <RiskLevel score={securityScore} className="mt-2" />
             </div>
-
-            {/* Stats grid */}
             <div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
                 { icon: ShieldCheckIcon, label: 'Total Scans', value: totalScans, color: 'text-cyber-400' },
@@ -266,7 +332,7 @@ export default function Dashboard() {
         ))}
       </motion.div>
 
-      {/* ─── AI Security Agent Card ──────────────────────── */}
+      {/* ─── AI Security Agent Card ────────────────────── */}
       <motion.div
         className="grid grid-cols-1 lg:grid-cols-3 gap-4"
         initial="hidden"
@@ -331,7 +397,7 @@ export default function Dashboard() {
                   {(agentInsights.recommendations || []).slice(0, 5).map((rec, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start gap-3 p-3 rounded-xl bg-slate-50/50 dark:bg-slate-800/30"
+                      className="flex items-start gap-3 p-3 rounded-xl bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100/50 dark:hover:bg-slate-700/30 transition-colors duration-200"
                     >
                       <div className={`mt-0.5 h-2 w-2 rounded-full ${
                         rec.priority === 'critical' ? 'bg-red-400' :
@@ -354,7 +420,7 @@ export default function Dashboard() {
         </Card>
       </motion.div>
 
-      {/* ─── 3. Threat Activity Chart ───────────────────── */}
+      {/* ─── 3. Threat Activity Chart ──────────────────── */}
       <motion.div
         className="grid grid-cols-1 lg:grid-cols-3 gap-4"
         initial="hidden"
@@ -404,7 +470,7 @@ export default function Dashboard() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.06 }}
-                  className="flex items-center justify-between p-3 rounded-xl bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-sm hover:bg-slate-100/50 dark:hover:bg-slate-700/30 transition-colors"
+                  className="flex items-center justify-between p-3 rounded-xl bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-sm hover:bg-slate-100/50 dark:hover:bg-slate-700/30 transition-colors duration-200"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={`p-2 rounded-lg ${
@@ -457,7 +523,6 @@ export default function Dashboard() {
           className="backdrop-blur-sm bg-white/50 dark:bg-surface-card/50 border border-slate-200 dark:border-slate-700"
         >
           <div className="space-y-4">
-            {/* Gemini status */}
             <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50/50 dark:bg-slate-800/30">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
@@ -475,7 +540,6 @@ export default function Dashboard() {
               </span>
             </div>
 
-            {/* Ollama status */}
             <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50/50 dark:bg-slate-800/30">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400">
@@ -493,7 +557,6 @@ export default function Dashboard() {
               </span>
             </div>
 
-            {/* Stats */}
             <div className="grid grid-cols-2 gap-3 pt-2">
               <div className="text-center p-2 rounded-lg bg-slate-50/50 dark:bg-slate-800/30">
                 <p className="text-lg font-bold text-cyber-400">{data?.totalChats || 0}</p>
@@ -516,7 +579,6 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        {/* ─── 6. Quick Actions ─────────────────────────── */}
         <Card
           title="Quick Actions"
           description="Common security tasks"
@@ -537,7 +599,6 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {/* Module risk levels */}
           <div className="mt-6">
             <p className="text-sm font-medium mb-3">Module Risk Levels</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

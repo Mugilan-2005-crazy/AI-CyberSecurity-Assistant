@@ -56,10 +56,6 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get("/", (req, res) => {
-  res.send("ROOT WORKING");
-});
-
 // --- Security & base middleware ---
 const connectSrcOrigins = ["'self'"];
 if (config.env === 'development') {
@@ -109,7 +105,7 @@ app.use(
 app.use(requestSizeLimit(10 * 1024 * 1024));
 
 app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(compression());
 app.use(sanitize);

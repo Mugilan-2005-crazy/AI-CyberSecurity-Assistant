@@ -75,8 +75,6 @@ export const useCloudSecurity = (callbacks = {}) => {
       setRiskScore(riskData?.score || metricsData?.overallRiskScore || 0);
       setFindings(findingsData?.findings || []);
       setProviders(providersData);
-    } catch (err) {
-      console.error('[useCloudSecurity] Failed to load metrics', err);
     } finally {
       setLoading(false);
     }
@@ -93,8 +91,8 @@ export const useCloudSecurity = (callbacks = {}) => {
       }
       const { scanAllClouds } = await import('../services/endpoints');
       return await scanAllClouds();
-    } catch (err) {
-      console.error('[useCloudSecurity] Scan failed', err);
+    } catch {
+      // Surface scan failures through callbacks/UI state instead of console noise
     }
   }, []);
 

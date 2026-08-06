@@ -7,13 +7,13 @@ import ContainerImage from '../../models/ContainerImage.js';
 import KubernetesResource from '../../models/KubernetesResource.js';
 import config from '../../config/index.js';
 import logger from '../../utils/logger.js';
-import { getIoInstance } from '../../socket/socketServer.js';
 import { routeAI } from '../ai/aiRouter.js';
 
 const execAsync = promisify(exec);
 
-const emitSocketEvent = (event, data) => {
+const emitSocketEvent = async (event, data) => {
   try {
+    const { getIoInstance } = await import('../../socket/socketServer.js');
     const io = getIoInstance();
     if (io) {
       io.to('admin-room').emit(event, data);

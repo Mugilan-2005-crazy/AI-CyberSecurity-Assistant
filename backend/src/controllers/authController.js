@@ -96,6 +96,9 @@ export const login = async (req, res, next) => {
     const user = await User.findOne({ email }).select('+password +refreshTokens +failedLoginAttempts +lockedUntil');
     if (!user) throw new ApiError(401, 'Invalid credentials');
     if (!user.isActive) throw new ApiError(403, 'Account disabled');
+    if (!user.isEmailVerified) {
+      throw new ApiError(403, 'Please verify your email address before logging in.');
+    }
 
     if (user.lockedUntil && user.lockedUntil > Date.now()) {
       const remainingMs = user.lockedUntil - Date.now();
@@ -108,7 +111,7 @@ export const login = async (req, res, next) => {
       user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
       if (user.failedLoginAttempts >= config.security.maxLoginAttempts) {
         user.lockedUntil = Date.now() + config.security.lockoutDuration;
-        logger.warn(`Account locked: ${email} after ${user.failedLoginAttempts} failed attempts`, { email, ip: req.ip });
+        logger.warn(`Account locked: ${maskEmail(email)} after ${user.failedLoginAttempts} failed attempts`, { email: maskEmail(email), ip: req.ip });
       }
       await user.save();
       recordActivity(user._id, {
@@ -208,7 +211,15 @@ export const refreshToken = async (req, res, next) => {
     if (!user || !user.refreshTokens.includes(token)) {
       throw new ApiError(401, 'Invalid refresh token');
     }
-    const access = signAccessToken({ sub: user._id.toString(), role: user.role, email: user.email });
+
+    // Security: Rotate refresh token — revoke the old one and issue a new one.
+    // This prevents replay attacks with stolen refresh tokens.
+    user.refreshTokens = user.refreshTokens.filter((t) => t !== token);
+    const { access, refresh } = issueTokens(user);
+    user.refreshTokens.push(refresh);
+    await user.save();
+
+    res.cookie('refreshToken', refresh, cookieOpts);
     res.json({ success: true, accessToken: access });
   } catch (err) { next(err); }
 };
@@ -717,7 +728,7 @@ export const loginEnhanced = async (req, res, next) => {
       user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
       if (user.failedLoginAttempts >= config.security.maxLoginAttempts) {
         user.lockedUntil = Date.now() + config.security.lockoutDuration;
-        logger.warn(`Account locked: ${email} after ${user.failedLoginAttempts} failed attempts`, { email, ip: req.ip });
+        logger.warn(`Account locked: ${maskEmail(email)} after ${user.failedLoginAttempts} failed attempts`, { email: maskEmail(email), ip: req.ip });
       }
       await user.save();
       recordActivity(user._id, {

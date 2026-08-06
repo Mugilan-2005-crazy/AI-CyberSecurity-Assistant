@@ -53,8 +53,6 @@ export default function KubernetesDashboard() {
       setMetrics(metricsData);
       setClusters(clustersData);
       setResources(resourcesData?.resources || []);
-    } catch (err) {
-      console.error('[KubernetesDashboard] Failed to load data', err);
     } finally {
       setLoading(false);
     }

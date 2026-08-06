@@ -104,7 +104,7 @@ export const getUserAnomalies = async (req, res, next) => {
 export const getAnomalyDetail = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const event = await UserRiskEvent.findById(id).populate('userId', 'name email role').populate('relatedAlert').lean();
+    const event = await UserRiskEvent.findById(id).populate('userId', 'name email role').populate('relatedAlert', 'title severity status createdAt').lean();
     if (!event) throw new ApiError(404, 'Anomaly event not found');
 
     if (req.user.role === 'user' && event.userId._id.toString() !== req.user.id) {

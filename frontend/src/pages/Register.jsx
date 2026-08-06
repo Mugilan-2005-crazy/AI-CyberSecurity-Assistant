@@ -66,18 +66,19 @@ export default function Register() {
 
   return (
     <AuthShell title={t('auth.registerTitle')}>
-      <form onSubmit={submit} className="space-y-4" noValidate>
+      <form onSubmit={submit} className="space-y-4" noValidate aria-label="Registration form">
         <div>
-          <label className="text-sm">{t('auth.name')}</label>
-          <input className="input" value={form.name} onChange={update('name')} placeholder={t('auth.namePlaceholder')} />
-          {errors.name && <p className="text-danger text-xs mt-1">{errors.name}</p>}
+          <label htmlFor="reg-name" className="text-sm">{t('auth.name')}</label>
+          <input id="reg-name" className="input" value={form.name} onChange={update('name')} placeholder={t('auth.namePlaceholder')} required />
+          {errors.name && <p className="text-danger text-xs mt-1" role="alert">{errors.name}</p>}
         </div>
         <div>
-          <label className="text-sm">{t('auth.email')}</label>
-          <input type="email" className="input" value={form.email} onChange={update('email')} placeholder={t('auth.emailPlaceholder')} />
-          {errors.email && <p className="text-danger text-xs mt-1">{errors.email}</p>}
+          <label htmlFor="reg-email" className="text-sm">{t('auth.email')}</label>
+          <input id="reg-email" type="email" className="input" value={form.email} onChange={update('email')} placeholder={t('auth.emailPlaceholder')} required />
+          {errors.email && <p className="text-danger text-xs mt-1" role="alert">{errors.email}</p>}
         </div>
         <PasswordInput
+          id="reg-password"
           label={t('auth.passwordMin')}
           value={form.password}
           onChange={update('password')}
@@ -87,7 +88,7 @@ export default function Register() {
           required
           autoComplete="new-password"
         />
-        <button className="btn-cyber w-full" disabled={loading}>
+        <button className="btn-cyber w-full" disabled={loading} type="submit">
           {loading ? t('auth.creating') : t('auth.registerBtn')}
         </button>
       </form>

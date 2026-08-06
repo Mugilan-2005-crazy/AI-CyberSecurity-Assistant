@@ -21,6 +21,27 @@ class MemoryFallback {
   constructor() {
     this.store = new Map();
     this.expiry = new Map();
+    this._sweepInterval = null;
+  }
+
+  _startSweep() {
+    if (this._sweepInterval) return;
+    this._sweepInterval = setInterval(() => {
+      const now = Date.now();
+      for (const [key, exp] of this.expiry.entries()) {
+        if (now > exp) {
+          this.store.delete(key);
+          this.expiry.delete(key);
+        }
+      }
+    }, 60000);
+  }
+
+  _stopSweep() {
+    if (this._sweepInterval) {
+      clearInterval(this._sweepInterval);
+      this._sweepInterval = null;
+    }
   }
 
   _isExpired(key) {
@@ -47,6 +68,7 @@ class MemoryFallback {
     if (ttlSeconds && ttlSeconds > 0) {
       this.expiry.set(key, Date.now() + ttlSeconds * 1000);
     }
+    if (!this._sweepInterval) this._startSweep();
     return 'OK';
   }
 
@@ -76,6 +98,7 @@ class MemoryFallback {
   }
 
   async quit() {
+    this._stopSweep();
     this.store.clear();
     this.expiry.clear();
     return 'OK';

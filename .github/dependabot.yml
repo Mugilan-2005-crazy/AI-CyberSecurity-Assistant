@@ -1,19 +1,39 @@
+# ============================================================
+# Dependabot — keep dependencies & actions up to date
+# Security: unpinned/outdated deps are a top attack surface.
+# ============================================================
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/backend"
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
     open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "backend"
+    labels: ["dependencies", "security"]
 
   - package-ecosystem: "npm"
-    directory: "/frontend"
+    directory: "backend"
     schedule:
       interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    labels: ["dependencies", "backend"]
+    reviewers: ["Mugilan-2005-crazy"]
+
+  - package-ecosystem: "npm"
+    directory: "frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    labels: ["dependencies", "frontend"]
+    reviewers: ["Mugilan-2005-crazy"]
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
     open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "frontend"
+    labels: ["dependencies", "infra"]

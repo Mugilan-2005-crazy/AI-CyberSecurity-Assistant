@@ -14,8 +14,7 @@ data:
   PORT: "5000"
   API_PREFIX: "/api"
   MONGO_INITDB_DATABASE: "cybersec"
-  MONGODB_URI: "mongodb://mongo:27017/cybersec?authSource=admin"
-  REDIS_HOST: "redis"
+  REDIS_HOST: "cybersec-redis-svc"
   REDIS_PORT: "6379"
   REDIS_DB: "0"
   REDIS_KEY_PREFIX: "csa:"
@@ -30,12 +29,13 @@ data:
   OTEL_PROMETHEUS_PORT: "9464"
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318"
   ADMIN_EMAIL: "admin@cybersec.io"
+  ADMIN_NAME: "Super Admin"
   MAX_LOGIN_ATTEMPTS: "5"
   LOCKOUT_DURATION: "900000"
   CORS_ALLOWED_ORIGINS: "http://cybersec-platform.cybersec.io"
 ---
 # ============================================================
-# Secret — sensitive data (reference externalSecrets in production)
+# Secret — sensitive data (use ExternalSecrets / Vault in production)
 # ============================================================
 apiVersion: v1
 kind: Secret
@@ -47,11 +47,14 @@ metadata:
 type: Opaque
 stringData:
   JWT_SECRET: "change-me-to-a-long-random-string"
-  JWT_REFRESH_SECRET: "change-me-to-a-long-random-string"
+  JWT_REFRESH_SECRET: "change-me-to-a-different-long-random-string"
   JWT_EXPIRE: "15m"
   JWT_REFRESH_EXPIRE: "30d"
   ENCRYPTION_KEY: "change-me-to-a-32-char-encryption-key"
   ADMIN_PASSWORD: "change-me-to-a-secure-password"
+  MONGO_ROOT_PASSWORD: "change-me-to-a-strong-mongo-password"
+  MONGODB_URI: "mongodb://admin:change-me-to-a-strong-mongo-password@cybersec-mongodb:27017/cybersec?authSource=admin"
+  REDIS_PASSWORD: "change-me-to-a-strong-redis-password"
   GEMINI_API_KEY: ""
   SMTP_HOST: "smtp.gmail.com"
   SMTP_PORT: "587"

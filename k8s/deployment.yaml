@@ -34,7 +34,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: backend
-          image: csassistant-backend:2.1
+          image: csassistant-backend:3.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000
@@ -55,6 +55,13 @@ spec:
               value: "5000"
             - name: REDIS_MAX_RETRIES
               value: "3"
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            failureThreshold: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
           livenessProbe:
             httpGet:
               path: /api/health
@@ -82,16 +89,20 @@ spec:
             allowPrivilegeEscalation: false
             runAsNonRoot: true
             runAsUser: 1001
-            readOnlyRootFilesystem: false
+            readOnlyRootFilesystem: true
           volumeMounts:
             - name: uploads
               mountPath: /app/uploads
             - name: logs
               mountPath: /app/logs
-      volumes:
+            - name: tmp
+              mountPath: /tmp
+       volumes:
         - name: uploads
           emptyDir: {}
         - name: logs
+          emptyDir: {}
+        - name: tmp
           emptyDir: {}
 ---
 # ============================================================
@@ -126,7 +137,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: frontend
-          image: csassistant-frontend:2.1
+          image: csassistant-frontend:3.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
@@ -147,6 +158,13 @@ spec:
             periodSeconds: 15
             timeoutSeconds: 3
             failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            failureThreshold: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
           resources:
             requests:
               memory: "128Mi"
@@ -184,25 +202,32 @@ spec:
     spec:
       containers:
         - name: redis
-          image: redis:7-alpine
+          image: redis:7.2.5-alpine3.20
           command:
             - redis-server
             - --appendonly yes
             - --maxmemory 512mb
             - --maxmemory-policy allkeys-lru
+            - --requirepass $(REDIS_PASSWORD)
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cybersec-secrets
+                  key: REDIS_PASSWORD
           ports:
             - containerPort: 6379
               name: redis
           livenessProbe:
             exec:
-              command: ["redis-cli", "ping"]
+              command: ["redis-cli", "-a", "$(REDIS_PASSWORD)", "ping"]
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 3
           readinessProbe:
             exec:
-              command: ["redis-cli", "ping"]
+              command: ["redis-cli", "-a", "$(REDIS_PASSWORD)", "ping"]
             initialDelaySeconds: 5
             periodSeconds: 5
             timeoutSeconds: 3
@@ -217,6 +242,123 @@ spec:
           volumeMounts:
             - name: redis-data
               mountPath: /data
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 999
       volumes:
         - name: redis-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: redis-pvc
+---
+# ============================================================
+# PersistentVolumeClaim — Redis data
+# ============================================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+  namespace: cybersec-platform
+  labels:
+    app: cybersec-platform
+    component: redis
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+# ============================================================
+# Deployment — MongoDB (in-cluster database)
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cybersec-mongodb
+  namespace: cybersec-platform
+  labels:
+    app: cybersec-platform
+    component: mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cybersec-platform
+      component: mongodb
+  template:
+    metadata:
+      labels:
+        app: cybersec-platform
+        component: mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:7.0.14
+          command:
+            - mongod
+            - --bind_ip_all
+            - --auth
+          ports:
+            - containerPort: 27017
+              name: mongodb
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: "admin"
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cybersec-secrets
+                  key: MONGO_ROOT_PASSWORD
+            - name: MONGO_INITDB_DATABASE
+              value: "cybersec"
+          livenessProbe:
+            exec:
+              command: ["mongosh", "--eval", "db.adminCommand('ping')"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command: ["mongosh", "--eval", "db.adminCommand('ping')"]
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "1Gi"
+              cpu: "2000m"
+          volumeMounts:
+            - name: mongodb-data
+              mountPath: /data/db
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 999
+      volumes:
+        - name: mongodb-data
+          persistentVolumeClaim:
+            claimName: mongodb-pvc
+---
+# ============================================================
+# PersistentVolumeClaim — MongoDB data
+# ============================================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongodb-pvc
+  namespace: cybersec-platform
+  labels:
+    app: cybersec-platform
+    component: mongodb
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi

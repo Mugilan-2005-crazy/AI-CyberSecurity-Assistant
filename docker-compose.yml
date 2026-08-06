@@ -30,6 +30,18 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
 
   # --------------------------------------------------------
   # Redis Cache
@@ -37,7 +49,7 @@ services:
   redis:
     image: redis:7-alpine
     restart: always
-    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru", "--requirepass", "${REDIS_PASSWORD:-cybersphere-redis-secure-2024}"]
     volumes:
       - redis_data:/data
     networks:
@@ -48,6 +60,18 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+        reservations:
+          memory: 128M
+          cpus: '0.25'
 
   # --------------------------------------------------------
   # Backend API
@@ -95,6 +119,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_DB: 0
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-cybersphere-redis-secure-2024}
       # OpenTelemetry
       OTEL_ENABLED: "true"
       OTEL_SERVICE_NAME: cybersec-backend
@@ -112,11 +137,27 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:5000/api/health"]
+      test: ["CMD", "sh", "-c", "wget -qO- http://127.0.0.1:5000/api/health | grep -q '\"success\":true'"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 60s
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/uploads
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '2'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
 
   # --------------------------------------------------------
   # Frontend (nginx serving built assets)
@@ -142,7 +183,7 @@ services:
   # Caddy — HTTPS/TLS reverse proxy (production entry point)
   # --------------------------------------------------------
   caddy:
-    image: caddy:2-alpine
+    image: caddy:2.8.4-alpine
     restart: always
     ports:
       - "80:80"
@@ -166,13 +207,64 @@ services:
       start_period: 15s
 
   # --------------------------------------------------------
+  # MongoDB Exporter (Prometheus metrics for MongoDB)
+  # --------------------------------------------------------
+  mongodb-exporter:
+    image: quay.io/prometheus/mongodb-exporter:0.23.0
+    restart: always
+    command:
+      - "--mongodb.uri=mongodb://admin:${MONGO_ROOT_PASSWORD}@mongodb:27017/?authSource=admin"
+      - "--web.listen-address=:9216"
+    environment:
+      - MONGODB_URI=mongodb://admin:${MONGO_ROOT_PASSWORD}@mongodb:27017/?authSource=admin
+    networks:
+      - app-network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:9216/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  # --------------------------------------------------------
+  # OpenTelemetry Collector — traces/metrics/telemetry hub
+  # Receives OTLP from the backend (otel-collector:4318),
+  # exposes self-metrics (:8889) + health (:13133).
+  # Existing backend /api/observability/metrics scrape is unchanged.
+  # --------------------------------------------------------
+  otel-collector:
+    image: otel/opentelemetry-collector:0.104.0
+    restart: always
+    command:
+      - "--config=/etc/otel-collector.yaml"
+    volumes:
+      - ./otel-collector.yaml:/etc/otel-collector.yaml:ro
+      - otel_collector_data:/var/lib/otelcol
+    networks:
+      - app-network
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    # NOTE: otel/opentelemetry-collector is a distroless image (no
+    # wget/curl/sh), so an in-container HEALTHCHECK cannot probe the
+    # HTTP endpoint. Liveness = process liveness (restart: always);
+    # true readiness is exposed by the in-process health_check
+    # extension on :13133 and verified externally below.
+
+  # --------------------------------------------------------
   # Ollama (optional local AI)
   # --------------------------------------------------------
   ollama:
-    image: ollama/ollama:latest
+    image: ollama/ollama:0.3.38
     restart: always
-    ports:
-      - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
     networks:
@@ -187,10 +279,8 @@ services:
   # Prometheus
   # --------------------------------------------------------
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.53.0
     restart: always
-    ports:
-      - "9090:9090"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -221,7 +311,7 @@ services:
       - "3001:3000"
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
       GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-piechart-panel
       GF_SERVER_ROOT_URL: /grafana
     volumes:
@@ -237,6 +327,13 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
+    read_only: false
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
 
 # --------------------------------------------------------
 # Networks
@@ -262,4 +359,6 @@ volumes:
   caddy_data:
     driver: local
   caddy_config:
+    driver: local
+  otel_collector_data:
     driver: local

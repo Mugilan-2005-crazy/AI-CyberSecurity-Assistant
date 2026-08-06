@@ -99,9 +99,6 @@ export default function QrChecker() {
     setError(false);
     try {
       const r = await api.post('/scan/qr', { text });
-      if (import.meta.env.DEV) {
-        console.log('QR ANALYSIS RESPONSE', r);
-      }
       setResult(r.result);
     } catch {
       setError(true);

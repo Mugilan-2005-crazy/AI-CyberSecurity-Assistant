@@ -15,6 +15,7 @@ import { analyzeFile, extractTextContent, extractVideoFrames } from '../fileAnal
 import AttachmentAnalysis from '../../models/AttachmentAnalysis.js';
 import path from 'path';
 import logger from '../../utils/logger.js';
+import { enrichWithMITRE } from '../security/mitreMapper.js';
 
 let genAI = null;
 let visionModel = null;
@@ -388,7 +389,19 @@ const generateSecurityReport = (result, filename, fileType) => {
     fileType,
     filename,
   };
-  return report;
+  // ----------------------------------------------------------
+  // TASK 5 — MITRE ATT&CK enrichment for AI-detected threats.
+  // Purely ADDITIVE: existing report fields are unchanged; we only
+  // append MITRE technique mapping + an incident-response playbook.
+  // ----------------------------------------------------------
+  const mitreEnrichment = enrichWithMITRE(result);
+  return {
+    ...report,
+    mitre: mitreEnrichment.mitre,
+    mitreTactics: Array.from(new Set(mitreEnrichment.mitre.flatMap((m) => m.tactics))),
+    mitreTechniques: mitreEnrichment.techniqueCount,
+    incidentResponse: mitreEnrichment.incidentResponse,
+  };
 };
 
 const saveAttachmentAnalysis = async (userId, filename, fileType, fileSize, result) => {

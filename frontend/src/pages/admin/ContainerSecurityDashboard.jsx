@@ -42,8 +42,6 @@ export default function ContainerSecurityDashboard() {
       ]);
       setMetrics(metricsData);
       setImages(imagesData?.images || []);
-    } catch (err) {
-      console.error('[ContainerSecurityDashboard] Failed to load data', err);
     } finally {
       setLoading(false);
     }

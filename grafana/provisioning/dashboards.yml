@@ -38,6 +38,15 @@
     },
     {
       "id": null,
+      "uid": "cybersphere-security",
+      "title": "CyberSphere AI Security Dashboard",
+      "tags": ["cybersphere", "security", "enterprise", "production"],
+      "timezone": "browser",
+      "refresh": "15s",
+      "time": { "from": "now-1h", "to": "now" }
+    },
+    {
+      "id": null,
       "uid": "ai-dashboard",
       "title": "AI Dashboard",
       "tags": ["ai", "monitoring"],

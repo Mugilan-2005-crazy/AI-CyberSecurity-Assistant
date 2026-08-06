@@ -1,0 +1,51 @@
+# CyberSphere AI v4.0 — Render Blueprint
+# Place this file at render.yaml in the root of your repository
+
+services:
+  - type: web
+    name: cybersphere-backend
+    runtime: node
+    plan: starter
+    buildCommand: cd backend && npm ci --only=production
+    startCommand: cd backend && npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: API_PREFIX
+        value: /api
+      - key: MONGODB_URI
+        fromDatabase:
+          name: cybersphere-mongodb
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: ENCRYPTION_KEY
+        generateValue: true
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: cybersphere-redis
+          property: connectionString
+      - key: CLIENT_ORIGIN
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: VIRUSTOTAL_API_KEY
+        sync: false
+      - key: ADMIN_EMAIL
+        value: admin@cybersec.io
+      - key: ADMIN_PASSWORD
+        generateValue: true
+      - key: ADMIN_NAME
+        value: Super Admin
+
+databases:
+  - name: cybersphere-mongodb
+    plan: starter
+    databaseName: cybersec
+    user: admin

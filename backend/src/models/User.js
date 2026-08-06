@@ -72,7 +72,7 @@ const userSchema = new mongoose.Schema(
     failedLoginAttempts: { type: Number, default: 0 },
     lockedUntil: { type: Date, default: null },
   },
-  { timestamps: true }
+  { timestamps: true, versionKey: false }
 );
 
 userSchema.index({ emailVerificationExpire: 1 }, { expireAfterSeconds: 0 });

@@ -5,6 +5,7 @@ import {
   createOrUpdateEntity,
   createRelationship,
   buildGraphFromUserData,
+  buildCloudSubgraph,
   getGraph,
   getEntityDetails,
   searchGraph,
@@ -75,5 +76,58 @@ describe('Knowledge Graph Service', () => {
     await createOrUpdateEntity('Vulnerability', 'test-clear-1', 'Test Clear', {}, testUser._id.toString());
     const result = await clearUserGraph(testUser._id.toString());
     expect(result.success).toBe(true);
+  });
+
+  test('buildCloudSubgraph creates entities and relationships from cloud data', async () => {
+    const CloudProvider = (await import('../src/models/CloudProvider.js')).default;
+    const CloudResource = (await import('../src/models/CloudResource.js')).default;
+    const CloudFinding = (await import('../src/models/CloudFinding.js')).default;
+    const ThreatIntel = (await import('../src/models/ThreatIntel.js')).default;
+
+    const provider = await CloudProvider.create({
+      provider: 'aws',
+      accountId: '123456789012',
+      name: 'Test AWS Account',
+      region: 'us-east-1',
+      status: 'connected',
+      riskScore: 30,
+    });
+
+    const resource = await CloudResource.create({
+      cloudProvider: 'aws',
+      providerAccountId: '123456789012',
+      resourceId: 'i-1234567890abcdef0',
+      name: 'Test EC2 Instance',
+      resourceType: 'ec2_instance',
+      region: 'us-east-1',
+      riskScore: 85,
+      isPublic: false,
+      tags: {},
+    });
+
+    const finding = await CloudFinding.create({
+      cloudProvider: 'aws',
+      providerAccountId: '123456789012',
+      resourceId: 'i-1234567890abcdef0',
+      checkId: 'aws_ec2_public_ip',
+      checkName: 'EC2 Instance has public IP',
+      checkCategory: 'network_misconfiguration',
+      severity: 'High',
+      title: 'Public IP detected',
+      description: 'Instance has a public IP address',
+      recommendation: 'Remove public IP',
+    });
+
+    await ThreatIntel.create({
+      ioc: '192.168.1.1',
+      iocType: 'ip',
+      classification: 'malicious',
+      reputationScore: 90,
+    });
+
+    const result = await buildCloudSubgraph(testUser._id.toString());
+    expect(result.success).toBe(true);
+    expect(result.providers).toBeGreaterThanOrEqual(1);
+    expect(result.resources).toBeGreaterThanOrEqual(1);
   });
 });

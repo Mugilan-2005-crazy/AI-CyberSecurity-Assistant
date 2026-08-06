@@ -31,6 +31,7 @@ const scanSchema = new mongoose.Schema(
 
 scanSchema.index({ user: 1, createdAt: -1 });
 scanSchema.index({ user: 1, type: 1, createdAt: -1 });
+scanSchema.index({ user: 1, verdict: 1, createdAt: -1 });
 scanSchema.index({ verdict: 1, createdAt: -1 });
 
 const ScanHistory = mongoose.model('ScanHistory', scanSchema);

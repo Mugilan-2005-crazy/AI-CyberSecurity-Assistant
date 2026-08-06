@@ -5,11 +5,17 @@
  * custom key generator (IP + route) so each endpoint is
  * throttled independently. Prevents brute-force & abuse.
  *
+ * Uses a Redis-backed store (with MemoryStore fallback) so
+ * that TTL expiration is handled by Redis server-side,
+ * preventing stale rate-limit entries that block legitimate
+ * clients in production.
+ *
  * In test environment (NODE_ENV=test), rate limiting is
  * automatically disabled to avoid blocking test requests.
  */
 import rateLimit from 'express-rate-limit';
 import ApiError from '../utils/ApiError.js';
+import { createRateLimitStore } from '../services/cache/rateLimitStore.js';
 
 export const rateLimiter = (windowMs = 15 * 60 * 1000, max = 100, message = 'Too many requests') => {
   // Disable rate limiting in test environment
@@ -24,6 +30,7 @@ export const rateLimiter = (windowMs = 15 * 60 * 1000, max = 100, message = 'Too
     legacyHeaders: false,
     handler: (_req, _res, next) => next(new ApiError(429, message)),
     keyGenerator: (req) => `${req.ip}:${req.baseUrl}${req.route?.path || ''}`,
+    store: createRateLimitStore(),
   });
 };
 

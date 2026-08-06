@@ -38,7 +38,7 @@ export const createTestUser = async (overrides = {}) => {
   return await User.create({
     name: overrides.name || 'Test User',
     email,
-    password: overrides.password || 'password123',
+    password: overrides.password || 'P@ssw0rd123!',
     role: overrides.role || 'user',
     isEmailVerified: true,
     ...overrides,

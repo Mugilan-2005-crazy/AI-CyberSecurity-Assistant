@@ -23,8 +23,8 @@ const TONES = {
 export default function RiskLevel({ score = 0, showScore = true }) {
   const level = LEVELS.find((l) => score >= l.min) || LEVELS[LEVELS.length - 1];
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${TONES[level.tone]}`}>
-      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${TONES[level.tone]}`} role="status" aria-label={`Risk level: ${level.label}${showScore ? `, score ${score}` : ''}`}>
+      <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
       {level.label}{showScore && ` · ${score}`}
     </span>
   );

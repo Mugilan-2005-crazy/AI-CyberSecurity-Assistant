@@ -1,0 +1,56 @@
+name: Bug Report
+description: Report a defect or unexpected behavior
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Before opening, search existing issues. If this is a **security** issue, use the Security Policy link at the bottom — do not post vulnerabilities publicly.
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: One-line description of the bug.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Minimal, reproducible steps.
+      placeholder: "1. ...\n2. ...\n3. ..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - info: Low (cosmetic/minor)
+        - low: Medium (affects some users/features)
+        - high: High (affects many/blocker)
+        - critical: Critical (security or data loss)
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      value: "docker compose / k8s / local dev"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / evidence
+      description: Paste relevant logs, sanitized of secrets.

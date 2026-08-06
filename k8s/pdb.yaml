@@ -1,0 +1,49 @@
+---
+# ============================================================
+# PodDisruptionBudget — ensures minimum availability during
+# node drains, upgrades, and rolling updates.
+# ============================================================
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: cybersec-backend-pdb
+  namespace: cybersec-platform
+  labels:
+    app: cybersec-platform
+    component: backend
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: cybersec-platform
+      component: backend
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: cybersec-frontend-pdb
+  namespace: cybersec-platform
+  labels:
+    app: cybersec-platform
+    component: frontend
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: cybersec-platform
+      component: frontend
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: cybersec-redis-pdb
+  namespace: cybersec-platform
+  labels:
+    app: cybersec-platform
+    component: redis
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: cybersec-platform
+      component: redis

@@ -5,7 +5,6 @@ import CloudFinding from '../../models/CloudFinding.js';
 import CloudResource from '../../models/CloudResource.js';
 import config from '../../config/index.js';
 import logger from '../../utils/logger.js';
-import { getIoInstance } from '../../socket/socketServer.js';
 
 const CHECK_CATEGORIES = [
   'iam_misconfiguration',
@@ -28,8 +27,9 @@ const SEVERITY_RISK_SCORES = {
   Critical: 95,
 };
 
-const emitSocketEvent = (event, data) => {
+const emitSocketEvent = async (event, data) => {
   try {
+    const { getIoInstance } = await import('../../socket/socketServer.js');
     const io = getIoInstance();
     if (io) {
       io.to('admin-room').emit(event, data);

@@ -145,9 +145,6 @@ export default function AIChatbot() {
     const fileArr = Array.from(files);
     if (fileArr.length === 0) return;
     const file = fileArr[0];
-    if (import.meta.env.DEV) {
-      console.log('[AIChatbot] processFile selected:', { name: file.name, size: file.size, type: file.type });
-    }
     if (file.size > MAX_SIZE) {
       toast.error(t('chatbot.fileTooLarge'));
       return;

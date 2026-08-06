@@ -4,10 +4,10 @@ import CloudFinding from '../../models/CloudFinding.js';
 import CloudResource from '../../models/CloudResource.js';
 import ContainerImage from '../../models/ContainerImage.js';
 import KubernetesResource from '../../models/KubernetesResource.js';
-import { getIoInstance } from '../../socket/socketServer.js';
 
-const emitSocketEvent = (event, data) => {
+const emitSocketEvent = async (event, data) => {
   try {
+    const { getIoInstance } = await import('../../socket/socketServer.js');
     const io = getIoInstance();
     if (io) {
       io.to('admin-room').emit(event, data);

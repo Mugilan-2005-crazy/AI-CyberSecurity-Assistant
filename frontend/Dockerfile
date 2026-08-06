@@ -1,7 +1,7 @@
 # ============================================================
 # Stage 1 — Build React app
 # ============================================================
-FROM node:lts-alpine AS builder
+FROM node:18.20.4-alpine3.20 AS builder
 WORKDIR /app
 
 COPY package*.json ./
@@ -13,7 +13,7 @@ RUN npm run build
 # ============================================================
 # Stage 2 — Serve with nginx (alpine, lightweight)
 # ============================================================
-FROM nginx:alpine
+FROM nginx:1.27.4-alpine
 WORKDIR /usr/share/nginx/html
 
 # Copy built assets from builder

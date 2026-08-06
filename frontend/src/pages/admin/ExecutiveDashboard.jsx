@@ -32,8 +32,6 @@ import ComplianceCard from '../../components/executive/ComplianceCard.jsx';
 import ReportPanel from '../../components/executive/ReportPanel.jsx';
 import Skeleton from '../../components/ui/Skeleton.jsx';
 import StateView from '../../components/ui/StateView.jsx';
-import { jsPDF } from 'jspdf';
-import ExcelJS from 'exceljs';
 
 const fadeUp = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
 const stagger = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } };
@@ -52,7 +50,8 @@ const downloadBlob = (blob, filename) => {
   URL.revokeObjectURL(url);
 };
 
-const buildPdf = (data) => {
+const buildPdf = async (data) => {
+  const { jsPDF } = await import('jspdf');
   const doc = new jsPDF();
   const pageW = doc.internal.pageSize.getWidth();
   let y = 14;
@@ -133,7 +132,8 @@ const buildPdf = (data) => {
 };
 
 const buildExcel = async (data) => {
-  const wb = new ExcelJS.Workbook();
+  const ExcelJS = await import('exceljs');
+  const wb = new ExcelJS.default.Workbook();
 
   const summaryRows = [
     ['Executive Security Command Center'],
@@ -269,8 +269,8 @@ export default function ExecutiveDashboard() {
       const data = r.data || r;
       setReportData(data);
 
-      if (format === 'pdf') buildPdf(data);
-      else if (format === 'excel') buildExcel(data);
+      if (format === 'pdf') await buildPdf(data);
+      else if (format === 'excel') await buildExcel(data);
       else if (format === 'csv') buildCsv(data);
       else if (format === 'print') setTimeout(() => window.print(), 300);
     } catch {

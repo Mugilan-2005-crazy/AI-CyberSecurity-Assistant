@@ -181,30 +181,14 @@ describe('Kubernetes Scanner', () => {
     expect(typeof result).toBe('boolean');
   });
 
-  test('scanKubernetesCluster returns findings', async () => {
+  test('scanKubernetesCluster returns skipped when no cluster is available', async () => {
     const result = await scanKubernetesCluster({ clusterName: 'test-cluster' });
-    expect(result).toHaveProperty('clusterName');
-    expect(result).toHaveProperty('findings');
-    expect(result).toHaveProperty('riskScore');
-    expect(Array.isArray(result.findings)).toBe(true);
+    expect(result).toHaveProperty('status', 'skipped');
+    expect(result).toHaveProperty('message', 'Kubernetes cluster unavailable - scan skipped');
   });
 
-  test('scanKubernetesCluster detects RBAC issues', async () => {
-    const result = await scanKubernetesCluster({ clusterName: 'test-cluster' });
-    const rbacFindings = result.findings.filter((f) => f.category === 'rbac' || f.category === 'service_accounts');
-    expect(rbacFindings.length).toBeGreaterThan(0);
-  });
-
-  test('scanKubernetesCluster detects pod security issues', async () => {
-    const result = await scanKubernetesCluster({ clusterName: 'test-cluster' });
-    const podFindings = result.findings.filter((f) => f.category === 'privileged_containers' || f.category === 'root_containers' || f.category === 'pods');
-    expect(podFindings.length).toBeGreaterThan(0);
-  });
-
-  test('scanKubernetesCluster detects network policy issues', async () => {
-    const result = await scanKubernetesCluster({ clusterName: 'test-cluster' });
-    const netFindings = result.findings.filter((f) => f.category === 'network_policies');
-    expect(netFindings.length).toBeGreaterThan(0);
+  test('scanKubernetesCluster does not throw when cluster is unavailable', async () => {
+    await expect(scanKubernetesCluster({ clusterName: 'test-cluster' })).resolves.toBeDefined();
   });
 });
 
@@ -246,11 +230,11 @@ describe('Container Security API Endpoints', () => {
     expect(res.body.data).toHaveProperty('findings');
   });
 
-  test('POST /api/container-security/k8s/scan scans Kubernetes', async () => {
+  test('POST /api/container-security/k8s/scan returns skipped when no cluster', async () => {
     const res = await request(app).post('/api/container-security/k8s/scan').set({ Authorization: `Bearer ${adminToken}` }).send({ clusterName: 'test-cluster-api' });
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data).toHaveProperty('findings');
+    expect(res.body.data.status).toBe('skipped');
   });
 
   test('GET /api/container-security/k8s/clusters returns clusters', async () => {

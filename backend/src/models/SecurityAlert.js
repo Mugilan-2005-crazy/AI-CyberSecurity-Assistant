@@ -31,6 +31,7 @@ const securityAlertSchema = new mongoose.Schema(
 );
 
 securityAlertSchema.index({ userId: 1, createdAt: -1 });
+securityAlertSchema.index({ userId: 1, status: 1, createdAt: -1 });
 securityAlertSchema.index({ severity: 1, status: 1 });
 
 securityAlertSchema.pre('save', function (next) {

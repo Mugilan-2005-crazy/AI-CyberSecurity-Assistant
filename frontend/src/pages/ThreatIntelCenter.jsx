@@ -737,7 +737,7 @@ export default function ThreatIntelCenter() {
                 type="text"
                 value={iocInput}
                 onChange={(e) => setIocInput(e.target.value)}
-                placeholder="Enter IP, domain, URL, hash, email, or CVE-2024-XXXX-XXXX"
+                placeholder="Enter IP, domain, URL, hash, email, or CVE identifier"
                 className="w-full px-4 py-2 rounded-xl bg-white dark:bg-surface-card border border-slate-200 dark:border-slate-700 focus:border-cyan-400 focus:outline-none text-sm"
                 onKeyDown={(e) => e.key === 'Enter' && handleAnalyze()}
               />

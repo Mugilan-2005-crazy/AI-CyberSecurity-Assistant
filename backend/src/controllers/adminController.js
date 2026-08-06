@@ -53,11 +53,12 @@ export const deleteUser = async (req, res, next) => {
 
 export const analytics = async (req, res, next) => {
   try {
+    const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
     const [totalUsers, totalScans, scansByType, threats] = await Promise.all([
       User.countDocuments(),
       ScanHistory.countDocuments(),
-      ScanHistory.aggregate([{ $group: { _id: '$type', count: { $sum: 1 } } }]),
-      ScanHistory.aggregate([{ $group: { _id: '$verdict', count: { $sum: 1 } } }]),
+      ScanHistory.aggregate([{ $match: { createdAt: { $gte: cutoff } } }, { $group: { _id: '$type', count: { $sum: 1 } } }]),
+      ScanHistory.aggregate([{ $match: { createdAt: { $gte: cutoff } } }, { $group: { _id: '$verdict', count: { $sum: 1 } } }]),
     ]);
     res.json({ success: true, data: { totalUsers, totalScans, scansByType, verdicts: threats } });
   } catch (err) { next(err); }

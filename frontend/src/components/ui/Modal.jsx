@@ -24,21 +24,25 @@ export default function Modal({ open, onClose, title, children }) {
   return (
     <AnimatePresence>
       {open && (
-        <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-        >
-          <motion.div
-            className="w-full max-w-lg bg-white dark:bg-surface-card rounded-2xl shadow-xl p-6"
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {title && <h2 className="text-lg font-semibold mb-4">{title}</h2>}
+      <motion.div
+           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+           role="presentation"
+           initial={{ opacity: 0 }}
+           animate={{ opacity: 1 }}
+           exit={{ opacity: 0 }}
+           onClick={onClose}
+         >
+           <motion.div
+             className="w-full max-w-lg bg-white dark:bg-surface-card rounded-2xl shadow-xl p-6"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby={title ? "modal-title" : undefined}
+             initial={{ scale: 0.95, opacity: 0 }}
+             animate={{ scale: 1, opacity: 1 }}
+             exit={{ scale: 0.95, opacity: 0 }}
+             onClick={(e) => e.stopPropagation()}
+           >
+             {title && <h2 id="modal-title" className="text-lg font-semibold mb-4">{title}</h2>}
             {children}
           </motion.div>
         </motion.div>

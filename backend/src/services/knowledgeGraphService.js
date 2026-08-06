@@ -578,6 +578,25 @@ export async function buildCloudSubgraph(userId, filters = {}) {
     const kubeResources = await KubernetesResource.find({}).sort({ lastScanned: -1 }).limit(100).lean();
     const threatIntel = await ThreatIntel.find({}).limit(50).lean();
 
+    const resourcesByProvider = new Map();
+    for (const r of resources) {
+      const key = r.providerAccountId || '';
+      if (!resourcesByProvider.has(key)) resourcesByProvider.set(key, []);
+      resourcesByProvider.get(key).push(r);
+    }
+
+    const findingsByResource = new Map();
+    for (const f of findings) {
+      const key = f.resourceId || '';
+      if (!findingsByResource.has(key)) findingsByResource.set(key, []);
+      findingsByResource.get(key).push(f);
+    }
+
+    const intelSearchIndex = threatIntel.map((t) => ({
+      ...t,
+      _searchText: JSON.stringify(t).toLowerCase(),
+    }));
+
     for (const provider of providers) {
       const entityType = provider.provider === 'aws' ? 'AWSAccount' : provider.provider === 'azure' ? 'AzureTenant' : 'GCPProject';
       const providerEntity = await createOrUpdateEntity(
@@ -594,7 +613,8 @@ export async function buildCloudSubgraph(userId, filters = {}) {
         await createRelationship(userEntity.entityId, providerEntity.entityId, 'manages', 60, 0.8, userId, { source: 'CloudProvider' });
       }
 
-      for (const resource of resources.filter((r) => r.providerAccountId === provider.accountId)) {
+      const providerResources = resourcesByProvider.get(provider.accountId) || [];
+      for (const resource of providerResources) {
         const resourceEntity = await createOrUpdateEntity(
           'CloudAsset',
           `cloud:${provider.provider}:${resource.resourceId}`,
@@ -613,7 +633,8 @@ export async function buildCloudSubgraph(userId, filters = {}) {
           await createRelationship(resourceEntity.entityId, userEntity.entityId, 'monitored_by', 60, 0.7, userId, { source: 'CloudResource' });
         }
 
-        for (const finding of findings.filter((f) => f.resourceId === resource.resourceId)) {
+        const resourceFindings = findingsByResource.get(resource.resourceId) || [];
+        for (const finding of resourceFindings) {
           const findingEntity = await createOrUpdateEntity(
             'SecurityAlert',
             `cloudfinding:${finding._id}`,
@@ -641,7 +662,8 @@ export async function buildCloudSubgraph(userId, filters = {}) {
         finding.severity === 'Critical' ? 'Critical' : finding.severity === 'High' ? 'High' : finding.severity === 'Medium' ? 'Medium' : 'Low'
       );
 
-      const relatedIntel = threatIntel.find((t) => JSON.stringify(t).includes(finding.title.substring(0, 10).toLowerCase()));
+      const titlePrefix = finding.title.substring(0, 10).toLowerCase();
+      const relatedIntel = intelSearchIndex.find((t) => t._searchText.includes(titlePrefix));
       if (relatedIntel && findingEntity) {
         const intelEntity = await createOrUpdateEntity(
           'ThreatIntel',

@@ -1,7 +1,7 @@
 # ============================================================
 # Stage 1 — dependency installer (leverages Docker layer caching)
 # ============================================================
-FROM node:lts-alpine AS deps
+FROM node:18.20.4-alpine3.20 AS deps
 WORKDIR /app
 
 # Copy only what's needed for npm install
@@ -11,7 +11,7 @@ RUN npm ci --only=production --ignore-scripts
 # ============================================================
 # Stage 2 — runtime (small, non-root, healthchecked)
 # ============================================================
-FROM node:lts-alpine
+FROM node:18.20.4-alpine3.20
 WORKDIR /app
 
 # Create non-root user
@@ -33,6 +33,10 @@ USER nodejs
 # Environment
 ENV NODE_ENV=production
 EXPOSE 5000
+
+# Read-only filesystem with tmpfs for writable paths
+# Run as non-root user with dropped capabilities
+# (security hardening applied at compose level via read_only, cap_drop, security_opt)
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \

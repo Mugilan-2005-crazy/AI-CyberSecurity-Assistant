@@ -12,7 +12,7 @@ const styles = {
 export default function VerdictBadge({ verdict }) {
   const v = (verdict || 'unknown').toLowerCase();
   return (
-    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${styles[v] || styles.unknown}`}>
+    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${styles[v] || styles.unknown}`} role="status" aria-label={`Verdict: ${v}`}>
       {v.toUpperCase()}
     </span>
   );

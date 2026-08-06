@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion';
-import { jsPDF } from 'jspdf';
 
 const RISK_TONES = {
   low: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
@@ -14,8 +13,9 @@ function toRiskTone(level = 'unknown') {
   return RISK_TONES[key] || RISK_TONES.unknown;
 }
 
-function downloadReportPdf(report) {
+async function downloadReportPdf(report) {
   try {
+    const { jsPDF } = await import('jspdf');
     const doc = new jsPDF();
     doc.setFontSize(18);
     doc.text('Security Report', 14, 16);

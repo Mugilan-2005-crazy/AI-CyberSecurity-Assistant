@@ -1,4 +1,4 @@
-# Security — Enterprise Cyber Security Platform v2.1.1
+# Security — Enterprise Cyber Security Platform v3.0.0
 
 ## Security Posture
 

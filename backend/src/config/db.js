@@ -32,7 +32,7 @@ export const connectDB = async () => {
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const conn = await mongoose.connect(uri, { serverSelectionTimeoutMS: 10000, maxPoolSize: 10, minPoolSize: 2 });
+        const conn = await mongoose.connect(uri, { serverSelectionTimeoutMS: 10000, maxPoolSize: 50, minPoolSize: 5 });
         logger.info(`MongoDB connected: ${conn.connection.host}`);
         return conn;
       } catch (error) {

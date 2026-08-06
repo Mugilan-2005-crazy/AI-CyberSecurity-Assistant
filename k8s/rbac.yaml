@@ -1,0 +1,53 @@
+---
+# ============================================================
+# Role — least-privilege permissions for backend pods
+# ============================================================
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: cybersec-platform
+  name: cybersec-role
+  labels:
+    app: cybersec-platform
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "configmaps", "secrets"]
+    verbs: ["get", "list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list"]
+  - apiGroups: ["monitoring.coreos.com"]
+    resources: ["prometheusrules"]
+    verbs: ["get", "list"]
+---
+# ============================================================
+# RoleBinding — bind role to service account
+# ============================================================
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cybersec-rolebinding
+  namespace: cybersec-platform
+  labels:
+    app: cybersec-platform
+subjects:
+  - kind: ServiceAccount
+    name: cybersec-sa
+    namespace: cybersec-platform
+roleRef:
+  kind: Role
+  name: cybersec-role
+  apiGroup: rbac.authorization.k8s.io
+---
+# ============================================================
+# ServiceAccount — dedicated account for backend pods
+# (namespace.yaml already defines this; this file ensures it
+# exists even if namespace.yaml is applied separately)
+# ============================================================
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cybersec-sa
+  namespace: cybersec-platform
+  labels:
+    app: cybersec-platform

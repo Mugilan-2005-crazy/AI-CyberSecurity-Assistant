@@ -18,7 +18,9 @@ export default class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    if (typeof reportError === 'function') {
+      reportError(error, errorInfo);
+    }
   }
 
   render() {

@@ -17,7 +17,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret';
 beforeAll(async () => {
   await initDB();
   const { default: jwt } = await import('jsonwebtoken');
-  testUser = await createTestUser({ email: 'ueba@test.com', password: 'password123', role: 'user' });
+  testUser = await createTestUser({ email: 'ueba@test.com', password: 'P@ssw0rd123!', role: 'user' });
   testUserId = testUser._id.toString();
   authToken = jwt.sign({ sub: testUserId, email: testUser.email, role: testUser.role }, JWT_SECRET, { expiresIn: '1h' });
 });

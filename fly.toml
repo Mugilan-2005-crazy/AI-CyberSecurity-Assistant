@@ -1,0 +1,41 @@
+# CyberSphere AI v4.0 — Fly.io Configuration
+# Place this file at fly.toml in the root of your repository
+
+app = "cybersphere-backend"
+primary_region = "iad"
+
+[build]
+  dockerfile = "backend/Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "5000"
+  API_PREFIX = "/api"
+
+[http_service]
+  internal_port = 5000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 200
+    hard_limit = 400
+
+  [[http_service.checks]]
+    interval = "10s"
+    timeout = "2s"
+    grace_period = "5s"
+    method = "GET"
+    path = "/api/health"
+
+[metrics]
+  port = 9464
+  path = "/metrics"
+
+[[statics]]
+  guest_path = "/app/public"
+  url_prefix = "/public"

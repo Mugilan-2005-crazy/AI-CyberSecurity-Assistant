@@ -1,0 +1,134 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "cybersphere-security",
+    "title": "CyberSphere AI Security Dashboard",
+    "description": "Enterprise security operations dashboard for CyberSphere AI v3.2.0. Monitors application health, API latency, request count, error rate, authentication failures, threat detections, AI requests, scanner usage, and database health.",
+    "tags": ["cybersphere", "security", "enterprise", "production"],
+    "timezone": "browser",
+    "refresh": "15s",
+    "time": { "from": "now-1h", "to": "now" },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Application Health",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+        "targets": [{ "expr": "up{job=\"backend\"}", "refId": "A" }],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "color": { "mode": "thresholds" },
+            "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 0 }] }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "API Latency (p95)",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+        "targets": [{ "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))", "refId": "A", "legendFormat": "p95 latency" }],
+        "fieldConfig": { "defaults": { "unit": "s", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.5 }, { "color": "red", "value": 1 }] } } }
+      },
+      {
+        "id": 3,
+        "title": "Request Count",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+        "targets": [{ "expr": "rate(http_requests_total[5m])", "refId": "A", "legendFormat": "requests/sec" }],
+        "fieldConfig": { "defaults": { "unit": "reqps" } }
+      },
+      {
+        "id": 4,
+        "title": "Error Rate",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+        "targets": [{ "expr": "rate(http_requests_total{status=~\"5..\"}[5m]) / rate(http_requests_total[5m])", "refId": "A", "legendFormat": "error rate" }],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "color": { "mode": "thresholds" },
+            "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.01 }, { "color": "red", "value": 0.05 }] }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Authentication Failures",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+        "targets": [{ "expr": "rate(failed_login_total[5m])", "refId": "A", "legendFormat": "failed logins/sec" }],
+        "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "palette-classic" } } }
+      },
+      {
+        "id": 6,
+        "title": "Threat Detections",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+        "targets": [{ "expr": "rate(threat_detection_total[5m])", "refId": "A", "legendFormat": "threats detected/sec" }],
+        "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "palette-classic" } } }
+      },
+      {
+        "id": 7,
+        "title": "AI Requests",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+        "targets": [{ "expr": "rate(ai_request_total[5m])", "refId": "A", "legendFormat": "AI requests/sec" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 8,
+        "title": "Scanner Usage",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+        "targets": [{ "expr": "rate(security_scan_total[5m])", "refId": "A", "legendFormat": "scans/sec" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 9,
+        "title": "Database Health",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 20 },
+        "targets": [{ "expr": "mongodb_connections_current", "refId": "A", "legendFormat": "MongoDB connections" }],
+        "fieldConfig": { "defaults": { "unit": "short" } }
+      },
+      {
+        "id": 10,
+        "title": "Database Query Latency",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 6, "y": 20 },
+        "targets": [{ "expr": "histogram_quantile(0.95, rate(mongodb_query_duration_seconds_bucket[5m]))", "refId": "A", "legendFormat": "p95 query latency" }],
+        "fieldConfig": { "defaults": { "unit": "s" } }
+      },
+      {
+        "id": 11,
+        "title": "Security Scans by Type",
+        "type": "piechart",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+        "targets": [{ "expr": "security_scan_total", "refId": "A", "legendFormat": "{{scanner_type}}" }]
+      },
+      {
+        "id": 12,
+        "title": "Threat Detection by Category",
+        "type": "piechart",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+        "targets": [{ "expr": "threat_detection_total", "refId": "A", "legendFormat": "{{threat_type}}" }]
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "datasource",
+          "type": "datasource",
+          "datasourceType": "prometheus",
+          "query": "prometheus",
+          "refresh": 1
+        }
+      ]
+    },
+    "annotations": { "list": [] }
+  },
+  "folderId": 0,
+  "overwrite": false
+}

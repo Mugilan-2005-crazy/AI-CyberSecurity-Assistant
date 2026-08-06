@@ -39,8 +39,8 @@ beforeAll(async () => {
   const appModule = await import('../src/app.js');
   app = appModule.default;
 
-  const user = await createTestUser({ email: 'agentuser@test.com', password: 'password123' });
-  const res = await request(app).post('/api/auth/login').send({ email: 'agentuser@test.com', password: 'password123' });
+  const user = await createTestUser({ email: 'agentuser@test.com', password: 'P@ssw0rd123!' });
+  const res = await request(app).post('/api/auth/login').send({ email: 'agentuser@test.com', password: 'P@ssw0rd123!' });
   userToken = res.body?.accessToken;
 }, 120000);
 

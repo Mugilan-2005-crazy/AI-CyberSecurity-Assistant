@@ -12,6 +12,10 @@ class MetricsService {
       mongo: { connections: 0, operations: 0, queryTime: 0, errors: 0 },
       socket: { connections: 0, messagesSent: 0, messagesReceived: 0, rooms: 0 },
       ai: { requests: 0, errors: 0, latency: 0, tokensUsed: 0, cacheHits: 0 },
+      securityScans: { total: 0, byType: {} },
+      threatDetections: { total: 0, byCategory: {} },
+      failedLogins: { total: 0 },
+      aiRequests: { total: 0 },
       threatIntel: { queries: 0, cacheHits: 0, errors: 0, providersActive: 0 },
       knowledgeGraph: { entities: 0, relationships: 0, queries: 0, indexSize: 0 },
       ueba: { profilesAnalyzed: 0, anomaliesDetected: 0, riskScoresComputed: 0 },
@@ -300,6 +304,22 @@ class MetricsService {
     lines.push(`ai_errors_total ${m.ai.errors}`);
     lines.push(`ai_cache_hits_total ${m.ai.cacheHits}`);
     lines.push(`ai_tokens_used_total ${m.ai.tokensUsed}`);
+
+    lines.push('# HELP security_scan_total Total security scans');
+    lines.push('# TYPE security_scan_total counter');
+    lines.push("security_scan_total " );
+
+    lines.push('# HELP threat_detection_total Total threat detections');
+    lines.push('# TYPE threat_detection_total counter');
+    lines.push("threat_detection_total " );
+
+    lines.push('# HELP failed_login_total Total failed login attempts');
+    lines.push('# TYPE failed_login_total counter');
+    lines.push("failed_login_total " );
+
+    lines.push('# HELP ai_request_total Total AI requests (alias)');
+    lines.push('# TYPE ai_request_total counter');
+    lines.push("ai_request_total " );
 
     lines.push('# HELP threat_intel_queries_total Total threat intelligence queries');
     lines.push('# TYPE threat_intel_queries_total counter');

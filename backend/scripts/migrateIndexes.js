@@ -38,8 +38,20 @@ const INDEX_SPECS = {
   scanhistories: [
     { spec: { user: 1, createdAt: -1 }, options: { background: true } },
     { spec: { user: 1, type: 1, createdAt: -1 }, options: { background: true } },
+    { spec: { user: 1, verdict: 1, createdAt: -1 }, options: { background: true } },
     { spec: { verdict: 1, createdAt: -1 }, options: { background: true } },
     { spec: { riskScore: -1, createdAt: -1 }, options: { background: true } },
+   ],
+  securityalerts: [
+    { spec: { userId: 1, createdAt: -1 }, options: { background: true } },
+    { spec: { userId: 1, status: 1, createdAt: -1 }, options: { background: true } },
+    { spec: { severity: 1, status: 1 }, options: { background: true } },
+  ],
+  cloudfindings: [
+    { spec: { cloudProvider: 1, severity: 1, status: 1 }, options: { background: true } },
+    { spec: { cloudProvider: 1, severity: 1, createdAt: -1 }, options: { background: true } },
+    { spec: { checkCategory: 1, status: 1 }, options: { background: true } },
+    { spec: { status: 'open', severity: -1 }, options: { background: true } },
   ],
   chatlogs: [
     { spec: { user: 1, sessionId: 1 }, options: { background: true } },

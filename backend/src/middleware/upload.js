@@ -19,6 +19,31 @@ const upload = multer({
     if (blocked.test(file.originalname)) {
       return cb(new ApiError(400, 'File type not allowed'), false);
     }
+
+    // Defense-in-depth: validate MIME type from magic bytes via file.mimetype.
+    // Multer populates this from the Content-Type header; for true magic-byte
+    // validation, the VirusTotal scanner handles deep inspection downstream.
+    const allowedMimes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'application/zip',
+      'application/x-tar',
+      'application/gzip',
+      'application/json',
+      'text/plain',
+      'image/png',
+      'image/jpeg',
+      'image/gif',
+      'image/webp',
+    ];
+
+    if (file.mimetype && !allowedMimes.includes(file.mimetype)) {
+      return cb(new ApiError(400, 'File type not allowed'), false);
+    }
+
     cb(null, true);
   },
 });

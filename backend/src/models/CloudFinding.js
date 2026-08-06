@@ -41,6 +41,7 @@ const cloudFindingSchema = new mongoose.Schema(
 );
 
 cloudFindingSchema.index({ cloudProvider: 1, severity: 1, status: 1 });
+cloudFindingSchema.index({ cloudProvider: 1, severity: 1, createdAt: -1 });
 cloudFindingSchema.index({ checkCategory: 1, status: 1 });
 cloudFindingSchema.index({ status: 'open', severity: -1 });
 

@@ -25,8 +25,6 @@ import Badge from '../../components/ui/Badge.jsx';
 import Button from '../../components/ui/Button.jsx';
 import Loader from '../../components/ui/Loader.jsx';
 import StateView from '../../components/ui/StateView.jsx';
-import { jsPDF } from 'jspdf';
-import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
 
 const SEVERITY_TONES = {
   Low: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
@@ -121,10 +119,10 @@ export default function AIIncidentReportCenter() {
         URL.revokeObjectURL(url);
         toast.success('Markdown exported');
       } else if (format === 'pdf') {
-        buildPdf(selectedReport);
+        await buildPdf(selectedReport);
         toast.success('PDF exported');
       } else if (format === 'docx') {
-        buildDocx(selectedReport);
+        await buildDocx(selectedReport);
         toast.success('DOCX exported');
       }
     } catch {
@@ -161,7 +159,8 @@ export default function AIIncidentReportCenter() {
     }
   };
 
-  const buildPdf = (report) => {
+  const buildPdf = async (report) => {
+    const { jsPDF } = await import('jspdf');
     const doc = new jsPDF();
     const pageW = doc.internal.pageSize.getWidth();
     let y = 14;
@@ -243,6 +242,7 @@ export default function AIIncidentReportCenter() {
   };
 
   const buildDocx = async (report) => {
+    const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import('docx');
     const doc = new Document({
       creator: 'CyberSec AI Incident Report Generator',
       title: `Incident Report ${report.incidentId}`,

@@ -70,6 +70,7 @@ export default function App() {
   return (
     <I18nextProvider i18n={i18n}>
     <ErrorBoundary>
+    <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[9999] focus:bg-primary focus:text-white focus:px-4 focus:py-2 focus:rounded-lg">Skip to main content</a>
     <Suspense fallback={<Fallback />}>
       <Routes>
         {/* Public */}

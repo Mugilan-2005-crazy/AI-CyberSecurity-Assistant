@@ -135,7 +135,12 @@ export async function getDashboardAlerts(req, res, next) {
     else if (timeframe === '30d') cutoff.setDate(cutoff.getDate() - 30);
     else cutoff.setHours(cutoff.getHours() - 24);
 
-    const recentAlerts = await SecurityAlert.find({ createdAt: { $gte: cutoff } })
+    const baseFilter = { createdAt: { $gte: cutoff } };
+    if (req.user.role === 'user') {
+      baseFilter.userId = req.user.id;
+    }
+
+    const recentAlerts = await SecurityAlert.find(baseFilter)
       .sort({ createdAt: -1 })
       .limit(50)
       .populate('userId', 'name email');

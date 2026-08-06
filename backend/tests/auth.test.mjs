@@ -45,7 +45,7 @@ let userId;
 beforeAll(async () => {
   await initDB();
   const admin = await seedAdmin();
-  const user = await createTestUser({ email: 'testuser@test.com', password: 'password123' });
+  const user = await createTestUser({ email: 'testuser@test.com', password: 'P@ssw0rd123!' });
   userId = user._id.toString();
 
   const appModule = await import('../src/app.js');
@@ -55,7 +55,7 @@ beforeAll(async () => {
   const adminRes = await request(app).post('/api/auth/login').send({ email: 'admin@test.com', password: 'testpass123' });
   adminToken = adminRes.body?.accessToken;
 
-  const userRes = await request(app).post('/api/auth/login').send({ email: 'testuser@test.com', password: 'password123' });
+  const userRes = await request(app).post('/api/auth/login').send({ email: 'testuser@test.com', password: 'P@ssw0rd123!' });
   userToken = userRes.body?.accessToken;
 }, 120000);
 
@@ -71,7 +71,7 @@ describe('Authentication', () => {
       const res = await request(app).post('/api/auth/register').send({
         name: 'New User',
         email: 'newuser@test.com',
-        password: 'password123',
+        password: 'Str0ngP@ss1!',
       });
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
@@ -83,7 +83,7 @@ describe('Authentication', () => {
       const res = await request(app).post('/api/auth/register').send({
         name: 'Duplicate',
         email: 'testuser@test.com',
-        password: 'password123',
+        password: 'Str0ngP@ss1!',
       });
       expect(res.status).toBe(409);
       expect(res.body.success).toBe(false);
@@ -103,7 +103,7 @@ describe('Authentication', () => {
     test('logs in with valid credentials', async () => {
       const res = await request(app).post('/api/auth/login').send({
         email: 'testuser@test.com',
-        password: 'password123',
+        password: 'P@ssw0rd123!',
       });
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -119,16 +119,16 @@ describe('Authentication', () => {
     });
 
     test('rejects disabled account', async () => {
-      await createTestUser({ email: 'disabled@test.com', password: 'password123', isActive: false });
+      await createTestUser({ email: 'disabled@test.com', password: 'P@ssw0rd123!', isActive: false });
       const res = await request(app).post('/api/auth/login').send({
         email: 'disabled@test.com',
-        password: 'password123',
+        password: 'P@ssw0rd123!',
       });
       expect(res.status).toBe(403);
     });
 
     test('locks account after too many failed attempts', async () => {
-      const lockUser = await createTestUser({ email: 'lock@test.com', password: 'password123' });
+      const lockUser = await createTestUser({ email: 'lock@test.com', password: 'P@ssw0rd123!' });
 
       // MAX_LOGIN_ATTEMPTS = 5 by default (config.security.maxLoginAttempts)
       for (let i = 0; i < 5; i++) {
@@ -142,7 +142,7 @@ describe('Authentication', () => {
       // Even correct password should be rejected while locked
       const res = await request(app).post('/api/auth/login').send({
         email: 'lock@test.com',
-        password: 'password123',
+        password: 'P@ssw0rd123!',
       });
       expect(res.status).toBe(403);
       expect(res.body.message).toContain('locked');
@@ -162,10 +162,10 @@ describe('Authentication', () => {
     });
 
     test('rejects request from inactive user with valid token (protect middleware)', async () => {
-      const inactiveUser = await createTestUser({ email: 'inactive-protect@test.com', password: 'password123' });
+      const inactiveUser = await createTestUser({ email: 'inactive-protect@test.com', password: 'P@ssw0rd123!' });
       const loginRes = await request(app).post('/api/auth/login').send({
         email: 'inactive-protect@test.com',
-        password: 'password123',
+        password: 'P@ssw0rd123!',
       });
       const token = loginRes.body?.accessToken;
       expect(token).toBeDefined();
@@ -179,10 +179,10 @@ describe('Authentication', () => {
     });
 
     test('rejects request from deleted user (protect middleware)', async () => {
-      const delUser = await createTestUser({ email: 'deleted-protect@test.com', password: 'password123' });
+      const delUser = await createTestUser({ email: 'deleted-protect@test.com', password: 'P@ssw0rd123!' });
       const loginRes = await request(app).post('/api/auth/login').send({
         email: 'deleted-protect@test.com',
-        password: 'password123',
+        password: 'P@ssw0rd123!',
       });
       const token = loginRes.body?.accessToken;
       expect(token).toBeDefined();
@@ -207,7 +207,7 @@ describe('Authentication', () => {
     test('refreshes access token', async () => {
       const loginRes = await request(app).post('/api/auth/login').send({
         email: 'testuser@test.com',
-        password: 'password123',
+        password: 'P@ssw0rd123!',
       });
       const cookies = loginRes.headers['set-cookie'];
       const refreshCookie = cookies?.find(c => c.startsWith('refreshToken='));
@@ -233,7 +233,7 @@ describe('Authentication', () => {
       const res = await request(app)
         .post('/api/auth/change-password')
         .set(auth(userToken))
-        .send({ currentPassword: 'password123', newPassword: 'newpassword123' });
+        .send({ currentPassword: 'P@ssw0rd123!', newPassword: 'N3wP@ssw0rd!' });
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
     });
@@ -242,7 +242,7 @@ describe('Authentication', () => {
       const res = await request(app)
         .post('/api/auth/change-password')
         .set(auth(userToken))
-        .send({ currentPassword: 'wrongpass', newPassword: 'newpassword123' });
+        .send({ currentPassword: 'wrongpass', newPassword: 'N3wP@ssw0rd!' });
       expect(res.status).toBe(401);
     });
   });
@@ -349,10 +349,10 @@ describe('Authentication', () => {
   describe('POST /api/auth/login-enhanced', () => {
     test('handles suspicious login detection', async () => {
       // Use a fresh user to avoid password change side effects from previous tests
-      const freshUser = await createTestUser({ email: 'enhanced@test.com', password: 'password123' });
+      const freshUser = await createTestUser({ email: 'enhanced@test.com', password: 'P@ssw0rd123!' });
       const res = await request(app).post('/api/auth/login-enhanced').send({
         email: 'enhanced@test.com',
-        password: 'password123',
+        password: 'P@ssw0rd123!',
         device: 'New Device',
         location: 'New Location',
       });
@@ -362,7 +362,7 @@ describe('Authentication', () => {
     });
 
     test('locks account via login-enhanced after too many failed attempts', async () => {
-      const enhancedLockUser = await createTestUser({ email: 'enhanced-lock@test.com', password: 'password123' });
+      const enhancedLockUser = await createTestUser({ email: 'enhanced-lock@test.com', password: 'P@ssw0rd123!' });
 
       for (let i = 0; i < 5; i++) {
         const failRes = await request(app).post('/api/auth/login-enhanced').send({
@@ -374,19 +374,116 @@ describe('Authentication', () => {
 
       const res = await request(app).post('/api/auth/login-enhanced').send({
         email: 'enhanced-lock@test.com',
-        password: 'password123',
+        password: 'P@ssw0rd123!',
       });
       expect(res.status).toBe(403);
       expect(res.body.message).toContain('locked');
     });
 
     test('rejects unverified email via login-enhanced', async () => {
-      const unverified = await createTestUser({ email: 'unverified-enhanced@test.com', password: 'password123', isEmailVerified: false });
-      const res = await request(app).post('/api/auth/login-enhanced').send({
+      const unverified = await createTestUser({ email: 'unverified-enhanced@test.com', password: 'P@ssw0rd123!', isEmailVerified: false });
+       const res = await request(app).post('/api/auth/login-enhanced').send({
         email: 'unverified-enhanced@test.com',
-        password: 'password123',
+        password: 'P@ssw0rd123!',
       });
       expect(res.status).toBe(403);
+    });
+  });
+
+  describe('Security Hardening', () => {
+    test('rejects weak password on registration (missing uppercase)', async () => {
+      const res = await request(app).post('/api/auth/register').send({
+        name: 'Weak User',
+        email: 'weak1@test.com',
+        password: 'alllowercase1!',
+      });
+      expect(res.status).toBe(422);
+    });
+
+    test('rejects weak password on registration (missing special char)', async () => {
+      const res = await request(app).post('/api/auth/register').send({
+        name: 'Weak User',
+        email: 'weak2@test.com',
+        password: 'NoSpecialChar1',
+      });
+      expect(res.status).toBe(422);
+    });
+
+    test('rejects weak password on registration (too short)', async () => {
+      const res = await request(app).post('/api/auth/register').send({
+        name: 'Weak User',
+        email: 'weak3@test.com',
+        password: 'Ab1!',
+      });
+      expect(res.status).toBe(422);
+    });
+
+    test('rejects invalid JWT access token', async () => {
+      const res = await request(app).get('/api/auth/me').set('Authorization', 'Bearer invalid.token.here');
+      expect(res.status).toBe(401);
+    });
+
+    test('rejects request with no authorization header', async () => {
+      const res = await request(app).get('/api/auth/me');
+      expect(res.status).toBe(401);
+    });
+
+    test('rejects malformed authorization header', async () => {
+      const res = await request(app).get('/api/auth/me').set('Authorization', 'NotBearer abc123');
+      expect(res.status).toBe(401);
+    });
+
+    test('refresh token rotation invalidates old refresh token', async () => {
+      const secUser = await createTestUser({ email: 'sectest-refresh@test.com', password: 'P@ssw0rd123!' });
+      const loginRes = await request(app).post('/api/auth/login').send({
+        email: 'sectest-refresh@test.com',
+        password: 'P@ssw0rd123!',
+      });
+      const cookies = loginRes.headers['set-cookie'];
+      const refreshCookie = cookies?.find(c => c.startsWith('refreshToken='));
+      const refreshToken = refreshCookie ? refreshCookie.split(';')[0].split('=')[1] : null;
+
+      expect(refreshToken).toBeDefined();
+
+      const refreshRes = await request(app)
+        .post('/api/auth/refresh')
+        .set('Cookie', `refreshToken=${refreshToken}`);
+      expect(refreshRes.status).toBe(200);
+      expect(refreshRes.body.accessToken).toBeDefined();
+
+      const newCookies = refreshRes.headers['set-cookie'];
+      const newRefreshCookie = newCookies?.find(c => c.startsWith('refreshToken='));
+      const newRefreshToken = newRefreshCookie ? newRefreshCookie.split(';')[0].split('=')[1] : null;
+
+      expect(newRefreshToken).toBeDefined();
+      expect(newRefreshToken).not.toBe(refreshToken);
+
+      const reuseRes = await request(app)
+        .post('/api/auth/refresh')
+        .set('Cookie', `refreshToken=${refreshToken}`);
+      expect(reuseRes.status).toBe(401);
+    });
+
+    test('rejects unregistered user email on login (existing email but unregistered)', async () => {
+      const res = await request(app).post('/api/auth/login').send({
+        email: 'nonexistent@test.com',
+        password: 'P@ssw0rd123!',
+      });
+      expect(res.status).toBe(401);
+    });
+
+    test('change-password validates new password complexity', async () => {
+      const secUser = await createTestUser({ email: 'sectest-changepw@test.com', password: 'P@ssw0rd123!' });
+      const loginRes = await request(app).post('/api/auth/login').send({
+        email: 'sectest-changepw@test.com',
+        password: 'P@ssw0rd123!',
+      });
+      const token = loginRes.body?.accessToken;
+      const res = await request(app)
+        .post('/api/auth/change-password')
+        .set(auth(token))
+        .send({ currentPassword: 'P@ssw0rd123!', newPassword: 'weak' });
+      expect(res.status).toBe(422);
     });
   });
 });

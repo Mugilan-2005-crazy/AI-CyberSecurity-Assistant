@@ -147,10 +147,10 @@ export default function Login() {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-slate-900 to-slate-800">
         <div className="w-full max-w-md">
-          <motion.div {...fadeIn} className="card">
+          <motion.div {...fadeIn} className="card" role="dialog" aria-modal="true" aria-labelledby="2fa-title">
             <div className="flex flex-col items-center mb-6">
               <ShieldCheckIcon className="h-12 w-12 text-cyber-400 animate-float" />
-              <h1 className="text-xl font-bold mt-2">Two-Factor Authentication</h1>
+              <h1 id="2fa-title" className="text-xl font-bold mt-2">Two-Factor Authentication</h1>
               <p className="text-sm text-slate-400 mt-1 text-center">Was this login attempt you?</p>
             </div>
 
@@ -171,14 +171,15 @@ export default function Login() {
               </div>
             )}
 
-            <form onSubmit={handle2FAVerify} className="space-y-6">
+            <form onSubmit={handle2FAVerify} className="space-y-6" aria-label="Two-factor authentication form">
               <div>
-                <label className="text-sm text-slate-300 block text-center mb-3">Enter 6-digit verification code</label>
+                <label htmlFor="2fa-otp-0" className="text-sm text-slate-300 block text-center mb-3">Enter 6-digit verification code</label>
                 <div className="flex justify-center gap-2">
                   {otp.map((digit, i) => (
                     <input
                       key={i}
                       id={`2fa-otp-${i}`}
+                      name={`2fa-otp-${i}`}
                       type="text"
                       inputMode="numeric"
                       maxLength={1}
@@ -187,6 +188,7 @@ export default function Login() {
                       onChange={(e) => handleOtpChange(i, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(i, e)}
                       autoFocus={i === 0}
+                      aria-required="true"
                     />
                   ))}
                 </div>
@@ -210,7 +212,7 @@ export default function Login() {
                 >
                   {twoFALoading ? (
                     <span className="flex items-center justify-center gap-2">
-                      <span className="h-4 w-4 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
+                      <span className="h-4 w-4 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
                       Verifying...
                     </span>
                   ) : (
@@ -252,10 +254,10 @@ export default function Login() {
 
           {/* Suspicious login warning */}
           {suspiciousWarning && (
-            <div className="bg-amber-900/30 border border-amber-700/50 rounded-lg p-3 mb-4 flex items-start gap-2">
+            <div className="bg-amber-900/30 border border-amber-700/50 rounded-lg p-3 mb-4 flex items-start gap-2" role="alert">
               <ExclamationTriangleIcon className="h-5 w-5 text-amber-400 mt-0.5 shrink-0" />
               <div className="text-xs text-amber-300">
-                <p className="font-semibold mb-1">⚠️ Unusual login detected</p>
+                <p className="font-semibold mb-1">Unusual login detected</p>
                 <p>Previous session: {suspiciousWarning.device} · {suspiciousWarning.location}</p>
                 {suspiciousWarning.time && <p>{new Date(suspiciousWarning.time).toLocaleString()}</p>}
                 <p className="mt-1">If this wasn't you, please change your password immediately.</p>
@@ -263,18 +265,21 @@ export default function Login() {
             </div>
           )}
 
-          <form onSubmit={submit} className="space-y-4">
+          <form onSubmit={submit} className="space-y-4" aria-label="Sign in form">
             <div>
-              <label className="text-sm text-slate-300">{t('auth.email')}</label>
+              <label htmlFor="login-email" className="text-sm text-slate-300">{t('auth.email')}</label>
               <input
+                id="login-email"
                 type="email" required className="input w-full"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 placeholder={t('auth.emailPlaceholder')}
                 autoComplete="email"
+                aria-required="true"
               />
             </div>
             <PasswordInput
+              id="login-password"
               label={t('auth.password')}
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -282,11 +287,11 @@ export default function Login() {
               required
               autoComplete="current-password"
             />
-            {error && <p className="text-danger text-xs text-center">{error}</p>}
-            <button className="btn-primary w-full" disabled={loading}>
+            {error && <p className="text-danger text-xs text-center" role="alert">{error}</p>}
+            <button className="btn-primary w-full" disabled={loading} type="submit">
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <span className="h-4 w-4 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
+                  <span className="h-4 w-4 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
                   {t('auth.signingIn')}
                 </span>
               ) : (

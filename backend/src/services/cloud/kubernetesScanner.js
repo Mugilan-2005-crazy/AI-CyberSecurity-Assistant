@@ -4,12 +4,12 @@ import fs from 'fs/promises';
 import path from 'path';
 import KubernetesResource from '../../models/KubernetesResource.js';
 import logger from '../../utils/logger.js';
-import { getIoInstance } from '../../socket/socketServer.js';
 
 const execAsync = promisify(exec);
 
-const emitSocketEvent = (event, data) => {
+const emitSocketEvent = async (event, data) => {
   try {
+    const { getIoInstance } = await import('../../socket/socketServer.js');
     const io = getIoInstance();
     if (io) {
       io.to('admin-room').emit(event, data);
@@ -37,10 +37,12 @@ const runKubectl = async (command) => {
 };
 
 export const isKubernetesAvailable = async () => {
-  const result = await runKubectl('version --client --short 2>nul');
-  if (result) return true;
-  const configTest = await runKubectl('config current-context 2>nul');
-  return !!configTest;
+  try {
+    await execAsync('kubectl get nodes --request-timeout=5s 2>nul', { timeout: 10000 });
+    return true;
+  } catch {
+    return false;
+  }
 };
 
 export const discoverClusters = async () => {
@@ -159,6 +161,12 @@ export const scanKubernetesCluster = async (options = {}) => {
   const namespace = options.namespace || 'default';
   const kubeconfig = options.kubeconfigPath;
 
+  const k8sAvailable = await isKubernetesAvailable();
+  if (!k8sAvailable) {
+    logger.warn('Kubernetes cluster unavailable, Kubernetes scan skipped');
+    return { status: 'skipped', message: 'Kubernetes cluster unavailable - scan skipped' };
+  }
+
   logger.info('[kubernetesScanner] Starting K8s scan', { clusterName, namespace });
   emitSocketEvent('k8s.scan.started', { clusterName, namespace, timestamp: new Date().toISOString() });
 
@@ -178,19 +186,6 @@ export const scanKubernetesCluster = async (options = {}) => {
   const clusterRoleBindings = await fetchKubectlResources(kubectlPrefix, 'get clusterrolebindings -o json', 'ClusterRoleBinding');
   const networkPolicies = await fetchKubectlResources(kubectlPrefix, 'get networkpolicies -A -o json', 'NetworkPolicy');
   const secrets = await fetchKubectlResources(kubectlPrefix, 'get secrets -A -o json', 'Secret');
-
-  const k8sAvailable = await isKubernetesAvailable();
-  if (!k8sAvailable) {
-    const simulated = simulateK8sResources(clusterName);
-    pods.items = simulated.pods.items;
-    namespaces.items = simulated.namespaces.items;
-    serviceAccounts.items = simulated.serviceAccounts.items;
-    clusterRoles.items = simulated.clusterRoles.items;
-    clusterRoleBindings.items = simulated.clusterRoleBindings.items;
-    networkPolicies.items = simulated.networkPolicies.items;
-    deployments.items = simulated.deployments.items;
-    logger.warn('[kubernetesScanner] No Kubernetes cluster available, using simulated data');
-  }
 
   await persistKubeResources(clusterName, namespaces, 'Namespace', clusterName);
   await persistKubeResources(clusterName, pods, 'Pod', clusterName);

@@ -1,6 +1,6 @@
 {
   "name": "enterprise-cyber-security-backend",
-  "version": "2.1.1",
+  "version": "4.0.0",
   "description": "Enterprise AI Cyber Security Platform backend (Express + MongoDB)",
   "main": "src/server.js",
   "type": "module",
@@ -9,7 +9,7 @@
     "dev": "nodemon src/server.js",
     "seed": "node src/utils/seedAdmin.js",
     "lint": "eslint src --ext .js",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --coverage"
+    "test": "node --experimental-vm-modules scripts/runJest.cjs --runInBand --coverage --config jest.config.cjs"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
@@ -41,6 +41,7 @@
     "pdfkit": "^0.15.0",
     "pngjs": "^7.0.0",
     "qrcode": "^1.5.4",
+    "rate-limit-redis": "^4.3.1",
     "redis": "^4.7.1",
     "socket.io": "^4.8.3",
     "socket.io-parser": "^4.2.7",

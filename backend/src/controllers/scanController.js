@@ -268,7 +268,7 @@ export const generateReport = async (req, res, next) => {
     // 2. Fetch scans (graceful: empty array if query throws).
     let scans = [];
     try {
-      scans = await ScanHistory.find(match).sort({ createdAt: -1 });
+      scans = await ScanHistory.find(match).sort({ createdAt: -1 }).limit(1000);
     } catch (err) {
       logger.warn(`Report scan fetch failed (${err.message}) — generating in-memory report.`);
     }

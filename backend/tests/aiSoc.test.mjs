@@ -13,7 +13,7 @@ let scanId;
 beforeAll(async () => {
   await initDB();
   const admin = await seedAdmin();
-  const user = await createTestUser({ email: 'aisoc@test.com', password: 'password123' });
+  const user = await createTestUser({ email: 'aisoc@test.com', password: 'P@ssw0rd123!' });
   userId = user._id.toString();
 
   const appModule = await import('../src/app.js');
@@ -22,7 +22,7 @@ beforeAll(async () => {
   const adminRes = await request(app).post('/api/auth/login').send({ email: 'admin@test.com', password: 'testpass123' });
   adminToken = adminRes.body?.accessToken;
 
-  const userRes = await request(app).post('/api/auth/login').send({ email: 'aisoc@test.com', password: 'password123' });
+  const userRes = await request(app).post('/api/auth/login').send({ email: 'aisoc@test.com', password: 'P@ssw0rd123!' });
   userToken = userRes.body?.accessToken;
 
   const scan = await createScan(userId, { type: 'url', input: 'http://malicious.example.com', riskScore: 85, verdict: 'malicious' });

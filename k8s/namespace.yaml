@@ -8,7 +8,7 @@ metadata:
   name: cybersec-platform
   labels:
     app.kubernetes.io/name: cybersec-platform
-    app.kubernetes.io/version: "2.1"
+    app.kubernetes.io/version: "3.0.0"
     environment: production
 ---
 apiVersion: v1

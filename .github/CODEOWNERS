@@ -1,0 +1,31 @@
+# Code owners — see https://docs.github.com/en/repositories/managing-your-repositorys-settings/about-code-owners
+
+# Backend — security & core
+backend/src/middleware/auth.js        @Mugilan-2005-crazy
+backend/src/middleware/rateLimiter.js @Mugilan-2005-crazy
+backend/src/middleware/upload.js      @Mugilan-2005-crazy
+backend/src/middleware/sanitize.js    @Mugilan-2005-crazy
+backend/src/controllers/authController.js @Mugilan-2005-crazy
+backend/src/controllers/alertController.js @Mugilan-2005-crazy
+backend/src/services/ai/              @Mugilan-2005-crazy
+backend/src/services/security/        @Mugilan-2005-crazy
+backend/src/services/audit/           @Mugilan-2005-crazy
+backend/tests/auth.test.mjs           @Mugilan-2005-crazy
+backend/tests/aiSecurity.test.mjs     @Mugilan-2005-crazy
+
+# Infrastructure
+docker-compose.yml                     @Mugilan-2005-crazy
+backend/Dockerfile                    @Mugilan-2005-crazy
+frontend/Dockerfile                   @Mugilan-2005-crazy
+grafana/Dockerfile                    @Mugilan-2005-crazy
+k8s/                                  @Mugilan-2005-crazy
+.Caddyfile                            @Mugilan-2005-crazy
+prometheus/                           @Mugilan-2005-crazy
+
+# CI/CD & Security
+.github/workflows/                    @Mugilan-2005-crazy
+.github/dependabot.yml                @Mugilan-2005-crazy
+.github/dependabot/                   @Mugilan-2005-crazy
+
+# Documentation
+*.md                                  @Mugilan-2005-crazy

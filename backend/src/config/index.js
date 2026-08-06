@@ -32,6 +32,7 @@ const config = {
     expire: process.env.JWT_EXPIRE || '15m',
     refreshSecret: required('JWT_REFRESH_SECRET', 'dev_refresh_secret'),
     refreshExpire: process.env.JWT_REFRESH_EXPIRE || '30d',
+    algorithm: 'HS256',
   },
 
   clientOrigin: (() => {
@@ -154,6 +155,26 @@ const config = {
 if (!config.admin.password) {
   throw new Error('Missing required environment variable: ADMIN_PASSWORD');
 }
+
+const validateJwtSecrets = () => {
+  const devSecrets = ['dev_jwt_secret', 'dev_refresh_secret'];
+  if (process.env.NODE_ENV !== 'test') {
+    if (devSecrets.includes(config.jwt.secret)) {
+      logger.warn('SECURITY WARNING: Using default JWT_SECRET. Set a strong environment variable for production.');
+    }
+    if (devSecrets.includes(config.jwt.refreshSecret)) {
+      logger.warn('SECURITY WARNING: Using default JWT_REFRESH_SECRET. Set a strong environment variable for production.');
+    }
+    if (config.jwt.secret.length < 32) {
+      logger.warn('SECURITY WARNING: JWT_SECRET is less than 32 characters. Use a stronger secret.');
+    }
+    if (config.jwt.refreshSecret.length < 32) {
+      logger.warn('SECURITY WARNING: JWT_REFRESH_SECRET is less than 32 characters. Use a stronger secret.');
+    }
+  }
+};
+
+validateJwtSecrets();
 
 export default config;
 

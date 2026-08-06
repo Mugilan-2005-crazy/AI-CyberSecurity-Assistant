@@ -60,6 +60,27 @@ spec:
   type: ClusterIP
 ---
 # ============================================================
+# Service — MongoDB (cluster-internal)
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: cybersec-mongodb-svc
+  namespace: cybersec-platform
+  labels:
+    app: cybersec-platform
+    component: mongodb
+spec:
+  selector:
+    app: cybersec-platform
+    component: mongodb
+  ports:
+    - name: mongodb
+      port: 27017
+      targetPort: mongodb
+  type: ClusterIP
+---
+# ============================================================
 # Headless service — for potential Redis Cluster or StatefulSet
 # ============================================================
 apiVersion: v1

@@ -1,4 +1,4 @@
-FROM grafana/grafana:latest
+FROM grafana/grafana:11.1.0
 USER root
 COPY provisioning/ /etc/grafana/provisioning/
 RUN mkdir -p /var/lib/grafana/dashboards

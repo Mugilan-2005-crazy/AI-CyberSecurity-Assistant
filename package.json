@@ -1,0 +1,22 @@
+{
+  "name": "cybersphere-ai",
+  "version": "4.0.0",
+  "private": true,
+  "description": "Enterprise Cloud Cyber Defense Platform - CyberSphere AI v4.0",
+  "scripts": {
+    "prepare": "husky",
+    "lint-staged": "lint-staged",
+    "postinstall": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ]
+}
