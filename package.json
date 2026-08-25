@@ -4,9 +4,9 @@
   "private": true,
   "description": "Enterprise Cloud Cyber Defense Platform - CyberSphere AI v4.0",
   "scripts": {
-    "prepare": "husky",
+    "prepare": "npx husky",
     "lint-staged": "lint-staged",
-    "postinstall": "husky"
+    "postinstall": "npx husky"
   },
   "devDependencies": {
     "husky": "^9.1.7",

@@ -21,6 +21,8 @@ const getTransport = () => {
       port: config.email.port,
       secure: config.email.port === 465,
       auth: { user: config.email.user, pass: config.email.pass },
+      connectionTimeout: 5000,
+      socketTimeout: 10000,
     });
   }
   return _transport;

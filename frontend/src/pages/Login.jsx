@@ -68,7 +68,7 @@ export default function Login() {
 
       if (res.requires2FA) {
         setRequires2FA(true);
-        setUserId(res.userId);
+        setUserId(res.twoFactorToken);
         setDeviceInfo(res.deviceInfo);
         return;
       }
@@ -106,7 +106,7 @@ export default function Login() {
     }
     setTwoFALoading(true);
     try {
-      const res = await api.post('/auth/2fa/verify', { userId, otp: otpStr, trustDevice });
+      const res = await api.post('/auth/2fa/verify', { twoFactorToken: userId, otp: otpStr });
       setUser(res.user);
       toast.success('2FA verified! Welcome back.');
       const role = res.user?.role;

@@ -157,6 +157,46 @@ app.get('/api/health', (_req, res) => res.json({ success: true, message: 'Enterp
  */
 app.get('/health', (_req, res) => res.json({ status: 'ok', env: config.env }));
 
+/**
+ * @openapi
+ * /ready:
+ *   get:
+ *     tags:
+ *       - Health
+ *     summary: Readiness check (verifies DB + Redis dependencies)
+ *     responses:
+ *       200:
+ *         description: Application is ready to serve traffic
+ */
+app.get('/ready', async (_req, res) => {
+  const mongoose = (await import('mongoose')).default;
+  const mongoOk = mongoose.connection.readyState === 1;
+  let redisOk = false;
+  try {
+    const { isRedisAvailable } = await import('./services/cache/redisClient.js');
+    redisOk = isRedisAvailable();
+  } catch {
+    redisOk = false;
+  }
+  if (mongoOk && redisOk) {
+    return res.status(200).json({ status: 'ready', mongo: 'connected', redis: 'connected' });
+  }
+  return res.status(503).json({ status: 'not-ready', mongo: mongoOk ? 'connected' : 'disconnected', redis: redisOk ? 'connected' : 'disconnected' });
+});
+
+/**
+ * @openapi
+ * /live:
+ *   get:
+ *     tags:
+ *       - Health
+ *     summary: Liveness check (process is alive)
+ *     responses:
+ *       200:
+ *         description: Process is alive
+ */
+app.get('/live', (_req, res) => res.json({ status: 'alive', uptime: process.uptime(), timestamp: new Date().toISOString() }));
+
 // --- API routes ---
 app.use(`${config.apiPrefix}/auth`, authRoutes);
 app.use(`${config.apiPrefix}/scan`, scanRoutes);

@@ -117,21 +117,47 @@ const config = {
     },
   },
 
-  redis: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: Number(process.env.REDIS_PORT) || 6379,
-    password: process.env.REDIS_PASSWORD || '',
-    db: Number(process.env.REDIS_DB) || 0,
-    tls: process.env.REDIS_TLS === 'true',
-    keyPrefix: process.env.REDIS_KEY_PREFIX || 'csa:',
-    connectTimeoutMs: Number(process.env.REDIS_CONNECT_TIMEOUT_MS) || 5000,
-    lazyConnect: true,
-    retryStrategy: {
+  redis: (() => {
+    const defaults = {
+      host: 'localhost',
+      port: 6379,
+      password: '',
+      db: 0,
+      tls: false,
+    };
+    if (process.env.REDIS_URL) {
+      try {
+        const parsed = new URL(process.env.REDIS_URL);
+        defaults.host = parsed.hostname || defaults.host;
+        defaults.port = parsed.port ? Number(parsed.port) : defaults.port;
+        if (parsed.password) {
+          defaults.password = parsed.password;
+        }
+        defaults.tls = parsed.protocol === 'rediss:';
+        if (parsed.pathname && parsed.pathname.length > 1) {
+          const dbNum = parseInt(parsed.pathname.slice(1), 10);
+          if (!Number.isNaN(dbNum)) defaults.db = dbNum;
+        }
+      } catch {
+        logger.warn('Failed to parse REDIS_URL, using individual Redis config fields');
+      }
+    } else {
+      defaults.host = process.env.REDIS_HOST || defaults.host;
+      defaults.port = Number(process.env.REDIS_PORT) || defaults.port;
+      defaults.password = process.env.REDIS_PASSWORD || defaults.password;
+      defaults.tls = process.env.REDIS_TLS === 'true';
+    }
+    defaults.db = Number(process.env.REDIS_DB) || defaults.db;
+    defaults.keyPrefix = process.env.REDIS_KEY_PREFIX || 'csa:';
+    defaults.connectTimeoutMs = Number(process.env.REDIS_CONNECT_TIMEOUT_MS) || 5000;
+    defaults.lazyConnect = true;
+    defaults.retryStrategy = {
       retries: Number(process.env.REDIS_MAX_RETRIES) || 3,
       baseDelayMs: Number(process.env.REDIS_RETRY_BASE_DELAY_MS) || 100,
       maxDelayMs: Number(process.env.REDIS_RETRY_MAX_DELAY_MS) || 5000,
-    },
-  },
+    };
+    return defaults;
+  })(),
 
   mfa: {
     totp: {
@@ -165,11 +191,11 @@ const validateJwtSecrets = () => {
     if (devSecrets.includes(config.jwt.refreshSecret)) {
       logger.warn('SECURITY WARNING: Using default JWT_REFRESH_SECRET. Set a strong environment variable for production.');
     }
-    if (config.jwt.secret.length < 32) {
-      logger.warn('SECURITY WARNING: JWT_SECRET is less than 32 characters. Use a stronger secret.');
+    if (config.jwt.secret.length < 64) {
+      logger.warn('SECURITY WARNING: JWT_SECRET is less than 64 characters. Use a 64+ character hex secret.');
     }
-    if (config.jwt.refreshSecret.length < 32) {
-      logger.warn('SECURITY WARNING: JWT_REFRESH_SECRET is less than 32 characters. Use a stronger secret.');
+    if (config.jwt.refreshSecret.length < 64) {
+      logger.warn('SECURITY WARNING: JWT_REFRESH_SECRET is less than 64 characters. Use a 64+ character hex secret.');
     }
   }
 };

@@ -30,10 +30,12 @@ import config from '../../config/index.js';
 import logger from '../../utils/logger.js';
 
 function getRedisUrl() {
+  if (process.env.REDIS_URL) return process.env.REDIS_URL;
+  const scheme = config.redis.tls ? 'rediss' : 'redis';
   if (config.redis.password) {
-    return `redis://:${encodeURIComponent(config.redis.password)}@${config.redis.host}:${config.redis.port}/${config.redis.db}`;
+    return `${scheme}://:${encodeURIComponent(config.redis.password)}@${config.redis.host}:${config.redis.port}/${config.redis.db}`;
   }
-  return `redis://${config.redis.host}:${config.redis.port}/${config.redis.db}`;
+  return `${scheme}://${config.redis.host}:${config.redis.port}/${config.redis.db}`;
 }
 
 class LazyRedisRateLimitStore {
@@ -70,6 +72,16 @@ class LazyRedisRateLimitStore {
         url: getRedisUrl(),
         socket: {
           connectTimeout: config.redis.connectTimeoutMs,
+          reconnectStrategy: (retries) => {
+            if (retries >= 5) {
+              logger.warn('[RateLimitStore] Max Redis reconnection attempts reached, using MemoryStore');
+              this._redisStore = null;
+              this._redisClient = null;
+              return false;
+            }
+            const delay = Math.min(100 * Math.pow(1.5, retries), 5000);
+            return delay;
+          },
         },
       });
 

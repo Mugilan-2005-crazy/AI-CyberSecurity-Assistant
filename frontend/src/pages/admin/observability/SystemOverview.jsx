@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Line, Doughnut, Bar, Gauge } from 'react-chartjs-2';
+import { Line, Doughnut, Bar } from 'react-chartjs-2';
 import { useObservability } from '../../../hooks/observability/useObservability.js';
 import endpoints from '../../../services/endpoints.js';
 import StatCard from '../../../components/ui/StatCard.jsx';

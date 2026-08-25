@@ -114,10 +114,12 @@ let fallback = null;
 let isRedisConnected = false;
 
 const buildRedisUrl = () => {
+  if (process.env.REDIS_URL) return process.env.REDIS_URL;
+  const scheme = config.redis.tls ? 'rediss' : 'redis';
   if (config.redis.password) {
-    return `redis://:${encodeURIComponent(config.redis.password)}@${config.redis.host}:${config.redis.port}/${config.redis.db}`;
+    return `${scheme}://:${encodeURIComponent(config.redis.password)}@${config.redis.host}:${config.redis.port}/${config.redis.db}`;
   }
-  return `redis://${config.redis.host}:${config.redis.port}/${config.redis.db}`;
+  return `${scheme}://${config.redis.host}:${config.redis.port}/${config.redis.db}`;
 };
 
 export async function connectRedis() {
@@ -140,7 +142,7 @@ export async function connectRedis() {
             logger.error('[redisClient] Max reconnection attempts reached, switching to fallback');
             isRedisConnected = false;
             fallback = new MemoryFallback();
-            return;
+            return false;
           }
           const delay = Math.min(
             config.redis.retryStrategy.baseDelayMs * Math.pow(1.5, retries),

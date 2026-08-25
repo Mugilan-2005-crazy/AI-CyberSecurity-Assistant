@@ -17,6 +17,11 @@ let currentLanguage = 'en';
 
 export const setToken = (token) => {
   accessToken = token || '';
+  if (token) {
+    localStorage.setItem('accessToken', token);
+  } else {
+    localStorage.removeItem('accessToken');
+  }
 };
 
 export const setLanguage = (language) => {

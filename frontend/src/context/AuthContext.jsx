@@ -17,6 +17,11 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const storedToken = localStorage.getItem('accessToken');
+    if (storedToken) setToken(storedToken);
+  }, []);
+
+  useEffect(() => {
     api
       .get('/auth/me')
       .then((res) => {
@@ -25,13 +30,17 @@ export const AuthProvider = ({ children }) => {
           i18n.changeLanguage(res.user.language);
         }
       })
-      .catch(() => setToken(''))
+      .catch(() => {
+        setToken('');
+        localStorage.removeItem('accessToken');
+      })
       .finally(() => setLoading(false));
   }, [i18n]);
 
   const login = async (email, password) => {
     const res = await api.post('/auth/login', { email, password, language: i18n.language });
     setToken(res.accessToken);
+    localStorage.setItem('accessToken', res.accessToken);
     setUser(res.user);
     if (res.user?.language && i18n.language !== res.user.language) {
       i18n.changeLanguage(res.user.language);
@@ -42,6 +51,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (name, email, password) => {
     const res = await api.post('/auth/register', { name, email, password, language: i18n.language });
     setToken(res.accessToken);
+    localStorage.setItem('accessToken', res.accessToken);
     setUser(res.user);
     if (res.user?.language && i18n.language !== res.user.language) {
       i18n.changeLanguage(res.user.language);
@@ -52,13 +62,17 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try { await api.post('/auth/logout'); } catch {}
     setToken('');
+    localStorage.removeItem('accessToken');
     setUser(null);
   };
 
   const updateLanguage = async (language) => {
     const res = await api.patch('/auth/me/language', { language });
     setUser((prev) => ({ ...prev, language: res.user?.language || language }));
-    if (res.accessToken) setToken(res.accessToken);
+    if (res.accessToken) {
+      setToken(res.accessToken);
+      localStorage.setItem('accessToken', res.accessToken);
+    }
     return res.user;
   };
 
