@@ -14,6 +14,22 @@ import logger from './utils/logger.js';
 import User from './models/User.js';
 import { initSocketServer, closeSocketServer } from './socket/socketServer.js';
 
+// --- Top-level process error guards ---
+// Background async work (AI calls, scans, telemetry, socket tasks) can reject
+// outside the request lifecycle. Registering handlers here prevents a single
+// rejected promise from crashing the whole HTTP service and lets Railway keep
+// the healthcheck alive. Uncaught exceptions are logged then exited so the
+// process cannot continue in a possibly-corrupt state.
+process.on('unhandledRejection', (reason) => {
+  logger.error(`Unhandled promise rejection: ${reason?.stack || reason?.message || reason}`);
+});
+
+process.on('uncaughtException', (err) => {
+  logger.error(`Uncaught exception: ${err?.stack || err?.message || err}`);
+  // Exit so the orchestrator can restart a potentially-corrupt process.
+  process.exit(1);
+});
+
 const seedAdmin = async () => {
   try {
     const existing = await User.findOne({ email: config.admin.email });
@@ -32,15 +48,23 @@ const seedAdmin = async () => {
 };
 
 const start = async () => {
-  await connectDB();
-  await connectRedis();
-  await initOpenTelemetry();
-  await seedAdmin();
+  // 1. Bind the HTTP server immediately so the liveness endpoint
+  //    (/api/health) is reachable as soon as the process is up — even
+  //    if a dependency (MongoDB/Redis/OTel/Socket.IO) is slow or down.
+  //    This keeps Railway's healthcheck honest without requiring
+  //    external services to be available first.
   const server = app.listen(config.port, () => {
     logger.info(`Server running on port ${config.port} [${config.env}]`);
   });
 
-  initSocketServer(server, config);
+  // 2. Attach Socket.IO to the shared HTTP server (non-blocking).
+  //    A Socket.IO failure must not prevent HTTP startup, so it is
+  //    wrapped and logged rather than allowed to crash the process.
+  try {
+    initSocketServer(server, config);
+  } catch (err) {
+    logger.error(`Socket.IO init failed (continuing with HTTP only): ${err.message}`);
+  }
 
   const gracefulShutdown = async (signal) => {
     logger.info(`${signal} received, closing server...`);
@@ -82,6 +106,34 @@ const start = async () => {
 
   process.on('SIGINT', () => gracefulShutdown('SIGINT'));
   process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+
+  // 3. Initialize dependencies in the background with controlled error
+  //    handling. A failing optional dependency (Redis/OTel) falls back
+  //    gracefully, and a MongoDB outage degrades the application
+  //    (logged, /ready reports not-ready) instead of killing the process
+  //    — so the HTTP liveness endpoint stays reachable for Railway.
+  const initDependencies = async () => {
+    try {
+      await initOpenTelemetry();
+    } catch (err) {
+      logger.warn(`OpenTelemetry init failed (continuing): ${err.message}`);
+    }
+
+    try {
+      await connectRedis();
+    } catch (err) {
+      logger.warn(`Redis init failed (using in-memory fallback): ${err.message}`);
+    }
+
+    try {
+      await connectDB();
+      await seedAdmin();
+    } catch (err) {
+      logger.error(`MongoDB connection failed — application degraded, /ready will report not-ready: ${err.message}`);
+    }
+  };
+
+  initDependencies();
 };
 
 start().catch((err) => {
